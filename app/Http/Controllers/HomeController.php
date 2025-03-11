@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
+use App\Models\Employee;
+use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
@@ -23,6 +26,14 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return view('home');
+        $user = Auth::user();
+        $employee = Employee::where('emp_code', $user->employee_code)->first();
+        return view('home', compact('employee'));
+    }
+
+    public function debug()
+    {
+        $user = Employee::first();
+        return response()->json($user);
     }
 }

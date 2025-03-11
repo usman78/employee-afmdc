@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'oracle'),
 
     /*
     |--------------------------------------------------------------------------
@@ -112,6 +112,18 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'oracle' => [
+            'driver' => 'oracle',
+            'tns' => '(DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.11)(PORT = 1521)) (CONNECT_DATA =(SERVICE_NAME = orcl)))',
+            'host' => env('DB_HOST', '192.168.1.11'),
+            'port' => env('DB_PORT', '1521'),
+            'database' => env('DB_DATABASE', 'a'),
+            'username' => env('DB_USERNAME', 'payroll'),
+            'password' => env('DB_PASSWORD', 'admin_clg'),
+            'charset' => env('DB_CHARSET', 'AL32UTF8'),
+            'prefix' => env('DB_PREFIX', ''),
+            'prefix_schema' => env('DB_SCHEMA_PREFIX', ''),
+        ],
     ],
 
     /*

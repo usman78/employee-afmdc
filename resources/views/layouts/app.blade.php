@@ -27,13 +27,13 @@
   <!-- Main CSS File -->
   <link href="{{asset('css/main.css')}}" rel="stylesheet">
 
-  <!-- =======================================================
-  * Template Name: Kelly
-  * Template URL: https://bootstrapmade.com/kelly-free-bootstrap-cv-resume-html-template/
-  * Updated: Aug 07 2024 with Bootstrap v5.3.3
-  * Author: BootstrapMade.com
-  * License: https://bootstrapmade.com/license/
-  ======================================================== -->
+  <style>
+    /* .border {
+      border: var(--bs-border-width) var(--bs-border-style) #009688 !important;
+    }  */
+
+    @stack('styles')
+  </style>
 </head>
 
 <body class="index-page">
@@ -53,6 +53,10 @@
           <li><a href="about.html">Attendance</a></li>
           <li><a href="resume.html">Leaves</a></li>
           <li><a href="services.html">Store Issue</a></li>
+          <li><a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a></li>
+          <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+            @csrf
+          </form>
           {{-- <li><a href="portfolio.html">Portfolio</a></li> --}}
           {{-- <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>
@@ -76,11 +80,17 @@
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
 
-      <div class="header-social-links">
+      {{-- <div class="header-social-links">
         <a href="#" class="twitter"><i class="bi bi-twitter-x"></i></a>
         <a href="#" class="facebook"><i class="bi bi-facebook"></i></a>
         <a href="#" class="instagram"><i class="bi bi-instagram"></i></a>
         <a href="#" class="linkedin"><i class="bi bi-linkedin"></i></a>
+      </div> --}}
+        {{-- <div class="social-links d-flex justify-content-center">
+          <a href="">Logout</a>
+        </div> --}}
+        <div>
+
       </div>
 
     </div>
