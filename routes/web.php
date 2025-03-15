@@ -15,9 +15,9 @@ Route::get('/employee', function () {
     return view('employee');
 });
 
-Route::get('/attendance', [AttendanceController::class, 'attendance'])->name('attendance');
+Route::get('/attendance/{emp_code}', [AttendanceController::class, 'attendance'])->name('attendance');
 
-Route::get('/leaves', [LeavesController::class, 'leaves'])->name('leaves');
+Route::get('/leaves/{emp_code}', [LeavesController::class, 'leaves'])->name('leaves');
 
 Route::get('/inventory', [InventoryController::class, 'inventory'])->name('inventory');
 

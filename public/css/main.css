@@ -1,10 +1,10 @@
 /**
-* Template Name: Kelly
-* Template URL: https://bootstrapmade.com/kelly-free-bootstrap-cv-resume-html-template/
-* Updated: Aug 07 2024 with Bootstrap v5.3.3
-* Author: BootstrapMade.com
-* License: https://bootstrapmade.com/license/
+* Customization
 */
+
+.scroll-top {
+  background-color: #2196F3 !important;
+}
 
 /*--------------------------------------------------------------
 # Font & Color Variables
@@ -234,7 +234,7 @@ h6 {
 
   .navmenu a,
   .navmenu a:focus {
-    color: var(--nav-color);
+    color: #353636;
     font-size: 15px;
     padding: 0 2px;
     font-family: var(--nav-font);
@@ -261,7 +261,7 @@ h6 {
     height: 2px;
     bottom: -6px;
     left: 0;
-    background-color: var(--nav-hover-color);
+    background-color: #2196f3;;
     visibility: hidden;
     width: 0px;
     transition: all 0.3s ease-in-out 0s;
@@ -277,7 +277,7 @@ h6 {
   .navmenu li:hover>a,
   .navmenu .active,
   .navmenu .active:focus {
-    color: var(--nav-hover-color);
+    color: #2196f3;;
   }
 
   .navmenu .dropdown ul {

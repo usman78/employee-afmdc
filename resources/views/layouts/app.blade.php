@@ -32,7 +32,7 @@
       border: var(--bs-border-width) var(--bs-border-style) #009688 !important;
     }  */
 
-    @stack('styles')
+    @stack('styles');
   </style>
 </head>
 
@@ -49,10 +49,10 @@
 
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="index.html" class="active">Home</a></li>
-          <li><a href="about.html">Attendance</a></li>
-          <li><a href="resume.html">Leaves</a></li>
-          <li><a href="services.html">Store Issue</a></li>
+          <li><a href="{{route('home')}}" class="active">Home</a></li>
+          <li><a id="attendance" href="{{route('attendance')}}">Attendance</a></li>
+          <li><a id="leaves" href="{{route('leaves')}}">Leaves</a></li>
+          <li><a id="inventory" href="{{route('inventory')}}">Store Issue</a></li>
           <li><a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a></li>
           <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
             @csrf
@@ -120,6 +120,12 @@
 
   <!-- Main JS File -->
   <script src="{{asset('js/main.js')}}"></script>
+
+  <script>
+
+    @stack('scripts');
+  </script>
+
 
 </body>
 
