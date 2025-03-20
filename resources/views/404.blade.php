@@ -28,67 +28,27 @@
   <link href="{{asset('css/main.css')}}" rel="stylesheet">
 
   <style>
-    /* .border {
-      border: var(--bs-border-width) var(--bs-border-style) #009688 !important;
-    }  */
-
-    @stack('styles');
+    .card-header {
+        text-align: center;
+        font-size: x-large;
+    }
   </style>
 </head>
 
 <body class="index-page">
 
   <header id="header" class="header d-flex align-items-center light-background sticky-top">
-    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-center">
 
       <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-        <!-- Uncomment the line below if you also wish to use an image logo -->
-        <!-- <img src="assets/img/logo.png" alt=""> -->
         <h1 class="sitename">Employee AFMDC</h1>
       </a>
 
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="{{route('home')}}" @if (Route::currentRouteName() == 'home') class="active" @endif>Home</a></li>
-          <li><a id="attendance" href="{{route('attendance', $emp_code)}}" @if(Route::currentRouteName() == 'attendance') class="active" @endif>Attendance</a></li>
-          <li><a id="leaves" href="{{route('leaves', $emp_code)}}" @if(Route::currentRouteName() == 'leaves') class="active" @endif>Leaves</a></li>
-          <li><a id="inventory" href="{{route('inventory', $emp_code)}}" @if(Route::currentRouteName() == 'inventory') class="active" @endif>Store Issue</a></li>
-          <li><a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a></li>
-          <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-            @csrf
-          </form>
-          {{-- <li><a href="portfolio.html">Portfolio</a></li> --}}
-          {{-- <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="#">Dropdown 1</a></li>
-              <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                <ul>
-                  <li><a href="#">Deep Dropdown 1</a></li>
-                  <li><a href="#">Deep Dropdown 2</a></li>
-                  <li><a href="#">Deep Dropdown 3</a></li>
-                  <li><a href="#">Deep Dropdown 4</a></li>
-                  <li><a href="#">Deep Dropdown 5</a></li>
-                </ul>
-              </li>
-              <li><a href="#">Dropdown 2</a></li>
-              <li><a href="#">Dropdown 3</a></li>
-              <li><a href="#">Dropdown 4</a></li>
-            </ul>
-          </li> --}}
-          {{-- <li><a href="contact.html">Contact</a></li> --}}
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
-
-      {{-- <div class="header-social-links">
-        <a href="#" class="twitter"><i class="bi bi-twitter-x"></i></a>
-        <a href="#" class="facebook"><i class="bi bi-facebook"></i></a>
-        <a href="#" class="instagram"><i class="bi bi-instagram"></i></a>
-        <a href="#" class="linkedin"><i class="bi bi-linkedin"></i></a>
-      </div> --}}
-        {{-- <div class="social-links d-flex justify-content-center">
-          <a href="">Logout</a>
-        </div> --}}
         <div>
 
       </div>
@@ -96,12 +56,23 @@
     </div>
   </header>
 
-  <main class="main">
+    <main class="main">
 
     <!-- Hero Section -->
-    @yield('content')
-
-  </main>  
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card mt-5">
+                        <div class="card-header"><i class="bi bi-ban"></i> {{ __('Page Not Found') }}</div>
+        
+                        <div class="card-body">
+                            <p class="text-center">The page you are looking for might have been removed, had its name changed or is temporarily unavailable.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
   <!-- Scroll Top -->
   <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
@@ -123,12 +94,10 @@
   <!-- Main JS File -->
   <script src="{{asset('js/main.js')}}"></script>
 
-  <script>
-
-    @stack('scripts');
-  </script>
-
-
 </body>
 
 </html>
+
+
+
+

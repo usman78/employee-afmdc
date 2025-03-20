@@ -28,7 +28,7 @@ class HomeController extends Controller
     {
         $user = Auth::user();
         $employee = Employee::where('emp_code', $user->employee_code)->first();
-        return view('home', compact('employee'));
+        return view('home', compact('employee'))->with('emp_code', $user);
     }
 
     public function debug()

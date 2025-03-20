@@ -19,9 +19,13 @@ Route::get('/attendance/{emp_code}', [AttendanceController::class, 'attendance']
 
 Route::get('/leaves/{emp_code}', [LeavesController::class, 'leaves'])->name('leaves');
 
-Route::get('/inventory', [InventoryController::class, 'inventory'])->name('inventory');
+Route::get('/inventory/{emp_code}', [InventoryController::class, 'inventory'])->name('inventory');
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/debug', [HomeController::class, 'debug']);
+
+Route::fallback(function () {
+    return response()->view('404', [], 404);
+});
 
