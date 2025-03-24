@@ -11,10 +11,16 @@ class InventoryController extends Controller
 {
     public function inventory($emp_code)
     {
+        // Check if user is logged in
+        if(!Auth::check()){
+            return redirect()->route('login');
+        }
+        // Check if the logged in user is the same as the user whose inventory is being viewed
         $authUser = Auth::user();
         if($authUser->employee_code != $emp_code){
             return redirect()->route('home');
         }
+        // Get inventory for the user
         $inventory = Issue::where('emp_code', $emp_code)->orderBy('doc_date', 'desc')->get();
         $inventory->emp_code = $emp_code;
         return view('inventory', compact('inventory'))->with('emp_code', $emp_code);

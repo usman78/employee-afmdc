@@ -1,5 +1,7 @@
 @extends('layouts.app')
-
+@php
+  use Carbon\Carbon;
+@endphp
 @push('styles')
 img {
   max-width: 100px;
@@ -41,10 +43,33 @@ i.bi {
 .services .service-item {
   min-width: 300px;
 }
+.badge-success {
+  background-color: #2196f3;
+}
+.badge-warning {
+  background-color: #ff9800;
+}
+.badge-info {
+  background-color: #4caf50;
+}
+.badge-danger {
+  background-color: #f44336;
+}
 @endpush
 
 @section('content')
 <div class="container">
+  <div class="row">
+    <div class="portfolio-details mt-5">
+      <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+        <h3>Today's Status</h3>
+        <ul>
+          <li><strong>Time-in: </strong>@if ($today && $today->timein != null) <i class="bi bi-clock"></i> {{ Carbon::parse($today->timein)->format('h:i A') }} @else You have not timed in today. @endif</li>
+          <li><strong>Status: </strong>@if ($today && $today->timein != null) <span class="badge badge-success">In the Office</span> @else <span class="badge badge-danger">Out of office</span> @endif</li>
+        </ul>
+      </div>
+    </div>
+  </div>
   <div class="row gy-4 justify-content-center mt-5">
       <div class="services col-lg-4 justify-content-center d-flex">
         <div class="service-item item-cyan position-relative">
