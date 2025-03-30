@@ -28,10 +28,16 @@
   <link href="{{asset('css/main.css')}}" rel="stylesheet">
 
   <style>
-    /* .border {
-      border: var(--bs-border-width) var(--bs-border-style) #009688 !important;
-    }  */
+    
 
+    @media (max-width: 768px) {
+      .table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+    }
     @stack('styles');
   </style>
 </head>

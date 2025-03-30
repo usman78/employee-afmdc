@@ -39,7 +39,7 @@ class HomeController extends Controller
 
     public function debug()
     {
-        $user = Employee::first();
-        return response()->json($user);
+        $attendanceRecords = Attendance::where('at_date', '2025-03-12')->where('emp_code', 805)->get();
+        return response()->json($attendanceRecords);
     }
 }

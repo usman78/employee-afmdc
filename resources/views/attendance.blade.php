@@ -23,6 +23,7 @@
 .table>:not(caption)>*>* {
   padding: .5rem 2.5rem;
 }
+
 @endpush
 
 @section('content')
@@ -34,7 +35,7 @@
           <h3>Attendance Information</h3>
           <ul>
             <li><strong>Employee Code: </strong>{{ $emp_code }}</li>
-            <li><strong>Employee Name: </strong>{{ $emp_name }}</li>
+            <li><strong>Employee Name: </strong>{{ capitalizeWords($emp_name) }}</li>
             <li><strong>Current month all attendance records.</strong></li>
           </ul>
           <table class="table mt-5 mb-5">
@@ -51,8 +52,8 @@
                 <tr>
                   <td>{{ Carbon::parse($record['at_date'])->format('d-m-Y') }}</td>
                   <td>
-                    @if ($record['is_sunday'])
-                      <span class="badge badge-info">Sunday (Off)</span>
+                    @if ($record['is_sunday'] || $record['is_holiday'])
+                      <span class="badge badge-info">{{$record['is_holiday'] ? 'Holiday' : 'Sunday'}}</span>
                     @else
                       @if ($record['timein'])
                         {{ Carbon::parse($record['timein'])->format('h:i A') }}
@@ -62,8 +63,8 @@
                     @endif
                   </td>
                   <td>
-                    @if ($record['is_sunday'])
-                      <span class="badge badge-info">Sunday (Off)</span>
+                    @if ($record['is_sunday'] || $record['is_holiday'])
+                      <span class="badge badge-info">{{$record['is_holiday'] ? 'Holiday' : 'Sunday'}}</span>
                     @else
                       @if ($record['timeout'])
                         {{ Carbon::parse($record['timeout'])->format('h:i A') }}
@@ -73,13 +74,14 @@
                     @endif
                   </td>
                   <td>
-                    @if ($record['is_sunday'])
-                      <span class="badge badge-info">Holiday</span>
+                    @if ($record['is_sunday'] || $record['is_holiday'])
+                      <span class="badge badge-info">{{$record['is_holiday'] ? 'Holiday' : 'Sunday'}}</span>
                     @else
                       @if ($record['timein'])
-                        <span class="badge badge-success">Present</span>
+                        <span class="badge badge-success">{{$record['is_leave'] ? $record['leave_type'] : 'Present' }}</span>
                       @else
                         <span class="badge badge-danger">Absent</span>
+                        <a href={{route('apply-leave', $record['at_date'])}}>Click to Apply for Leave</a>
                       @endif
                     @endif
                   </td>

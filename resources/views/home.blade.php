@@ -60,15 +60,18 @@ i.bi {
 @section('content')
 <div class="container">
   <div class="row">
-    <div class="portfolio-details mt-5">
-      <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
-        <h3>Today's Status</h3>
-        <ul>
-          <li><strong>Time-in: </strong>@if ($today && $today->timein != null) <i class="bi bi-clock"></i> {{ Carbon::parse($today->timein)->format('h:i A') }} @else You have not timed in today. @endif</li>
-          <li><strong>Status: </strong>@if ($today && $today->timein != null) <span class="badge badge-success">In the Office</span> @else <span class="badge badge-danger">Out of office</span> @endif</li>
-        </ul>
+    <div class="col-md-6 d-block mx-auto">
+      <div class="portfolio-details mt-5">
+        <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+          <h3>Today's Status</h3>
+          <ul>
+            <li><strong>Time-in: </strong>@if ($today && $today->timein != null) <i class="bi bi-clock"></i> {{ Carbon::parse($today->timein)->format('h:i A') }} @else You have not timed in today. @endif</li>
+            <li><strong>Status: </strong>@if ($today && $today->timein != null) <span class="badge badge-success">In the Office</span> @else <span class="badge badge-danger">Out of office</span> @endif</li>
+          </ul>
+        </div>
       </div>
     </div>
+
   </div>
   <div class="row gy-4 justify-content-center mt-5">
       <div class="services col-lg-4 justify-content-center d-flex">
@@ -114,7 +117,7 @@ i.bi {
             </div>
             <div class="resume-item pb-0">
               <p>Designation:</p>
-              <h4>{{capitalizeWords($employee->designation->desg_short)}}</h4>
+              <h4>{{ capitalizeAbbreviation( capitalizeWords($employee->designation->desg_short))}}</h4>
             </div>
             <div class="resume-item pb-0">
               <p>Employee Code</p>
