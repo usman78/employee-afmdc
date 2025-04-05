@@ -23,7 +23,14 @@
 .table>:not(caption)>*>* {
   padding: .5rem 2.5rem;
 }
-
+.leave-link {
+  color: #2196f3;
+  font-size: 14px;
+  margin-left: 15px;
+}
+.leave-link:hover {
+  color: rgb(3 108 191);
+}
 @endpush
 
 @section('content')
@@ -81,7 +88,7 @@
                         <span class="badge badge-success">{{$record['is_leave'] ? $record['leave_type'] : 'Present' }}</span>
                       @else
                         <span class="badge badge-danger">Absent</span>
-                        <a href={{route('apply-leave', $record['at_date'])}}>Click to Apply for Leave</a>
+                        <a class="leave-link" href={{route('apply-leave', ['emp_code' => $emp_code, 'leave_date' => $record['at_date']])}}><i class="fa-solid fa-person-walking-arrow-right"></i> Apply for Leave</a>
                       @endif
                     @endif
                   </td>

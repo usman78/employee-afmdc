@@ -31,23 +31,24 @@
         <table class="table mt-5 mb-5">
             <thead>
                 <tr>
-                    <th>Leave Code</th>
-                    <th>Leaves Open</th>
+                    <th>Leave Type</th>
+                    {{-- <th>Leaves Open</th> --}}
                     <th>Leave Credits</th>
                     <th>Leaves Taken</th>
-                    <th>Leaves Credited</th>
-                    <th>Leaves Encashed</th>
+                    <th>Leaves Balance</th>
+                    {{-- <th>Leaves Encashed</th> --}}
                 </tr>
             </thead>
             <tbody>
                 @foreach ($leaves as $leave)
                     <tr>
-                        <td>{{ $leave->leav_code }}</td>
-                        <td>{{ $leave->leav_open }}</td>
+                        {{-- <td>{{ $leave->leav_code }}</td> --}}
+                        <td>{{ $leave->leave_type }}</td> 
+                        {{-- <td>{{ $leave->leav_open }}</td> --}}
                         <td>{{ $leave->leav_credit }}</td>
                         <td>{{ $leave->leav_taken }}</td>
-                        <td>{{ $leave->leaves_credited }}</td>
-                        <td>{{ $leave->leave_encashed }}</td>
+                        <td style="color: #2196F3"><strong>{{ $leave->leav_credit - $leave->leav_taken }}</strong></td>
+                        {{-- <td>{{ $leave->leave_encashed }}</td> --}}
                     </tr>
                 @endforeach
             </tbody>

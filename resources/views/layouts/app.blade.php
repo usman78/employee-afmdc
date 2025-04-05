@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>Employee - AFMDC</title>
+  <title>AFMDC Employee Portal</title>
   <meta name="description" content="">
   <meta name="keywords" content="">
 
@@ -23,12 +23,20 @@
   <link href="{{asset('vendor/aos/aos.css')}}" rel="stylesheet">
   <link href="{{asset('vendor/swiper/swiper-bundle.min.css')}}" rel="stylesheet">
   <link href="{{asset('vendor/glightbox/css/glightbox.min.css')}}" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
   <!-- Main CSS File -->
   <link href="{{asset('css/main.css')}}" rel="stylesheet">
 
   <style>
-    
+
+    table.table thead tr th {
+      /* color: #2196F3; */
+    }
+    .table thead {
+        --bs-table-bg: #2196f3;
+        --bs-table-color: #fff;
+    }
 
     @media (max-width: 768px) {
       .table {
@@ -36,6 +44,11 @@
         width: 100%;
         overflow-x: auto;
         white-space: nowrap;
+      }
+      @media (max-width: 1199px) {
+          .navmenu a:hover, .navmenu .active, .navmenu .active:focus {
+              color: #2196f3;
+          }
       }
     }
     @stack('styles');
@@ -45,12 +58,12 @@
 <body class="index-page">
 
   <header id="header" class="header d-flex align-items-center light-background sticky-top">
-    <div class="container-fluid position-relative d-flex align-items-center justify-content-between">
+    <div class="container-fluid position-relative d-flex align-items-center justify-content-around">
 
       <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
         <!-- Uncomment the line below if you also wish to use an image logo -->
         <!-- <img src="assets/img/logo.png" alt=""> -->
-        <h1 class="sitename">Employee AFMDC</h1>
+        <h1 class="sitename">AFMDC Employee Portal</h1>
       </a>
 
       <nav id="navmenu" class="navmenu">
