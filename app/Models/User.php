@@ -9,11 +9,14 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    protected $table = 'portal_emp_users';
-    protected $primaryKey = 'employee_code';
+    protected $table = 'pay_pers';
+    protected $primaryKey = 'emp_code';
     public $incrementing = false;
-    protected $keyType = 'string';
+    protected $keyType = 'number';
     protected $connection = 'oracle';
+    public $timestamps = false;
+    protected $rememberTokenName = false;
+
     
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -24,8 +27,8 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'employee_code',
-        'password',
+        'emp_code',
+        'u_passwd',
     ];
 
     /**
@@ -34,7 +37,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
-        'password',
+        'u_passwd',
         'remember_token',
     ];
 
@@ -47,12 +50,19 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
         ];
     }
 
     public function getAuthIdentifierName()
     {
-        return 'employee_code';
+        return 'emp_code';
+    }
+    public function getAuthPassword()
+    {
+        return $this->u_passwd;
+    }
+    public function setPasswordAttribute($value)
+    {
+        $this->attributes['password'] = $value;
     }
 }

@@ -29,7 +29,9 @@
   <link href="{{asset('css/main.css')}}" rel="stylesheet">
 
   <style>
-
+    .btn-primary {
+      --bs-btn-bg: #2196f3;
+    }
     table.table thead tr th {
       /* color: #2196F3; */
     }

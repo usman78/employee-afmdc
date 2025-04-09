@@ -40,6 +40,23 @@ class LoginController extends Controller
         $this->middleware('auth')->only('logout');
     }
 
+    public function login(Request $request)
+    {
+        // 🔍 Debug incoming credentials
+        $credentials = $request->only('employee_code', 'u_passwd');
+        logger()->info('Attempting login with credentials:', $credentials);
+
+        if (Auth::attempt($credentials)) {
+            logger()->info('Login successful for user: ' . $credentials['employee_code']);
+            return redirect()->intended('/'); // or your desired route
+        }
+
+        logger()->warning('Login failed for: ' . $credentials['employee_code']);
+        return back()->withErrors([
+            'login_error' => 'Invalid employee code or password',
+        ]);
+    }
+
     public function username()
     {
         return 'employee_code';

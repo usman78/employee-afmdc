@@ -120,18 +120,26 @@
                                 </div>
         
                                 <div class="row mb-3">
-                                    <label for="password" class="col-md-4 col-form-label text-md-end">{{ __('Password') }}</label>
+                                    <label for="u_passwd" class="col-md-4 col-form-label text-md-end">{{ __('Password') }}</label>
         
                                     <div class="col-md-6">
-                                        <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="current-password">
+                                        <input id="u_passwd" type="password" class="form-control @error('u_passwd') is-invalid @enderror" name="u_passwd" required autocomplete="current-password">
         
-                                        @error('password')
+                                        @error('u_passwd')
                                             <span class="invalid-feedback" role="alert">
                                                 <strong>{{ $message }}</strong>
                                             </span>
                                         @enderror
                                     </div>
                                 </div>
+                                @if ($errors->any())
+                                    <div class="alert alert-danger">
+                                        @foreach ($errors->all() as $error)
+                                            <div>{{ $error }}</div>
+                                        @endforeach
+                                    </div>
+                                @endif
+
         
                                 <div class="row mb-3">
                                     <div class="col-md-6 offset-md-4">

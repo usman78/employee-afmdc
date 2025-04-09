@@ -28,8 +28,10 @@ class HomeController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $employee = Employee::where('emp_code', $user->employee_code)->first();
-        $today = Attendance::where('emp_code', $user->employee_code)->whereDate('at_date', today())->first();
+        // dd('Employee: ' . $user->emp_code);
+        $employee = Employee::where('emp_code', $user->emp_code)->first();
+        $today = Attendance::where('emp_code', $user->emp_code)->whereDate('at_date', today())->first();
+
         if($today){
             $today->timein = date('H:i', strtotime($today->timein));
             $today->timeout = date('H:i', strtotime($today->timeout));

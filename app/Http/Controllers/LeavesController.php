@@ -17,14 +17,14 @@ class LeavesController extends Controller
         }
         // Check if the logged in user is the same as the user whose leaves are being viewed
         $authUser = Auth::user();
-        if($authUser->employee_code != $emp_code){
+        if($authUser->emp_code != $emp_code){
             return redirect()->route('home');
         }
 
 
         // Get leaves balance for the user
         $leaves = LeavesBalance::where('emp_code', $emp_code)
-            ->whereIn('leav_code', [1, 2, 3, 8])
+            ->whereIn('leav_code', [1, 2, 3])
             ->get();
         $leaves->emp_code = $emp_code;
 
@@ -39,16 +39,11 @@ class LeavesController extends Controller
                 case 3:
                     $leave->leave_type = 'Annual Leave';
                     break;
-                case 8:
-                    $leave->leave_type = 'Short Leave';
-                    break;
                 default:
                     $leave->leave_type = 'Unknown Leave Type';
             }
         }
-
-
-
+        // Get employee details
         $employee = Employee::where('emp_code', $emp_code)->first();
         $leaves->emp_name = capitalizeWords($employee->name) ;
         return view('leaves', compact('leaves'))->with('emp_code', $emp_code);
@@ -67,12 +62,12 @@ class LeavesController extends Controller
         }
 
         // Get employee details
-        $employee = Attendance::where('emp_code', $emp_code)
-            ->where('at_date', $leave_date)->first();
+        $employee_name = Employee::select('name')->where('emp_code', $emp_code)->first();
 
         return view('apply-leave', [
             'emp_code' => $emp_code,
-            'emp_name' => $employee ? ucfirst($employee->name) : 'Unknown Employee'
+            'emp_name' => $employee_name->name,
+            'leave_date' => $leave_date,
         ]);
     }
 }

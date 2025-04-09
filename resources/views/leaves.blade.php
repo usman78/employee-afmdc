@@ -47,7 +47,7 @@
                         {{-- <td>{{ $leave->leav_open }}</td> --}}
                         <td>{{ $leave->leav_credit }}</td>
                         <td>{{ $leave->leav_taken }}</td>
-                        <td style="color: #2196F3"><strong>{{ $leave->leav_credit - $leave->leav_taken }}</strong></td>
+                        <td style="color: #2196F3"><strong>{{ $leave->leav_open + $leave->leav_credit - $leave->leav_taken - $leave->leave_encashed }}</strong></td>
                         {{-- <td>{{ $leave->leave_encashed }}</td> --}}
                     </tr>
                 @endforeach
