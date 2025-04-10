@@ -57,7 +57,7 @@ class LeavesController extends Controller
 
         // Ensure logged-in user matches the requested employee code
         $authUser = Auth::user();
-        if ($authUser->employee_code != $emp_code) {
+        if ($authUser->emp_code != $emp_code) {
             return redirect()->route('home');
         }
 
