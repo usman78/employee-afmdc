@@ -32,6 +32,35 @@
         text-align: center;
         font-size: x-large;
     }
+    .main {
+      height: 100vh;
+      background-image: url({{asset('/img/4th.jpg') }});
+      /* background-color: #4a163c; */
+      background-size: cover;
+      background-position: center;
+    }
+    .header .logo h1 {
+      font-size: 21px;
+    }
+    .header .logo img {
+      max-height: 50px;
+    }
+    .card {
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(20px);
+      background: transparent;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      border-radius: 10px;
+      padding: 40px 0px;
+      color: #fff;
+      margin-top: 8rem !important;
+    }
+    .card-header {
+      background: transparent;
+      border: none;
+    }
+
+
   </style>
 </head>
 
@@ -40,10 +69,18 @@
   <header id="header" class="header d-flex align-items-center light-background sticky-top">
     <div class="container-fluid position-relative d-flex align-items-center justify-content-center">
 
+      <div class="logo">
+        <a href="{{route('home')}}" class="logo d-flex align-items-center me-auto me-xl-0">
+          <!-- Uncomment the line below if you also wish to use an image logo -->
+          <!-- <img src="assets/img/logo.png" alt=""> -->
+          <img class="" src="{{asset('img/AFMDC-Logo.png')}}"></img>
+        </a>
+      </div>
+
       <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
         <!-- Uncomment the line below if you also wish to use an image logo -->
         <!-- <img src="assets/img/logo.png" alt=""> -->
-        <h1 class="sitename">AFMDC Employee Portal</h1>
+        <h1 class="sitename"><strong>AFMDC Employee Portal</strong></h1>
       </a>
 
       <nav id="navmenu" class="navmenu">
@@ -97,7 +134,7 @@
     <!-- Hero Section -->
         <div class="container">
             <div class="row justify-content-center">
-                <div class="col-md-8">
+                <div class="col-md-6">
                     <div class="card mt-5">
                         <div class="card-header">{{ __('Login') }}</div>
         
@@ -154,16 +191,10 @@
                                 </div>
         
                                 <div class="row mb-0">
-                                    <div class="col-md-8 offset-md-4">
+                                    <div class="col-md-12" style="text-align: center">
                                         <button type="submit" class="btn btn-primary">
                                             {{ __('Login') }}
                                         </button>
-        
-                                        @if (Route::has('password.request'))
-                                            <a class="btn btn-link" href="{{ route('password.request') }}">
-                                                {{ __('Forgot Your Password?') }}
-                                            </a>
-                                        @endif
                                     </div>
                                 </div>
                             </form>

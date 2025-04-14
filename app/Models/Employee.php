@@ -18,4 +18,16 @@ class Employee extends Model
     {
         return $this->hasOne(Department::class, 'dept_code', 'dept_code');
     }
+    // public function leavesBalance()
+    // {
+    //     return $this->hasMany(LeavesBalance::class, 'emp_code', 'emp_code');
+    // }
+    // public function attendance()
+    // {
+    //     return $this->hasMany(Attendance::class, 'emp_code', 'emp_code');
+    // }
+    public function leave()
+    {
+        return $this->hasMany(Leave::class, 'emp_code', 'emp_code');
+    }
 }

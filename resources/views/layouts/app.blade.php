@@ -61,23 +61,21 @@
 
   <header id="header" class="header d-flex align-items-center light-background sticky-top">
     <div class="container-fluid position-relative d-flex align-items-center justify-content-around">
-
-      <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
-        <!-- Uncomment the line below if you also wish to use an image logo -->
-        <!-- <img src="assets/img/logo.png" alt=""> -->
-        <h1 class="sitename">AFMDC Employee Portal</h1>
-      </a>
+      <div class="logo">
+        <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
+          <img src="{{asset('/img/AFMDC-Logo.png')}}" alt="">
+          <h1 class="sitename">AFMDC Employee Portal</h1>
+        </a>
+      </div>
+      
 
       <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="{{route('home')}}" @if (Route::currentRouteName() == 'home') class="active" @endif>Home</a></li>
           <li><a id="attendance" href="{{route('attendance', $emp_code)}}" @if(Route::currentRouteName() == 'attendance') class="active" @endif>Attendance</a></li>
-          <li><a id="leaves" href="{{route('leaves', $emp_code)}}" @if(Route::currentRouteName() == 'leaves') class="active" @endif>Leaves</a></li>
+          <li><a id="leaves" href="{{route('leaves', $emp_code)}}" @if(Route::currentRouteName() == 'leaves' || Route::currentRouteName() == 'apply-leave') class="active" @endif>Leaves</a></li>
           <li><a id="inventory" href="{{route('inventory', $emp_code)}}" @if(Route::currentRouteName() == 'inventory') class="active" @endif>Store Issue</a></li>
-          <li><a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a></li>
-          <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-            @csrf
-          </form>
+          
           {{-- <li><a href="portfolio.html">Portfolio</a></li> --}}
           {{-- <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
             <ul>

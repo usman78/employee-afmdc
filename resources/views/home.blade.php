@@ -3,16 +3,11 @@
   use Carbon\Carbon;
 @endphp
 @push('styles')
-img {
-  max-width: 100px;
-  border-radius: 50%;
-  max-height: 100px;
-  object-fit: cover;
-  width: 100%;
-  border: 5px solid #2196f3;
-}
 ul {
   list-style: none;
+}
+.resume {
+  margin-left: 50px;
 }
 .resume .resume-item h4 {
   color: #2196f3;
@@ -55,53 +50,70 @@ i.bi {
 .badge-danger {
   background-color: #f44336;
 }
+.portfolio-info .links {
+  color: #2196f3;
+  {{-- text-decoration: underline; --}}
+  font-weight: 600;
+
+}
+.btn-log-out{
+  color: #fff;
+  background: #f44336;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 1px;
+  display: inline-block;
+  padding: 12px 40px;
+  border-radius: 50px;
+  transition: 0.5s;
+  margin-top: 30px;
+  cursor: pointer;
+}
+.btn-log-out:hover {
+  background: #ff5722;
+  color: #fff;
+}
 @endpush
 
 @section('content')
 <div class="container">
-  <div class="row">
-    <div class="col-md-6 d-block mx-auto">
-      <div class="portfolio-details mt-5">
-        <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
-          <h3>Today's Status</h3>
-          <ul>
-            <li><strong>Time-in: </strong>@if ($today && $today->timein != null) <i class="bi bi-clock"></i> {{ Carbon::parse($today->timein)->format('h:i A') }} @else You have not timed in today. @endif</li>
-            <li><strong>Status: </strong>@if ($today && $today->timein != null) <span class="badge badge-success">In the Office</span> @else <span class="badge badge-danger">Out of office</span> @endif</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-  </div>
   <div class="row gy-4 justify-content-center mt-5">
-      <div class="services col-lg-4 justify-content-center d-flex">
+      <div class="services col-md-4 justify-content-center d-flex">
         <div class="service-item item-cyan position-relative">
           <div class="icon">
-            <img src="{{asset('pictures') . "/" . $employee->pic_name}}">
+            <img style="max-width: 100px; object-fit: cover; width: 100%; border: 4px solid #2196f3;" src="{{asset('pictures') . "/" . $employee->pic_name}}">
           </div>
           <a href="#" class="stretched-link">
             <h3>{{capitalizeWords($employee->name)}}</h3>
           </a>
-          <p>{{capitalizeWords($employee->designation->desg_short)}}</p>
-          {{-- <p style="visibility: hidden;"><em>from initial concept to final, polished deliverable.</em></p> --}}
-
+          <p>{{capitalizeAbbreviation(capitalizeWords($employee->designation->desg_short))}}</p>
         </div>
-        {{-- <div class="service-item item-cyan position-relative">
-          <div class="icon">
-            <img src="{{asset('pictures') . "/" . $employee->pic_name}}" class="img-fluid" alt="">
-          </div>
-        </div> --}}
       </div>
-      <div class="col-lg-8 content">
-        {{-- <p class="fst-italic py-3">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-          magna aliqua.
-        </p> --}}
-        <div class="row resume">
-          <div class="col-lg-6">
+      <div class="col-md-5 d-block mx-auto">
+    
+        <div class="portfolio-details">
+          <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+            <h3>Dashboard</h3>
+            <ul>
+              <li><strong>Time-in: </strong>@if ($today && $today->timein != null) <i class="bi bi-clock"></i> {{ Carbon::parse($today->timein)->format('h:i A') }} @else You have not timed in today. @endif</li>
+              <li><strong>Status: </strong>@if ($today && $today->timein != null) <span class="badge badge-success">In the Office</span> @else <span class="badge badge-danger">Out of office</span> @endif</li>
+              <li>Check your <a class="links" href="{{route('attendance', $employee->emp_code)}}">current month attendance.</a></li>
+              <li>Check your <a class="links" href="{{route('leaves', $employee->emp_code)}}">leaves balance.</a></li>
+              <li><a class="btn-log-out" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a></li>
+              <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                @csrf
+              </form>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="row resume mt-4">
+          <div class="col-lg-12">
             <div class="resume-item pb-0">
-              <p>Name</p>
-              <h4>{{capitalizeWords($employee->name)}}</h4>
+              <p>Date of Joining</p>
+              <h4>{{dateFormat($employee->join_date)}}</h4>
               
               {{-- <p><em>Innovative and deadline-driven Graphic Designer with 3+ years of experience designing and developing user-centered digital/print marketing material from initial concept to final, polished deliverable.</em></p> --}}
               {{-- <ul>
@@ -116,8 +128,14 @@ i.bi {
               </ul> --}}
             </div>
             <div class="resume-item pb-0">
-              <p>Designation:</p>
-              <h4>{{ capitalizeAbbreviation( capitalizeWords($employee->designation->desg_short))}}</h4>
+              <p>Service Years</p>
+              <h4>
+                  @php $diff = Carbon::parse($employee->join_date)->diff(Carbon::now()) @endphp
+                  {{ $diff->y }} Years
+                  {{ $diff->m }} Months
+                  {{ $diff->d }} Days
+              </h4>
+              {{-- <h4>{{ capitalizeAbbreviation( capitalizeWords($employee->designation->desg_short))}}</h4> --}}
             </div>
             <div class="resume-item pb-0">
               <p>Employee Code</p>
@@ -128,31 +146,59 @@ i.bi {
               <h4>{{capitalizeWords($employee->department->dept_desc)}}</h4>
             </div>
           </div>
-          <div class="col-lg-6">
-            <div class="resume-item pb-0">
-              <p>Mobile Number:</p>
-              <h4>{{capitalizeWords($employee->phone)}}</h4>
-            </div>
-            <div class="resume-item pb-0">
-              <p>Email Address:</p>
-              <h4>{{strtolower($employee->emp_email)}}</h4>
-            </div>
-            <div class="resume-item pb-0">
-              <p>CNIC Number:</p>
-              <h4>{{capitalizeWords($employee->nic_num)}}</h4>
-            </div>
-            <div class="resume-item pb-0">
-              <p>City:</p>
-              <h4>{{capitalizeWords($employee->nic_iss_plc)}}</h4>
-            </div>
+        </div>
+      </div>
+
+  </div>
+  {{-- <div class="row">
+    <div class="col-lg-8 content">
+
+      <div class="row resume">
+        <div class="col-lg-6">
+          <div class="resume-item pb-0">
+            <p>Date of Joining</p>
+            <h4>{{dateFormat($employee->join_date)}}</h4>
+          </div>
+          <div class="resume-item pb-0">
+            <p>Service Years</p>
+            <h4>
+                @php $diff = Carbon::parse($employee->join_date)->diff(Carbon::now()) @endphp
+                {{ $diff->y }} Years
+                {{ $diff->m }} Months
+                {{ $diff->d }} Days
+            </h4>
+          </div>
+          <div class="resume-item pb-0">
+            <p>Employee Code</p>
+            <h4>{{$employee->emp_code}}</h4>
+          </div>
+          <div class="resume-item pb-0">
+            <p>Department:</p>
+            <h4>{{capitalizeWords($employee->department->dept_desc)}}</h4>
           </div>
         </div>
-        {{-- <p class="py-3">
-          Officiis eligendi itaque labore et dolorum mollitia officiis optio vero. Quisquam sunt adipisci omnis et ut. Nulla accusantium dolor incidunt officia tempore. Et eius omnis.
-          Cupiditate ut dicta maxime officiis quidem quia. Sed et consectetur qui quia repellendus itaque neque.
-        </p> --}}
+        <div class="col-lg-6">
+          <div class="resume-item pb-0">
+            <p>Mobile Number:</p>
+            <h4>{{capitalizeWords($employee->phone)}}</h4>
+          </div>
+          <div class="resume-item pb-0">
+            <p>Email Address:</p>
+            <h4>{{strtolower($employee->emp_email)}}</h4>
+          </div>
+          <div class="resume-item pb-0">
+            <p>CNIC Number:</p>
+            <h4>{{capitalizeWords($employee->nic_num)}}</h4>
+          </div>
+          <div class="resume-item pb-0">
+            <p>City:</p>
+            <h4>{{capitalizeWords($employee->nic_iss_plc)}}</h4>
+          </div>
+        </div>
       </div>
     </div>
+
+  </div> --}}
 </div>
 @endsection
 

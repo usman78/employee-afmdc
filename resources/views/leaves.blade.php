@@ -13,6 +13,7 @@
 .table>:not(caption)>*>* {
   padding: .5rem 2.5rem;
 }
+
 @endpush
 
 @section('content')
@@ -25,6 +26,14 @@
           <ul>
             <li><strong>Employee Code: </strong>{{$leaves->emp_code}}</li>
             <li><strong>Employee Name: </strong>{{$leaves->emp_name}}</li>
+            <li class="mt-5">
+              @if(session('success'))
+                <span class="alert alert-success">{{session('success')}}</span>
+              @endif  
+              @if(session('error'))
+                <span class="alert alert-warning">{{session('error')}}</span>
+              @endif
+            </li>
           </ul>
         </div>
       </div>

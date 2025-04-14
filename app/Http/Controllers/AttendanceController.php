@@ -8,6 +8,7 @@ use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon; 
+use App\Models\Leave;
 
 class AttendanceController extends Controller
 {
@@ -132,9 +133,15 @@ class AttendanceController extends Controller
         // Get employee details
         $employee = Employee::where('emp_code', $emp_code)->first();
 
+        $leaves = Leave::where('emp_code', $emp_code)
+            ->where('from_date',  '>=' , $start_date)
+            ->where('to_date', '<=', $end_date)
+            ->get(); 
+
         return view('attendance', [
             'attendance' => $allDates,
             'emp_code' => $emp_code,
+            'leaves' => $leaves,
             'emp_name' => $employee ? ucfirst($employee->name) : 'Unknown Employee'
         ]);
     }

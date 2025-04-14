@@ -20,7 +20,7 @@ Route::get('/attendance/{emp_code}', [AttendanceController::class, 'attendance']
 Route::get('/leaves/{emp_code}', [LeavesController::class, 'leaves'])->name('leaves');
 
 Route::get('/apply-leave/{emp_code}/{leave_date}', [LeavesController::class, 'applyLeave'])->name('apply-leave'); 
-// Route::post('/apply-leave/{emp_code}', [LeavesController::class, 'storeLeave'])->name('store-leave');
+Route::post('/apply-leave/{emp_code}/{leave_date}', [LeavesController::class, 'storeLeave'])->name('store-leave');
 // Route::get('/apply-leave/{emp_code}/{leave_id}', [LeavesController::class, 'editLeave'])->name('edit-leave');
 // Route::post('/apply-leave/{emp_code}/{leave_id}', [LeavesController::class, 'updateLeave'])->name('update-leave');
 // Route::get('/apply-leave/{emp_code}/{leave_id}/delete', [LeavesController::class, 'deleteLeave'])->name('delete-leave');

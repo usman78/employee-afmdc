@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Attendance;
+use App\Models\Leave;
 
 class HomeController extends Controller
 {
@@ -41,7 +42,7 @@ class HomeController extends Controller
 
     public function debug()
     {
-        $attendanceRecords = Attendance::where('at_date', '2025-03-12')->where('emp_code', 805)->get();
+        $attendanceRecords = Leave::where('emp_code', '1171')->get();
         return response()->json($attendanceRecords);
     }
 }

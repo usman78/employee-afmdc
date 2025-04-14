@@ -12,3 +12,9 @@ if (!function_exists('capitalizeAbbreviation')) {
         }, $string);
     }
 }
+
+if (!function_exists('dateFormat')) {
+    function dateFormat($string) {
+        return date('d-m-Y', strtotime($string));
+    }
+}

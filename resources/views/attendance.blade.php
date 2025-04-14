@@ -87,8 +87,29 @@
                       @if ($record['timein'])
                         <span class="badge badge-success">{{$record['is_leave'] ? $record['leave_type'] : 'Present' }}</span>
                       @else
-                        <span class="badge badge-danger">Absent</span>
-                        <a class="leave-link" href={{route('apply-leave', ['emp_code' => $emp_code, 'leave_date' => $record['at_date']])}}><i class="fa-solid fa-person-walking-arrow-right"></i> Apply for Leave</a>
+                        @php $leaveFound = false; 
+                        foreach ($leaves as $leave) {
+                          if ($record['at_date'] >= date('Y-m-d', strtotime($leave->from_date)) && $record['at_date'] <= date('Y-m-d', strtotime($leave->to_date))){
+                           $leaveFound = true;
+                            break;
+                          }
+                        }    
+                        @endphp
+                        @if ($leaveFound)
+                          <span class="badge badge-success">Leave already applied</span>
+                        @else
+                          <span class="badge badge-danger">Absent</span>
+                          <a class="leave-link" href={{route('apply-leave', ['emp_code' => $emp_code, 'leave_date' => $record['at_date']])}}><i class="fa-solid fa-person-walking-arrow-right"></i> Apply for Leave</a>
+                        @endif  
+                          {{-- @if ($record['at_date'] >= date('Y-m-d', strtotime($leave->from_date)) && $record['at_date'] <= date('Y-m-d', strtotime($leave->to_date)))
+                            <span class="badge badge-success">Leave already applied</span>
+                            @break
+                          @else
+                            <span class="badge badge-danger">Absent</span>
+                            <a class="leave-link" href={{route('apply-leave', ['emp_code' => $emp_code, 'leave_date' => $record['at_date']])}}><i class="fa-solid fa-person-walking-arrow-right"></i> Apply for Leave</a>
+                            @break
+                          @endif
+                          @break --}}
                       @endif
                     @endif
                   </td>
