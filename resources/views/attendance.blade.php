@@ -100,16 +100,7 @@
                         @else
                           <span class="badge badge-danger">Absent</span>
                           <a class="leave-link" href={{route('apply-leave', ['emp_code' => $emp_code, 'leave_date' => $record['at_date']])}}><i class="fa-solid fa-person-walking-arrow-right"></i> Apply for Leave</a>
-                        @endif  
-                          {{-- @if ($record['at_date'] >= date('Y-m-d', strtotime($leave->from_date)) && $record['at_date'] <= date('Y-m-d', strtotime($leave->to_date)))
-                            <span class="badge badge-success">Leave already applied</span>
-                            @break
-                          @else
-                            <span class="badge badge-danger">Absent</span>
-                            <a class="leave-link" href={{route('apply-leave', ['emp_code' => $emp_code, 'leave_date' => $record['at_date']])}}><i class="fa-solid fa-person-walking-arrow-right"></i> Apply for Leave</a>
-                            @break
-                          @endif
-                          @break --}}
+                        @endif
                       @endif
                     @endif
                   </td>

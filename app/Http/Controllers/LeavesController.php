@@ -90,7 +90,16 @@ class LeavesController extends Controller
         if ($authUser->emp_code != $emp_code) {
             return redirect()->route('home');
         }
+
+        $checkResult = $this->checkLeave(
+            $emp_code,
+            $request->input('leave_type') == 'casual' ? 1 : ($request->input('leave_type') == 'medical' ? 2 : 3),
+            $request->input('leave_duration') == 'full' ? 1 : 0.5
+        );
         
+        if ($checkResult == null) {
+            return redirect()->back()->with('error', 'You do not have the leave balance.');
+        }        
         // Validate the request
         $request->validate([
             'leave_type' => 'required|string|in:casual,medical,annual',
@@ -138,16 +147,13 @@ class LeavesController extends Controller
         // dd($request->all());
         
         $leave->save();
-        // Update the leave balance
-        // $leave_balance->balance -= 1; // Deduct one leave from the balance
-        // $leave_balance->save();
-        // Optionally, you can send a notification or email to the employee about the leave application
-        // You can also send a notification to the HR or manager for approval
-        // Send notification logic here
-        // ...
 
-        // Validate and store leave application logic here
-        // ...
+
+        // Update the leave balance
+        // DB::table('pay_leave_bal')
+        //     ->where('emp_code', $emp_code)
+        //     ->where('leav_code', $leave->leave_code)
+        //     ->increment('leav_taken', $leave->l_day);
 
         return redirect()->route('leaves', ['emp_code' => $emp_code])->with('success', 'Leave application submitted successfully.');
     }
@@ -158,4 +164,19 @@ class LeavesController extends Controller
         log::info('Max leave_id: ' . $max + 1);
         return $max + 1;
     }
+
+    public function checkLeave($empcode, $leave_type, $leave_duration)
+    {
+        $leave_balance = LeavesBalance::where('emp_code', $empcode)
+            ->where('leav_code', $leave_type)
+            ->first();
+        
+        $balance = $leave_balance->leav_open + $leave_balance->leav_credit - $leave_balance->leav_taken - $leave_balance->leave_encashed;
+        
+        if($balance < $leave_duration){
+            return null;
+        }
+        return true;
+    }
+
 }

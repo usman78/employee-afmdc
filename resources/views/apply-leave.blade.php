@@ -18,6 +18,10 @@
 .form-check {
   display: inline-block;
 }
+.alert-warning {
+  --bs-alert-color: #ffffff;
+  --bs-alert-bg: #e91e1e;
+}
 @endpush
 @section('content')
 <div class="container">
@@ -76,12 +80,12 @@
                   </div>
                   <li class="mt-2"><strong>Reason of Leave: </strong></li>
                   <input type="text" class="form-control mt-2" name="reason" id="reason" placeholder="Enter reason of leave" required>
-                  <li>
+                  <li style="margin-top: 20px;">
                     @if(session('success'))
-                      <span class="badge badge-success">{{session('success')}}</span>
+                      <span class="alert alert-success">{{session('success')}}</span>
                     @endif  
                     @if(session('error'))
-                      <span class="badge badge-warning">{{session('error')}}</span>
+                      <span class="alert alert-warning">{{session('error')}}</span>
                     @endif
                   </li>
                 </ul>
