@@ -30,4 +30,8 @@ class Employee extends Model
     {
         return $this->hasMany(Leave::class, 'emp_code', 'emp_code');
     }
+    public function leaveAuth()
+    {
+        return $this->hasMany(LeaveAuth::class, 'emp_code_l', 'emp_code');
+    }
 }
