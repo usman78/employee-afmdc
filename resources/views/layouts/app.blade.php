@@ -25,6 +25,11 @@
   <link href="{{asset('vendor/glightbox/css/glightbox.min.css')}}" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
+  <!-- Date Range Picker -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
   <!-- Main CSS File -->
   <link href="{{asset('css/main.css')}}" rel="stylesheet">
 
@@ -32,12 +37,46 @@
     .btn-primary {
       --bs-btn-bg: #2196f3;
     }
+    .thick-underline {
+      text-decoration-line: underline;
+      text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
+      text-decoration-color: #973594;
+      text-underline-offset: 4px;
+      color: #973594;
+      font-weight: 600;
+    }
+    .thick-underline:hover {
+      text-decoration-line: underline;
+      text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
+      text-decoration-color: #973594;
+      text-underline-offset: 4px;
+      color: #2196f3;
+      font-weight: 600;
+    }
     table.table thead tr th {
       /* color: #2196F3; */
     }
     .table thead {
         --bs-table-bg: #2196f3;
         --bs-table-color: #fff;
+    }
+    .header {
+      background-color: #c0ddff;
+    }
+    .header::after {
+      content: "";
+      position: absolute;
+      height: 3%;
+      padding: 2px 0;
+      width: 100%;
+      background: #9C27B0;
+      left: 50%;
+      top: 0;
+      translate: -50% -50%;
+      z-index: -99999999999;
+    }
+    li.nav-item {
+      margin-bottom: 0;
     }
 
     @media (max-width: 768px) {
@@ -53,6 +92,22 @@
           }
       }
     }
+    @media (min-width: 1200px) {
+      .navmenu li:hover>a, .navmenu .active, .navmenu .active:focus {
+          color: #973594;
+      }
+      .navmenu>ul>li>a:before {
+        background-color: #973594;
+      }
+      .navmenu a:hover:before, .navmenu li:hover>a:before, .navmenu .active:before {
+        width: 100%;
+      }
+      .navmenu a, .navmenu a:focus {
+        color: #353636;
+        font-size: 15px;
+        font-weight: 700;
+    }
+  }
     @stack('styles');
   </style>
 </head>
@@ -62,56 +117,22 @@
   <header id="header" class="header d-flex align-items-center light-background sticky-top">
     <div class="container-fluid position-relative d-flex align-items-center justify-content-around">
       <div class="logo">
-        <a href="index.html" class="logo d-flex align-items-center me-auto me-xl-0">
+        <a href="/" class="logo d-flex align-items-center me-auto me-xl-0">
           <img src="{{asset('/img/AFMDC-Logo.png')}}" alt="">
           <h1 class="sitename">AFMDC Employee Portal</h1>
         </a>
       </div>
-      
-
       <nav id="navmenu" class="navmenu">
         <ul>
-          <li><a href="{{route('home')}}" @if (Route::currentRouteName() == 'home') class="active" @endif>Home</a></li>
-          <li><a id="attendance" href="{{route('attendance', $emp_code)}}" @if(Route::currentRouteName() == 'attendance') class="active" @endif>Attendance</a></li>
-          <li><a id="leaves" href="{{route('leaves', $emp_code)}}" @if(Route::currentRouteName() == 'leaves' || Route::currentRouteName() == 'apply-leave') class="active" @endif>Leaves</a></li>
-          <li><a id="inventory" href="{{route('inventory', $emp_code)}}" @if(Route::currentRouteName() == 'inventory') class="active" @endif>Store Issue</a></li>
-          
-          {{-- <li><a href="portfolio.html">Portfolio</a></li> --}}
-          {{-- <li class="dropdown"><a href="#"><span>Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="#">Dropdown 1</a></li>
-              <li class="dropdown"><a href="#"><span>Deep Dropdown</span> <i class="bi bi-chevron-down toggle-dropdown"></i></a>
-                <ul>
-                  <li><a href="#">Deep Dropdown 1</a></li>
-                  <li><a href="#">Deep Dropdown 2</a></li>
-                  <li><a href="#">Deep Dropdown 3</a></li>
-                  <li><a href="#">Deep Dropdown 4</a></li>
-                  <li><a href="#">Deep Dropdown 5</a></li>
-                </ul>
-              </li>
-              <li><a href="#">Dropdown 2</a></li>
-              <li><a href="#">Dropdown 3</a></li>
-              <li><a href="#">Dropdown 4</a></li>
-            </ul>
-          </li> --}}
-          {{-- <li><a href="contact.html">Contact</a></li> --}}
+          <li class="nav-item"><a href="{{route('home')}}" @if (Route::currentRouteName() == 'home') class="active" @endif>Home</a></li>
+          <li class="nav-item"><a id="attendance" href="{{route('attendance', $emp_code)}}" @if(Route::currentRouteName() == 'attendance') class="active" @endif>Attendance</a></li>
+          <li class="nav-item"><a id="leaves" href="{{route('leaves', $emp_code)}}" @if(Route::currentRouteName() == 'leaves' || Route::currentRouteName() == 'apply-leave-advance') class="active" @endif>Leaves</a></li>
+          <li class="nav-item"><a id="inventory" href="{{route('inventory', $emp_code)}}" @if(Route::currentRouteName() == 'inventory') class="active" @endif>Store Issue</a></li>
+          <li class="nav-item"><a href="{{route('leave-approvals', $emp_code)}}" @if(Route::currentRouteName() == 'leave-approvals') class="active" @endif>Leave Approvals</a></li>
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
-
-      {{-- <div class="header-social-links">
-        <a href="#" class="twitter"><i class="bi bi-twitter-x"></i></a>
-        <a href="#" class="facebook"><i class="bi bi-facebook"></i></a>
-        <a href="#" class="instagram"><i class="bi bi-instagram"></i></a>
-        <a href="#" class="linkedin"><i class="bi bi-linkedin"></i></a>
-      </div> --}}
-        {{-- <div class="social-links d-flex justify-content-center">
-          <a href="">Logout</a>
-        </div> --}}
-        <div>
-
-      </div>
-
+      <div></div>
     </div>
   </header>
 
@@ -138,6 +159,7 @@
   <script src="{{asset('vendor/glightbox/js/glightbox.min.js')}}"></script>
   <script src="{{asset('vendor/imagesloaded/imagesloaded.pkgd.min.js')}}"></script>
   <script src="{{asset('vendor/isotope-layout/isotope.pkgd.min.js')}}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <!-- Main JS File -->
   <script src="{{asset('js/main.js')}}"></script>
