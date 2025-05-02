@@ -26,6 +26,19 @@ class AttendanceController extends Controller
             return redirect()->route('home');
         }
 
+        $emp_category = Employee::select('catg_code', 'st_time', 'end_time')->where('emp_code', $emp_code)->first();
+        $totalMins = 480;
+        $startTime = $emp_category->st_time;
+        $endTime = $emp_category->end_time;
+
+        // dd($emp_category->st_time, $emp_category->end_time);
+
+        if($emp_category->catg_code == 2){
+            $totalMins = 360;
+        }
+
+        
+
         // Define national holidays
         $holidays = [
             '2025-03-31', // Eid
@@ -69,7 +82,7 @@ class AttendanceController extends Controller
                 $attendanceRecords = Attendance::whereRaw("TRUNC(at_date) = TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
                                             ->where('emp_code', $emp_code)
                                             ->get();
-
+                //  Fetch the record for the date available in the database
                 if ($attendanceRecords->isNotEmpty()) {
                     // Determine if multiple records exist
                     foreach ($attendanceRecords as $record) {
@@ -97,11 +110,53 @@ class AttendanceController extends Controller
                             break;
                     }
 
-                    // Pick the earliest time-in and latest time-out (merging records)
                     $timein = $attendanceRecords->min('timein'); 
-                    // $timein = $attendanceRecords->whereNull('att_stat')->min('timein'); 
                     $timeout = $attendanceRecords->max('timeout');
 
+                    // if($dateString == '2025-04-09'){
+                    //     dd($timein, $timeout, $startTime , $endTime, $dateString);
+                    // }
+
+                    // $workedMinutes = 0;
+                    $leaveRemark = null;
+
+                    // Check if timein and timeout are within the official working hours
+                    $officialStartTime = Carbon::parse($dateString . ' ' . $startTime);
+                    $officialEndTime = Carbon::parse($dateString . ' ' . $endTime);
+                    
+                    $actualIn = Carbon::parse($timein);
+                    $actualOut = Carbon::parse($timeout);
+                    
+                    // Add 10-minute grace to official start
+                    $gracePeriodStart = $officialStartTime->copy()->addMinutes(10);
+                    
+                    // Apply grace period logic
+                    if ($actualIn->lessThanOrEqualTo($gracePeriodStart)) {
+                        $effectiveIn = $officialStartTime;
+                    } else {
+                        $effectiveIn = $actualIn;
+                    }
+                    
+                    // Bound the out time
+                    $effectiveOut = $actualOut->lessThan($officialEndTime) ? $actualOut : $officialEndTime;
+                    
+                    // Final worked minutes
+                    $workedMinutes = max(0, $effectiveIn->diffInMinutes($effectiveOut));
+                    // Calculate minutes worked only if timein and timeout are valid
+                    if ($timein && $timeout) {
+                        $in = Carbon::parse($timein);
+                        $out = Carbon::parse($timeout);
+                        $workedMinutes = round($in->diffInMinutes($out));
+                    
+                        if (!$isLeave) {
+                            if ($workedMinutes >= ($totalMins / 2) && $workedMinutes < $totalMins - 120) {
+                                $leaveRemark = 'Half Day Eligible';
+                            } elseif ($workedMinutes < ($totalMins / 2)) {
+                                $leaveRemark = 'Full Day Eligible';
+                            }
+                        }
+                    }
+                    
                     $allDates->push([
                         'at_date' => $dateString,
                         'timein' => $timein,
@@ -109,8 +164,11 @@ class AttendanceController extends Controller
                         'is_sunday' => false,
                         'is_holiday' => $isHoliday,
                         'is_leave' => $isLeave,
-                        'leave_type' => $isLeave ? $leaveType : null
+                        'leave_type' => $isLeave ? $leaveType : null,
+                        // 'worked_minutes' => $workedMinutes,
+                        'short_duty_status' => $leaveRemark
                     ]);
+                    
                 } else {
                     // Manually create a placeholder record for non-leave days
                     $allDates->push([
