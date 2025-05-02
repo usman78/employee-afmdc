@@ -8,6 +8,7 @@ use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Attendance;
 use App\Models\Leave;
+use App\Models\LeaveAuth;
 
 class HomeController extends Controller
 {
@@ -34,15 +35,19 @@ class HomeController extends Controller
         $today = Attendance::where('emp_code', $user->emp_code)->whereDate('at_date', today())->first();
 
         if($today){
-            $today->timein = date('H:i', strtotime($today->timein));
-            $today->timeout = date('H:i', strtotime($today->timeout));
+            if($today->timein != null){
+                $today->timein = date('H:i', strtotime($today->timein));
+            }
+            if($today->timeout != null){
+                $today->timeout = date('H:i', strtotime($today->timeout));
+            }
         }   
         return view('home', compact('employee', 'today'))->with('emp_code', $user);
     }
 
     public function debug()
     {
-        $attendanceRecords = Leave::where('emp_code', '1171')->get();
+        $attendanceRecords = LeaveAuth::where('emp_code_l', '1171')->get();
         return response()->json($attendanceRecords);
     }
 }

@@ -3,6 +3,10 @@
   use Carbon\Carbon;
 @endphp
 @push('styles')
+p {
+  color: #973594;
+  font-weight: 600;
+}
 ul {
   list-style: none;
 }
@@ -19,21 +23,19 @@ ul {
 strong {
   color: #150E56;
 }
-i.bi {
-  color: #150E56;
-}
 .resume .resume-item::before {
-  border: 2px solid #2196F3;
+  border: 2px solid #973594;
 }
 .resume .resume-item {
-  border-left: 2px solid #2196F3;
+  border-left: 2px solid #973594;
 }
 .services .service-item p {
   font-size: 18px;
-  color: #2196f3;
+  color: #000;
 }
 .services .service-item h3 {
   margin: 30px 0 15px 0;
+  color: #973594;
 }
 .services .service-item {
   min-width: 300px;
@@ -51,10 +53,11 @@ i.bi {
   background-color: #f44336;
 }
 .portfolio-info .links {
-  color: #2196f3;
-  {{-- text-decoration: underline; --}}
+  color: #fff;
   font-weight: 600;
-
+}
+.portfolio-info h3 {
+    color: #973594;
 }
 .btn-log-out{
   color: #fff;
@@ -70,10 +73,6 @@ i.bi {
   margin-top: 30px;
   cursor: pointer;
 }
-.btn-log-out:hover {
-  background: #ff5722;
-  color: #fff;
-}
 @endpush
 
 @section('content')
@@ -82,7 +81,7 @@ i.bi {
       <div class="services col-md-4 justify-content-center d-flex">
         <div class="service-item item-cyan position-relative">
           <div class="icon">
-            <img style="max-width: 100px; object-fit: cover; width: 100%; border: 4px solid #2196f3;" src="{{asset('pictures') . "/" . $employee->pic_name}}">
+            <img style="max-width: 100px; object-fit: cover; width: 100%; border: 4px solid #973594;" src="{{asset('pictures') . "/" . $employee->pic_name}}">
           </div>
           <a href="#" class="stretched-link">
             <h3>{{capitalizeWords($employee->name)}}</h3>
@@ -96,10 +95,31 @@ i.bi {
           <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
             <h3>Dashboard</h3>
             <ul>
-              <li><strong>Time-in: </strong>@if ($today && $today->timein != null) <i class="bi bi-clock"></i> {{ Carbon::parse($today->timein)->format('h:i A') }} @else You have not timed in today. @endif</li>
-              <li><strong>Status: </strong>@if ($today && $today->timein != null) <span class="badge badge-success">In the Office</span> @else <span class="badge badge-danger">Out of office</span> @endif</li>
-              <li>Check your <a class="links" href="{{route('attendance', $employee->emp_code)}}">current month attendance.</a></li>
-              <li>Check your <a class="links" href="{{route('leaves', $employee->emp_code)}}">leaves balance.</a></li>
+              <li><strong>Today's Time </strong>
+                @if ($today && $today->timein != null && $today->timeout == null) 
+                  {{ Carbon::parse($today->timein)->format('h:i A') }} 
+              </li>
+              <li><strong>Status: </strong>
+                <span class="badge badge-success">In the Office</span> 
+              </li>
+                @elseif ($today && $today->timein != null && $today->timeout != null)
+                  {{ Carbon::parse($today->timein)->format('h:i A') . " - " . Carbon::parse($today->timeout)->format('h:i A') }}
+                </li>
+                <li><strong>Your Status </strong>
+                  <span class="badge badge-success">You have clocked out.</span> 
+                </li>  
+                @else You have not showed up today. 
+                @endif
+              {{-- </li>
+              <li><strong>Status: </strong>
+                @if ($today && $today->timein != null) 
+                <span class="badge badge-success">In the Office</span> 
+                @else 
+                <span class="badge badge-danger">Out of office</span> 
+                @endif
+              </li> --}}
+              <li><a class="thick-underline" href="{{route('attendance', $employee->emp_code)}}">Check your current month attendance.</a></li>
+              <li><a class="thick-underline" href="{{route('leaves', $employee->emp_code)}}">Check your leaves balance.</a></li>
               <li><a class="btn-log-out" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a></li>
               <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                 @csrf
