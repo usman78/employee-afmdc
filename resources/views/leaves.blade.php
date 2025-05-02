@@ -26,6 +26,7 @@
           <ul>
             <li><strong>Employee Code: </strong>{{$leaves->emp_code}}</li>
             <li><strong>Employee Name: </strong>{{$leaves->emp_name}}</li>
+            {{-- <li><a class="btn btn-primary" href="{{route('apply-leave-advance', $leaves->emp_code)}}"><i class="fa-solid fa-house-person-leave"></i>Apply Leave</a></li> --}}
             <li class="mt-5">
               @if(session('success'))
                 <span class="alert alert-success">{{session('success')}}</span>
@@ -35,33 +36,34 @@
               @endif
             </li>
           </ul>
-        </div>
-      </div>
-        <table class="table mt-5 mb-5">
+          <table class="table mt-5 mb-5">
             <thead>
                 <tr>
                     <th>Leave Type</th>
-                    {{-- <th>Leaves Open</th> --}}
                     <th>Leave Credits</th>
                     <th>Leaves Taken</th>
                     <th>Leaves Balance</th>
-                    {{-- <th>Leaves Encashed</th> --}}
                 </tr>
             </thead>
             <tbody>
                 @foreach ($leaves as $leave)
                     <tr>
-                        {{-- <td>{{ $leave->leav_code }}</td> --}}
                         <td>{{ $leave->leave_type }}</td> 
-                        {{-- <td>{{ $leave->leav_open }}</td> --}}
                         <td>{{ $leave->leav_credit }}</td>
                         <td>{{ $leave->leav_taken }}</td>
                         <td style="color: #2196F3"><strong>{{ $leave->leav_open + $leave->leav_credit - $leave->leav_taken - $leave->leave_encashed }}</strong></td>
-                        {{-- <td>{{ $leave->leave_encashed }}</td> --}}
                     </tr>
                 @endforeach
             </tbody>
         </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="row mt-5">
+    <div class="col-12" style="text-align: center;">
+      <a class="btn btn-primary" href="{{route('apply-leave-advance', $leaves->emp_code)}}"><i class="fa-solid fa-house-person-leave"></i>Apply Leave</a>
     </div>
   </div>
 </div>
