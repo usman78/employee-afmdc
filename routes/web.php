@@ -13,19 +13,13 @@ Auth::routes();
 
 Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home')->middleware(EnsureNoQuit::class);
 
-// Route::get('/employee', function () {
-//     return view('employee');
-// });
-
 Route::get('/attendance/{emp_code}', [AttendanceController::class, 'attendance'])->name('attendance');
 
 Route::get('/leaves/{emp_code}', [LeavesController::class, 'leaves'])->name('leaves');
-
-// Route::get('/apply-leave/{emp_code}/{leave_date}', [LeavesController::class, 'applyLeave'])->name('apply-leave'); 
-// Route::post('/apply-leave/{emp_code}/{leave_date}', [LeavesController::class, 'storeLeave'])->name('store-leave');
 Route::get('/apply-leave-advance/{emp_code}', [LeavesController::class, 'applyLeaveAdvance'])->name('apply-leave-advance');
 Route::post('/apply-leave-advance/{emp_code}', [LeavesController::class, 'storeLeaveAdvance'])->name('store-leave-advance');
 Route::post('/approve-leave/{leave_id}', [LeavesController::class, 'approveLeave'])->name('approve-leave');
+Route::get('leave-approvals/{emp_code}', [LeavesController::class, 'leaveApprovals'])->name('leave-approvals');
 // Route::get('/apply-leave/{emp_code}/{leave_id}', [LeavesController::class, 'editLeave'])->name('edit-leave');
 // Route::post('/apply-leave/{emp_code}/{leave_id}', [LeavesController::class, 'updateLeave'])->name('update-leave');
 // Route::get('/apply-leave/{emp_code}/{leave_id}/delete', [LeavesController::class, 'deleteLeave'])->name('delete-leave');
@@ -34,8 +28,6 @@ Route::post('/approve-leave/{leave_id}', [LeavesController::class, 'approveLeave
 // Route::get('/apply-leave/{emp_code}/reject', [LeavesController::class, 'rejectLeave'])->name('reject-leave');
 
 Route::get('/inventory/{emp_code}', [InventoryController::class, 'inventory'])->name('inventory');
-
-Route::get('leave-approvals/{emp_code}', [LeavesController::class, 'leaveApprovals'])->name('leave-approvals');
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
