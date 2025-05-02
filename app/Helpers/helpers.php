@@ -18,3 +18,9 @@ if (!function_exists('dateFormat')) {
         return date('d-m-Y', strtotime($string));
     }
 }
+
+if (!function_exists('dateAndTimeFormat')) {
+    function dateAndTimeFormat($string) {
+        return date('d-m-Y H:i', strtotime($string));
+    }
+}
