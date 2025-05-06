@@ -165,7 +165,7 @@ class AttendanceController extends Controller
                         'is_holiday' => $isHoliday,
                         'is_leave' => $isLeave,
                         'leave_type' => $isLeave ? $leaveType : null,
-                        // 'worked_minutes' => $workedMinutes,
+                        'worked_minutes' => $workedMinutes,
                         'short_duty_status' => $leaveRemark
                     ]);
                     

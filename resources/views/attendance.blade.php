@@ -66,6 +66,7 @@ td {
               <tr>
                 <th>Date</th>
                 <th>Time-In/Out</th>
+                <th>Work Mins</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -85,6 +86,11 @@ td {
                         <span class="badge badge-danger">Not timed in</span>
                       @endif
                     @endif
+                  </td>
+                  <td>
+                    @if($record['timein'] && $record['timeout'])
+                      {{ $record['worked_minutes'] }} mins
+                    @endif  
                   </td>
                   <td>
                     @if ($record['is_sunday'] || $record['is_holiday'])
