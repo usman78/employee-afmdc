@@ -15,4 +15,8 @@ class Leave extends Model
     {
         return $this->belongsTo(Employee::class, 'emp_code', 'emp_code');
     }
+    public function approvedLeave()
+    {
+        return $this->hasOne(ApprovedLeave::class, 'pre_leave_id');
+    }
 }

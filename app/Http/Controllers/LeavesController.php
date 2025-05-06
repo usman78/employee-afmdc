@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Leave;
 use Illuminate\Support\Facades\Log;
 use App\Models\LeaveAuth;
+use App\Models\ApprovedLeave;
 
 class LeavesController extends Controller
 {
@@ -355,8 +356,32 @@ class LeavesController extends Controller
             return response()->json(['success' => true]);
         }
         else if($status == 5){
+
             Leave::where('leave_id', $leave_id)
             ->update(['status' => 7, 'user_id_p' => $user->emp_code, 'terminal_id_p' => 'WEB', 'moddate_p' => now()]);
+
+            $leave = Leave::find($leave_id);
+
+            if (!$leave) {
+                return response()->json(['success' => false]);
+            }
+
+            $approvedLeave = new ApprovedLeave();
+            $approvedLeave->pay_date = $leave->leave_date;
+            $approvedLeave->emp_code = $leave->emp_code;
+            $approvedLeave->leav_code = $leave->leave_code;
+            $approvedLeave->leav_date = $leave->from_date;
+            $approvedLeave->days = numberOfLeaveDays($leave->from_date, $leave->to_date);
+            $approvedLeave->end_date = $leave->to_date;
+            $approvedLeave->auth_emp_code = $leave->user_id_p;
+            $approvedLeave->post_flag = 'P';
+            $approvedLeave->edit_date = now();
+            $approvedLeave->user_name = $leave->user_id_p;
+            $approvedLeave->terminal = 'WEB';
+            $approvedLeave->pre_leave_id = $leave->leave_id;
+            $approvedLeave->leave_nature = 'R';
+            $approvedLeave->save();
+                
             return response()->json(['success' => true]);
         }
         return response()->json(['success' => false]);
