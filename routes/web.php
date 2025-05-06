@@ -11,7 +11,7 @@ use App\Http\Controllers\InventoryController;
 
 Auth::routes();
 
-Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home')->middleware(EnsureNoQuit::class);
+Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Route::get('/attendance/{emp_code}', [AttendanceController::class, 'attendance'])->name('attendance');
 

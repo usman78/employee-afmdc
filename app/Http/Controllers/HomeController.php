@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ApprovedLeave;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Employee;
@@ -47,7 +48,8 @@ class HomeController extends Controller
 
     public function debug()
     {
-        $attendanceRecords = LeaveAuth::where('emp_code_l', '1171')->get();
-        return response()->json($attendanceRecords);
+        $attendanceRecords = Leave::where('emp_code', '1171')->first();
+        numberOfLeaveDays($attendanceRecords->from_date, $attendanceRecords->to_date);
+        return response()->json(numberOfLeaveDays($attendanceRecords->from_date, $attendanceRecords->to_date));
     }
 }
