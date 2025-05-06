@@ -1,4 +1,5 @@
 <?php
+use Carbon\Carbon;
 if (!function_exists('capitalizeWords')) {
     function capitalizeWords($string) {
         return ucwords(strtolower($string));
@@ -23,4 +24,27 @@ if (!function_exists('dateAndTimeFormat')) {
     function dateAndTimeFormat($string) {
         return date('d-m-Y H:i', strtotime($string));
     }
+}
+
+function parseDateRange(string $range): array
+{
+    list($from, $to) = explode(' - ', $range);
+
+    $fromDate = Carbon::createFromFormat('d-m-Y', date('d-m-Y', strtotime($from)));
+    $toDate = Carbon::createFromFormat('d-m-Y', date('d-m-Y', strtotime($to)));
+    $numberOfDays = $fromDate->diffInDays($toDate) + 1;
+
+    return [
+        'fromDate' => $fromDate,
+        'toDate' => $toDate,
+        'numberOfDays' => $numberOfDays,
+    ];
+}
+
+function numberOfLeaveDays($fromDate, $toDate)
+{
+    $fromDate = Carbon::createFromFormat('d-m-Y', date('d-m-Y', strtotime($fromDate)));
+    $toDate = Carbon::createFromFormat('d-m-Y', date('d-m-Y', strtotime($toDate)));
+    $numberOfDays = $fromDate->diffInDays($toDate) + 1;
+    return $numberOfDays;
 }

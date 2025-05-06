@@ -110,6 +110,7 @@ strong {
                 </li>  
                 @else You have not showed up today. 
                 @endif
+
               {{-- </li>
               <li><strong>Status: </strong>
                 @if ($today && $today->timein != null) 
@@ -120,6 +121,11 @@ strong {
               </li> --}}
               <li><a class="thick-underline" href="{{route('attendance', $employee->emp_code)}}">Check your current month attendance.</a></li>
               <li><a class="thick-underline" href="{{route('leaves', $employee->emp_code)}}">Check your leaves balance.</a></li>
+              <li>
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                  <strong>Please Note!</strong> The Outdoor Duty (OD) leaves should be applied manually through HR Approval.
+                </div>
+              </li>
               <li><a class="btn-log-out" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a></li>
               <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                 @csrf

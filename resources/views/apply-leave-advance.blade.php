@@ -123,19 +123,19 @@ ul.error-msg{
                   <li class="mt-2"><strong>Select Leave Duration: </strong></li>
                   <div style="margin-bottom: 15px;" class="form-check">
                     <input class="btn-check" type="radio" name="leave_duration" id="full-day" value="full">
-                    <label class="btn btn-outline-primary" for="full-day">
+                    <label class="btn btn-outline-primary" for="full-day" style="width: 110px;">
                       Full Leave
                     </label>
                   </div>
                   <div class="form-check mt-2">
                     <input class="btn-check" type="radio" name="leave_duration" id="half-day" value="half">
-                    <label class="btn btn-outline-primary" for="half-day">
+                    <label class="btn btn-outline-primary" for="half-day" style="width: 110px;">
                       Half Leave
                     </label>
                   </div>
                   <div style="margin-bottom: 15px;" class="form-check">
                     <input class="btn-check" type="radio" name="leave_duration" id="short-day" value="short">
-                    <label class="btn btn-outline-primary" for="short-day">
+                    <label class="btn btn-outline-primary" for="short-day" style="width: 111px;">
                       Short Leave
                     </label>
                   </div>
@@ -184,26 +184,26 @@ ul.error-msg{
                     </div>
                   </li>
 
-                  <li id="leave-type-section"><strong>Select Leave Type: </strong>
+                  <li id="leave-type-section"><strong>Select Leave Type: </strong></li>
                     <div style="margin-bottom: 15px;" class="form-check mt-2">
                         <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault1" value="1">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault1">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault1" style="width: 110px;">
                           Casual
                         </label>
                     </div>
                     <div class="form-check">
                         <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault2" value="2">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault2">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault2" style="width: 110px;">
                           Medical
                         </label>
                     </div>
                     <div class="form-check">
                         <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault3" value="3">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault3">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault3" style="width: 110px;">
                           Annual
                         </label>
                     </div>
-                    </li>
+                    
                   <li class="mt-2"><strong>Reason of Leave: </strong></li>
                   <input type="text" class="form-control mt-2" name="reason" id="reason" placeholder="Enter reason of leave" required>
                   <li style="margin-top: 20px;">
