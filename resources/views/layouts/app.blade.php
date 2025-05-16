@@ -78,7 +78,13 @@
     li.nav-item {
       margin-bottom: 0;
     }
-
+    .header .header-social-links a:hover {
+      color: #E91E63;
+    }
+    .header .header-social-links a
+    {
+      font-size: 20px;
+    }
     @media (max-width: 768px) {
       .table {
         display: block;
@@ -132,7 +138,12 @@
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
-      <div></div>
+      <div class="header-social-links">
+        <a href="#" class="facebook" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa fa-sign-out"></i></a>
+        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+          @csrf
+        </form>
+      </div>
     </div>
   </header>
 
