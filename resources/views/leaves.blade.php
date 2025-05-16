@@ -11,7 +11,7 @@
   border: 1px solid #ccc;
 } 
 .table>:not(caption)>*>* {
-  padding: .5rem 2.5rem;
+  padding: .5rem 0.5rem;
 }
 
 @endpush
@@ -40,18 +40,25 @@
             <thead>
                 <tr>
                     <th>Leave Type</th>
-                    <th>Leave Credits</th>
-                    <th>Leaves Taken</th>
-                    <th>Leaves Balance</th>
+                    <th>Balance</th>
+                    <th>Pending Approval</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($leaves as $leave)
                     <tr>
-                        <td>{{ $leave->leave_type }}</td> 
-                        <td>{{ $leave->leav_credit }}</td>
-                        <td>{{ $leave->leav_taken }}</td>
+                        <td>{{ $leave->leave_type }}</td>
                         <td style="color: #2196F3"><strong>{{ $leave->leav_open + $leave->leav_credit - $leave->leav_taken - $leave->leave_encashed }}</strong></td>
+                        <td>
+                          {{-- {{ $leave->leav_code }} --}}
+                          @if ($leave->leav_code == 1)
+                            {{ $pendingLeaves['casual_leave'] ?? 0 }}
+                          @elseif ($leave->leav_code == 2) 
+                            {{ $pendingLeaves['medical_leave'] ?? 0 }}
+                          @elseif ($leave->leav_code == 3)   
+                            {{ $pendingLeaves['annual_leave'] ?? 0 }}
+                          @endif
+                        </td>
                     </tr>
                 @endforeach
             </tbody>

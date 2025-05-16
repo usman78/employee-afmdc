@@ -15,6 +15,9 @@
     color: #fff;
     background-color: #2196f3;
 }
+label.btn.btn-outline-primary {
+  padding: 5px 2px;
+}
 .form-check {
   display: inline-block;
   padding-left: 0.5em;
@@ -123,27 +126,29 @@ ul.error-msg{
                   <li class="mt-2"><strong>Select Leave Duration: </strong></li>
                   <div style="margin-bottom: 15px;" class="form-check">
                     <input class="btn-check" type="radio" name="leave_duration" id="full-day" value="full">
-                    <label class="btn btn-outline-primary" for="full-day" style="width: 110px;">
-                      Full Leave
+                    <label class="btn btn-outline-primary" for="full-day" style="width: 70px;">
+                      Full
                     </label>
                   </div>
                   <div class="form-check mt-2">
                     <input class="btn-check" type="radio" name="leave_duration" id="half-day" value="half">
-                    <label class="btn btn-outline-primary" for="half-day" style="width: 110px;">
-                      Half Leave
+                    <label class="btn btn-outline-primary" for="half-day" style="width: 70px;">
+                      Half
                     </label>
                   </div>
                   <div style="margin-bottom: 15px;" class="form-check">
                     <input class="btn-check" type="radio" name="leave_duration" id="short-day" value="short">
-                    <label class="btn btn-outline-primary" for="short-day" style="width: 111px;">
-                      Short Leave
+                    <label class="btn btn-outline-primary" for="short-day" style="width: 70px;">
+                      Short
                     </label>
                   </div>
                 
                   <!-- Full Day Section -->
                   <li id="leave-date-section" class="mt-2" style="display: none;">
-                    <strong>Leave Date Range: </strong>
-                    <input type="text" name="dates" class="form-control pull-right" style="margin-top: 15px;">
+                    <strong>From Date: </strong>
+                    <input type="text" name="leave_from_date" class="form-control pull-right mb-4" style="margin-top: 15px;">
+                    <strong>To Date: </strong>
+                    <input type="text" name="leave_to_date" class="form-control pull-right" style="margin-top: 15px;">
                   </li>
                   <!-- Single Date Leave -->
                   <li id="single-date-section" class="mt-2" style="display: none;">
@@ -187,19 +192,19 @@ ul.error-msg{
                   <li id="leave-type-section"><strong>Select Leave Type: </strong></li>
                     <div style="margin-bottom: 15px;" class="form-check mt-2">
                         <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault1" value="1">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault1" style="width: 110px;">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault1" style="width: 70px;">
                           Casual
                         </label>
                     </div>
                     <div class="form-check">
                         <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault2" value="2">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault2" style="width: 110px;">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault2" style="width: 75px;">
                           Medical
                         </label>
                     </div>
                     <div class="form-check">
                         <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault3" value="3">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault3" style="width: 110px;">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault3" style="width: 70px;">
                           Annual
                         </label>
                     </div>
@@ -231,7 +236,19 @@ ul.error-msg{
 
 @push('scripts')
     {{-- date range picker --}}
-    $('input[name="dates"]').daterangepicker();
+    $(function() {
+      $('input[name="leave_from_date"]').daterangepicker({
+        singleDatePicker: true,
+        showDropdowns: true
+      });
+    });
+
+    $(function() {
+      $('input[name="leave_to_date"]').daterangepicker({
+        singleDatePicker: true,
+        showDropdowns: true
+      });
+    });
 
     {{-- single date picker --}}
     $(function() {

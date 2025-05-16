@@ -28,13 +28,6 @@ class LeavesController extends Controller
             return redirect()->route('home');
         }
 
-        // if($authUser->quit_stat != null) {
-        //     Auth::logout();
-        //     $request->session()->invalidate();
-        //     $request->session()->regenerateToken();
-        //     return redirect()->route('login')->withErrors(['error' => 'Your account has been marked as quit. Contact admin.']);
-        // }
-
         // Get leaves balance for the user
         $leaves = LeavesBalance::where('emp_code', $emp_code)
             ->whereIn('leav_code', [1, 2, 3])
@@ -56,10 +49,13 @@ class LeavesController extends Controller
                     $leave->leave_type = 'Unknown Leave Type';
             }
         }
+
+        $pendingLeaves = $this->checkPendingLeaves($emp_code);
+
         // Get employee details
         $employee = Employee::where('emp_code', $emp_code)->first();
-        $leaves->emp_name = capitalizeWords($employee->name) ;
-        return view('leaves', compact('leaves'))->with('emp_code', $emp_code);
+        $leaves->emp_name = capitalizeWords($employee->name);
+        return view('leaves', compact('leaves', 'pendingLeaves'))->with('emp_code', $emp_code);
     }
 
     public function empType($emp_code)
@@ -168,21 +164,20 @@ class LeavesController extends Controller
             'leave_duration' => 'required|string|in:full,half,short',
             'leave_type' => 'required_if:leave_duration,half,full|integer|in:1,2,3',
             'single_leave_date' => 'required_if:leave_duration,half,short|date',
-            'dates' => 'required_if:leave_duration,full|string',
+            'leave_from_date' => 'required_if:leave_duration,full|date',
+            'leave_to_date' => 'required_if:leave_duration,full|date',
             'start_time' => 'required_if:leave_duration,short',
             'end_time' => 'required_if:leave_duration,short',
             'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2',
             'reason' => 'required|string|max:255',
         ]);
 
-        
-
         // Get the leave type and duration from the request
         $leave_duration = $request->input('leave_duration');
 
         if ($leave_duration == 'full') {
             
-            $range = $request->input('dates');
+            $range = $request->input('leave_from_date') . ' - ' . $request->input('leave_to_date');
             list($from, $to) = explode(' - ', $range);
             $to = date('d-m-Y', strtotime($to));
             $from = date('d-m-Y', strtotime($from));
@@ -240,8 +235,6 @@ class LeavesController extends Controller
                 $leave->to_date = $endTime;
             }
             $leave->l_day = 0.5;
-            $leave_type = $request->input('leave_type');
-            $leave->leave_code = $leave_type == 'casual' ? 1 : ($leave_type == 'medical' ? 2 : 3); 
             list($employeeType, $deptCode) = $this->empType($emp_code);
             $leave->status = $employeeType == 'Regular' ? '1' : '3';
             $leave->dept_code = $deptCode;
@@ -398,5 +391,36 @@ class LeavesController extends Controller
             }
         }
         return $hrEmpCode;
+    }
+
+    public function checkPendingLeaves($emp_code)
+    {
+        $leaves = Leave::where('emp_code', $emp_code)
+            ->whereIn('status', [1, 3, 5])
+            ->get();
+        if ($leaves->isEmpty()) {
+            return null;
+        }
+        $pending = [
+            'casual_leave' => 0,
+            'medical_leave' => 0,
+            'annual_leave' => 0,
+        ];
+    
+        foreach ($leaves as $leave) {
+            switch ($leave->leave_code) {
+                case 1:
+                    $pending['casual_leave'] += $leave->l_day;
+                    break;
+                case 2:
+                    $pending['medical_leave'] += $leave->l_day;
+                    break;
+                case 3:
+                    $pending['annual_leave'] += $leave->l_day;
+                    break;
+            }
+        }
+    
+        return $pending;
     }
 }
