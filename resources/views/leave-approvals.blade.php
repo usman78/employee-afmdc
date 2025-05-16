@@ -292,6 +292,7 @@ $(".approve-leave").change(function () {
   var leaveId = $checkbox.data("id");
   var status = $checkbox.data("status");
   let is_enable = $checkbox.is(':checked') ? 1 : 0;
+  var $row = $checkbox.closest("tr");
 
   // Prevent unchecking once approved
   if (is_enable == 0) {
@@ -330,8 +331,10 @@ $(".approve-leave").change(function () {
                           icon: "success",
                       });
 
-                      // Disable checkbox permanently
-                      $checkbox.prop('disabled', true);
+                      // Remove the row from the table
+                      $row.fadeOut(300, function () {
+                          $(this).remove();
+                      });
                   } else {
                       Swal.fire({
                           title: "Failed to Update!",
@@ -339,7 +342,6 @@ $(".approve-leave").change(function () {
                           icon: "error",
                       });
 
-                      // Revert checkbox if failed
                       $checkbox.prop("checked", false);
                   }
               },
@@ -348,11 +350,7 @@ $(".approve-leave").change(function () {
                   $checkbox.prop("checked", false);
               }
           });
-      } else if (result.isDenied) {
-          Swal.fire("Changes not saved", "", "info");
-          $checkbox.prop("checked", false); // Revert if denied
       } else {
-          // Cancelled — return to previous state
           $checkbox.prop("checked", false);
       }
   });

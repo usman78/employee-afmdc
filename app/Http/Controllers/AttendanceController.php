@@ -45,6 +45,7 @@ class AttendanceController extends Controller
             '2025-04-01', // Eid
             '2025-04-02', // Eid
             '2025-05-01', // Labor Day
+            '2025-05-07', // Holiday due to hostility
             '2025-06-09', // Eid
             '2025-06-10', // Eid
             '2025-06-11', // Eid
