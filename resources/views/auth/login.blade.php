@@ -141,7 +141,6 @@
                         <div class="card-body">
                             <form method="POST" action="{{ route('login') }}">
                                 @csrf
-        
                                 <div class="row mb-3">
                                     <label for="employee_code" class="col-md-4 col-form-label text-md-end">Employee Code</label>
         
@@ -175,6 +174,11 @@
                                             <div style="text-align: center;">{{ $error }}</div>
                                         @endforeach
                                     </div>
+                                @endif
+                                @if (session('error'))
+                                  <div class="alert alert-warning" style="text-align: center;">
+                                      {{ session('error') }}
+                                  </div>
                                 @endif
 
         
