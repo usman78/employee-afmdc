@@ -65,4 +65,8 @@ class User extends Authenticatable
     {
         $this->attributes['password'] = $value;
     }
+    public function isHR()
+    {
+        return in_array($this->desg_code, ['971', '991', '44', '996']);
+    }
 }

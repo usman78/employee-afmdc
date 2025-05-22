@@ -1,3 +1,6 @@
+@php
+    use App\Models\Employee;
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 
@@ -135,6 +138,9 @@
           <li class="nav-item"><a id="leaves" href="{{route('leaves', $emp_code)}}" @if(Route::currentRouteName() == 'leaves' || Route::currentRouteName() == 'apply-leave-advance') class="active" @endif>Leaves</a></li>
           <li class="nav-item"><a id="inventory" href="{{route('inventory', $emp_code)}}" @if(Route::currentRouteName() == 'inventory') class="active" @endif>Store Issue</a></li>
           <li class="nav-item"><a href="{{route('leave-approvals', $emp_code)}}" @if(Route::currentRouteName() == 'leave-approvals') class="active" @endif>Leave Approvals</a></li>
+          @if (Auth::user()->isHR())
+            <li class="nav-item"><a href="{{route('job-dashboard', $emp_code)}}" target="_blank">Jobs Bank</a></li>
+          @endif
         </ul>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
