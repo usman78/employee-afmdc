@@ -140,9 +140,12 @@ class LeavesController extends Controller
         // Get employee details
         $employee = Employee::where('emp_code', $emp_code)->first();
 
+        $pendingLeaves = $this->checkPendingLeaves($emp_code);
+
         return view('apply-leave-advance', [
             'emp_code' => $emp_code,
             'employee' => $employee,
+            'pendingLeaves' => $pendingLeaves,
         ]);
     }
 

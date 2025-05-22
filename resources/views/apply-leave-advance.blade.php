@@ -231,7 +231,7 @@ ul.error-msg{
         </div>
       </div>
       </div>
-      <div class="col-lg-3 justify-content-center mx-auto">
+      <div class="col-lg-4 justify-content-center mx-auto">
         <div class="portfolio-details mt-5">
           <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
             <h3>Leave Balance</h3>
@@ -240,11 +240,20 @@ ul.error-msg{
                 <ul>
                   @foreach ($employee->leavesBalance as $balance)
                     @if ($balance->leav_code == 1)
-                      <li>Casual Leaves: {{$balance->leav_open + $balance->leav_credit - $balance->leav_taken - $balance->leave_encashed}}</li>
+                      <li>
+                        <strong>Casual Leaves: </strong>{{$balance->leav_open + $balance->leav_credit - $balance->leav_taken - $balance->leave_encashed}}
+                        ({{isset($pendingLeaves['casual_leave']) ? 'Approval Pending '.$pendingLeaves['casual_leave'] : 'No Pending Leave'}})
+                      </li>
                     @elseif ($balance->leav_code == 2)
-                      <li>Medical Leaves: {{$balance->leav_open + $balance->leav_credit - $balance->leav_taken - $balance->leave_encashed}}</li>
+                      <li>
+                        <strong>Medical Leaves: </strong>{{$balance->leav_open + $balance->leav_credit - $balance->leav_taken - $balance->leave_encashed}}
+                        ({{isset($pendingLeaves['medical_leave']) ? 'Approval Pending '.$pendingLeaves['medical_leave'] : 'No Pending Leave'}})
+                      </li>
                     @elseif ($balance->leav_code == 3)
-                      <li>Annual Leaves: {{$balance->leav_open + $balance->leav_credit - $balance->leav_taken - $balance->leave_encashed}}</li> 
+                      <li>
+                        <strong>Annual Leaves: </strong>{{$balance->leav_open + $balance->leav_credit - $balance->leav_taken - $balance->leave_encashed}}
+                        ({{isset($pendingLeaves['annual_leave']) ? 'Approval Pending '.$pendingLeaves['annual_leave'] : 'No Pending Leave'}})
+                      </li> 
                     @endif
                   @endforeach
                 </ul>
@@ -254,7 +263,7 @@ ul.error-msg{
       </div>
       </div>
   </div>
-@endsection2
+@endsection
 
 @push('scripts')
     {{-- date range picker --}}
