@@ -364,7 +364,7 @@ class LeavesController extends Controller
             $approvedLeave->emp_code = $leave->emp_code;
             $approvedLeave->leav_code = $leave->leave_code;
             $approvedLeave->leav_date = $leave->from_date;
-            $approvedLeave->days = numberOfLeaveDays($leave->from_date, $leave->to_date);
+            $approvedLeave->days = $leave->l_day;
             $approvedLeave->end_date = $leave->to_date;
             $approvedLeave->auth_emp_code = $leave->user_id_p;
             $approvedLeave->post_flag = 'P';
