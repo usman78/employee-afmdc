@@ -230,9 +230,31 @@ ul.error-msg{
           </div>
         </div>
       </div>
-    </div>
+      </div>
+      <div class="col-lg-3 justify-content-center mx-auto">
+        <div class="portfolio-details mt-5">
+          <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+            <h3>Leave Balance</h3>
+            <div class="row">
+              <div class="col-12">
+                <ul>
+                  @foreach ($employee->leavesBalance as $balance)
+                    @if ($balance->leav_code == 1)
+                      <li>Casual Leaves: {{$balance->leav_open + $balance->leav_credit - $balance->leav_taken - $balance->leave_encashed}}</li>
+                    @elseif ($balance->leav_code == 2)
+                      <li>Medical Leaves: {{$balance->leav_open + $balance->leav_credit - $balance->leav_taken - $balance->leave_encashed}}</li>
+                    @elseif ($balance->leav_code == 3)
+                      <li>Annual Leaves: {{$balance->leav_open + $balance->leav_credit - $balance->leav_taken - $balance->leave_encashed}}</li> 
+                    @endif
+                  @endforeach
+                </ul>
+              </div>
+          </div>
+        </div>
+      </div>
+      </div>
   </div>
-@endsection
+@endsection2
 
 @push('scripts')
     {{-- date range picker --}}

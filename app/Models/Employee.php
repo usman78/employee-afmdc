@@ -18,14 +18,6 @@ class Employee extends Model
     {
         return $this->hasOne(Department::class, 'dept_code', 'dept_code');
     }
-    // public function leavesBalance()
-    // {
-    //     return $this->hasMany(LeavesBalance::class, 'emp_code', 'emp_code');
-    // }
-    // public function attendance()
-    // {
-    //     return $this->hasMany(Attendance::class, 'emp_code', 'emp_code');
-    // }
     public function leave()
     {
         return $this->hasMany(Leave::class, 'emp_code', 'emp_code');
@@ -33,5 +25,14 @@ class Employee extends Model
     public function leaveAuth()
     {
         return $this->hasMany(LeaveAuth::class, 'emp_code_l', 'emp_code');
+    }
+    public function leavesBalance()
+    {
+        return $this->hasMany(LeavesBalance::class, 'emp_code', 'emp_code');
+    }
+
+    public function isHR()
+    {
+        return in_array($this->desg_code, ['971', '991', '44', '996']);
     }
 }
