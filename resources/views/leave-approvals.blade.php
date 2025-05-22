@@ -176,7 +176,7 @@ td {
                     </td>
                     <td>
                         <label class="switch">
-                            <input type="checkbox" class="approve-leave" data-status="{{$leave->status}}" data-id="{{$leave->leave_id}}">
+                            <input type="checkbox" class="approve-leave" data-url="{{ route('approve-leave', $leave->leave_id) }}" data-status="{{$leave->status}}" data-id="{{$leave->leave_id}}">
                             <span class="slider round"></span>
                         </label>
                     </td>
@@ -287,6 +287,7 @@ td {
 @endsection
 
 @push('scripts')
+
 $(".approve-leave").change(function () {
   var $checkbox = $(this);
   var leaveId = $checkbox.data("id");
@@ -313,9 +314,8 @@ $(".approve-leave").change(function () {
       denyButtonText: "Cancel"
   }).then((result) => {
       if (result.isConfirmed) {
-          var url = "{{ route('approve-leave', ':id') }}";
-          url = url.replace(':id', leaveId);
-
+        
+          var url = $checkbox.data("url");
           $.ajax({
               url: url,
               type: "POST",
