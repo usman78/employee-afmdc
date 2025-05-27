@@ -18,10 +18,6 @@ class LeavesController extends Controller
 {
     public function leaves(Request $request, $emp_code)                                                                      
     {
-        // Check if user is logged in
-        if(!Auth::check()){
-            return redirect()->route('login');
-        }
         // Check if the logged in user is the same as the user whose leaves are being viewed
         $authUser = Auth::user();
         if($authUser->emp_code != $emp_code){
@@ -126,11 +122,6 @@ class LeavesController extends Controller
 
     public function applyLeaveAdvance($emp_code)
     {
-        // Check if user is logged in
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
         // Ensure logged-in user matches the requested employee code
         $authUser = Auth::user();
         if ($authUser->emp_code != $emp_code) {
@@ -151,11 +142,6 @@ class LeavesController extends Controller
 
     public function storeLeaveAdvance(Request $request, $emp_code)
     {
-        // Check if user is logged in
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
         // Ensure logged-in user matches the requested employee code
         $authUser = Auth::user();
         if ($authUser->emp_code != $emp_code) {
@@ -208,6 +194,13 @@ class LeavesController extends Controller
             $leave->emp_code = $emp_code;
             $leave->leave_date = Carbon::today();
 
+            $check = $this->checkConsecutiveLeave($emp_code, 
+                $request->input('leave_type'), 
+                $request->input('leave_from_date'), 
+                $request->input('leave_to_date'));
+            if($check == false){
+                return redirect()->back()->with('error', 'You cannot apply for consecutive leaves of different leave types.');
+            }
             $leave->save();
             return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
 
@@ -245,7 +238,13 @@ class LeavesController extends Controller
             $leave->terminal_id = 'online';
             $leave->moddate = now();
             $leave->remark = $request->input('reason');
-
+            $check = $this->checkConsecutiveLeave($emp_code, 
+                $request->input('leave_type'), 
+                $request->input('single_leave_date'), 
+                $request->input('single_leave_date'));
+            if($check == false){
+                return redirect()->back()->with('error', 'You cannot apply for consecutive leaves of different leave types.');
+            }
             $leave->save();
             return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
         } elseif ($leave_duration == 'short') {
@@ -283,12 +282,7 @@ class LeavesController extends Controller
     }
 
     public function leaveApprovals($emp_code)
-    { 
-        // Check if user is logged in
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
+    {
         // Ensure logged-in user matches the requested employee code
         $authUser = Auth::user();
         if ($authUser->emp_code != $emp_code) {
@@ -329,11 +323,6 @@ class LeavesController extends Controller
     }
     public function approveLeave(Request $request, $leave_id)
     {
-        // Check if user is logged in
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
         $user = Auth::user(); 
 
         $leave = Leave::find($leave_id);
@@ -426,4 +415,21 @@ class LeavesController extends Controller
     
         return $pending;
     }
+
+    public function checkConsecutiveLeave($emp_code, $leave_code, $from_date, $to_date)
+    {
+        $from = Carbon::parse($from_date);
+        $to = Carbon::parse($to_date);
+        $yesterday = Carbon::parse($from)->copy()->subDay();
+        $tomorrow = Carbon::parse($to)->copy()->addDay();
+        $leave = Leave::where('emp_code', $emp_code)
+        ->whereIn('leave_code', [1, 2, 3])  // restricted leave codes
+        ->where('leave_code', '!=', $leave_code) // different leave type
+        ->where(function ($query) use ($yesterday, $tomorrow) {
+            $query->whereDate('to_date', $yesterday) // ends right before new leave
+                  ->orWhereDate('from_date', $tomorrow); // starts right after new leave
+        })->exists();
+
+        return !$leave;    
+    }   
 }
