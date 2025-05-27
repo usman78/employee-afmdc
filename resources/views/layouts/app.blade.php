@@ -135,9 +135,14 @@
         <ul>
           <li class="nav-item"><a href="{{route('home')}}" @if (Route::currentRouteName() == 'home') class="active" @endif>Home</a></li>
           <li class="nav-item"><a id="attendance" href="{{route('attendance', $emp_code)}}" @if(Route::currentRouteName() == 'attendance') class="active" @endif>Attendance</a></li>
-          <li class="nav-item"><a id="leaves" href="{{route('leaves', $emp_code)}}" @if(Route::currentRouteName() == 'leaves' || Route::currentRouteName() == 'apply-leave-advance') class="active" @endif>Leaves</a></li>
+          <li class="nav-item"><a id="leaves" href="{{route('leaves', $emp_code)}}" @if(in_array(Route::currentRouteName(), ['leaves' , 'apply-leave-advance'])) class="active" @endif>Leaves</a></li>
+          @if (Auth::user()->isBoss())
+            <li class="nav-item"><a href="{{route('leave-approvals', $emp_code)}}" @if(Route::currentRouteName() == 'leave-approvals') class="active" @endif>Leave Approvals</a></li>
+          @endif
           <li class="nav-item"><a id="inventory" href="{{route('inventory', $emp_code)}}" @if(Route::currentRouteName() == 'inventory') class="active" @endif>Store Issue</a></li>
-          <li class="nav-item"><a href="{{route('leave-approvals', $emp_code)}}" @if(Route::currentRouteName() == 'leave-approvals') class="active" @endif>Leave Approvals</a></li>
+          @if (Auth::user()->isBoss())
+            <li class="nav-item"><a href="{{route('team', $emp_code)}}" @if(in_array(Route::currentRouteName(), [ 'team', 'attendance-filter'])) class="active" @endif>Team</a></li>
+          @endif
           @if (Auth::user()->isHR())
             <li class="nav-item"><a href="{{route('job-dashboard', $emp_code)}}" target="_blank">Jobs Bank</a></li>
           @endif

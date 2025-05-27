@@ -41,6 +41,21 @@ function parseDateRange(string $range): array
     ];
 }
 
+function parseDateToRange(string $range): array
+{
+    list($from, $to) = explode('_to_', $range);
+
+    $fromDate = Carbon::createFromFormat('d-m-Y', date('d-m-Y', strtotime($from)));
+    $toDate = Carbon::createFromFormat('d-m-Y', date('d-m-Y', strtotime($to)));
+    $numberOfDays = $fromDate->diffInDays($toDate) + 1;
+
+    return [
+        'fromDate' => $fromDate,
+        'toDate' => $toDate,
+        'numberOfDays' => $numberOfDays,
+    ];
+}
+
 function numberOfLeaveDays($fromDate, $toDate)
 {
     $fromDate = Carbon::createFromFormat('d-m-Y', date('d-m-Y', strtotime($fromDate)));

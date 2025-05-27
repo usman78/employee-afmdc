@@ -65,8 +65,28 @@ class User extends Authenticatable
     {
         $this->attributes['password'] = $value;
     }
+    public function leaveAuth()
+    {
+        return $this->hasOne(LeaveAuth::class, 'emp_code_a', 'emp_code');
+    }
     public function isHR()
     {
         return in_array($this->desg_code, ['971', '991', '44', '996']);
+    }
+    public function isBoss()
+    {
+        if($this?->leaveAuth?->emp_code_a)
+        {
+            return true;
+        }
+        return false;
+    }
+    public function teamMembers()
+    {
+        return $this->hasMany(LeaveAuth::class, 'emp_code_a', 'emp_code');
+    }
+    public function attendance()
+    {
+        return $this->hasMany(Attendance::class, 'emp_code', 'emp_code');
     }
 }

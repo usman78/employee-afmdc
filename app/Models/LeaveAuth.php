@@ -13,4 +13,8 @@ class LeaveAuth extends Model
     {
         return $this->belongsTo(Employee::class, 'emp_code_l', 'emp_code');
     }
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'emp_code', 'emp_code_l');
+    }
 }
