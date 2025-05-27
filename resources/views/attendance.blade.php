@@ -93,32 +93,38 @@ td {
                     @endif  
                   </td>
                   <td>
+                    @php 
+                      $leaveFound = false; 
+                      foreach ($leaves as $leave) {
+                        if ($record['at_date'] >= date('Y-m-d', strtotime($leave->from_date)) && $record['at_date'] <= date('Y-m-d', strtotime($leave->to_date))){
+                        $leaveFound = true;
+                          break;
+                        }
+                      }    
+                    @endphp
                     @if ($record['is_sunday'] || $record['is_holiday'])
                       <span class="badge badge-info">{{$record['is_holiday'] ? 'Holiday' : 'Sunday'}}</span>
                     @else
                       @if ($record['timein'] && $record['timeout'])
                         @if ($record['short_duty_status'] ?? false)
+                          @if($leaveFound)
+                            <span class="badge badge-success">Leave already applied</span>
+                          @else 
                           <span class="badge badge-warning">{{$record['short_duty_status']}}</span>
-                          <a class="leave-link" href={{route('apply-leave-advance', $emp_code)}}><i class="fa-solid fa-person-walking-arrow-right"></i> Apply for Leave</a>
-                          @else
-                            <span class="badge badge-success">{{$record['is_leave'] ? $record['leave_type'] : 'Present' }}</span>
+                          {{-- <a class="leave-link" href={{route('apply-leave-advance', $emp_code)}}><i class="fa-solid fa-person-walking-arrow-right"></i> Apply for Leave</a> --}}
+                          @endif
+                        @else
+                          <span class="badge badge-success">{{$record['is_leave'] ? $record['leave_type'] : 'Present' }}</span>
                         @endif
                       @elseif ($record['timein'] && !$record['timeout'])
                       <span class="badge badge-success">Present</span>           
                       @else
-                        @php $leaveFound = false; 
-                        foreach ($leaves as $leave) {
-                          if ($record['at_date'] >= date('Y-m-d', strtotime($leave->from_date)) && $record['at_date'] <= date('Y-m-d', strtotime($leave->to_date))){
-                           $leaveFound = true;
-                            break;
-                          }
-                        }    
-                        @endphp
+
                         @if ($leaveFound)
                           <span class="badge badge-success">Leave already applied</span>
                         @else
                           <span class="badge badge-danger">Absent</span>
-                          <a class="leave-link" href={{route('apply-leave-advance', $emp_code)}}><i class="fa-solid fa-person-walking-arrow-right"></i> Apply for Leave</a>
+                          {{-- <a class="leave-link" href={{route('apply-leave-advance', $emp_code)}}><i class="fa-solid fa-person-walking-arrow-right"></i> Apply for Leave</a> --}}
                         @endif
                       @endif
                     @endif
