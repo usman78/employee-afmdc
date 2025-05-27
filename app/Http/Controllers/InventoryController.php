@@ -11,10 +11,6 @@ class InventoryController extends Controller
 {
     public function inventory($emp_code)
     {
-        // Check if user is logged in
-        if(!Auth::check()){
-            return redirect()->route('login');
-        }
         // Check if the logged in user is the same as the user whose inventory is being viewed
         $authUser = Auth::user();
         if($authUser->emp_code != $emp_code){

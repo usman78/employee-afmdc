@@ -14,12 +14,6 @@ class AttendanceController extends Controller
 {
     public function attendance($emp_code)
     {
-        // dd($emp_code);
-        // Check if user is logged in
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
         // Ensure logged-in user matches the requested employee code
         $authUser = Auth::user();
         if ($authUser->emp_code != $emp_code) {
@@ -31,13 +25,9 @@ class AttendanceController extends Controller
         $startTime = $emp_category->st_time;
         $endTime = $emp_category->end_time;
 
-        // dd($emp_category->st_time, $emp_category->end_time);
-
         if($emp_category->catg_code == 2){
             $totalMins = 360;
-        }
-
-        
+        }       
 
         // Define national holidays
         $holidays = [
@@ -55,12 +45,9 @@ class AttendanceController extends Controller
 
         // Get attendance records (excluding Sundays)
         $start_date = Carbon::now()->startOfMonth();
-        $end_date = Carbon::today();
-        
+        $end_date = Carbon::today();     
         $allDates = collect();
-        // dd($allDates);
         $tempDate = $start_date->copy();
-
 
         while ($tempDate->lte($end_date)) {
             $dateString = $tempDate->toDateString(); // Format: YYYY-MM-DD
@@ -90,7 +77,6 @@ class AttendanceController extends Controller
                         if ($record->att_stat != null) {
                             $isLeave = true;
                             $leaveType = $record->att_stat;
-                            //break;
                         }
                     }
                     switch ($leaveType) {
@@ -113,10 +99,6 @@ class AttendanceController extends Controller
 
                     $timein = $attendanceRecords->min('timein'); 
                     $timeout = $attendanceRecords->max('timeout');
-
-                    // if($dateString == '2025-04-09'){
-                    //     dd($timein, $timeout, $startTime , $endTime, $dateString);
-                    // }
 
                     // $workedMinutes = 0;
                     $leaveRemark = null;
@@ -187,8 +169,6 @@ class AttendanceController extends Controller
 
         $allDates = $allDates->sortByDesc('at_date')->values();
 
-        
-
         // Get employee details
         $employee = Employee::where('emp_code', $emp_code)->first();
 
@@ -204,6 +184,4 @@ class AttendanceController extends Controller
             'emp_name' => $employee ? ucfirst($employee->name) : 'Unknown Employee'
         ]);
     }
-
-
 }
