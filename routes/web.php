@@ -11,6 +11,7 @@ use App\Http\Controllers\LeavesController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\TeamController;
+use App\Http\Controllers\TaskController;
 
 Auth::routes();
 
@@ -23,8 +24,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/leaves/{emp_code}', [LeavesController::class, 'leaves'])->name('leaves');
     Route::get('/apply-leave-advance/{emp_code}', [LeavesController::class, 'applyLeaveAdvance'])->name('apply-leave-advance');
     Route::post('/apply-leave-advance/{emp_code}', [LeavesController::class, 'storeLeaveAdvance'])->name('store-leave-advance');
-    Route::post('/approve-leave/{leave_id}', [LeavesController::class, 'approveLeave'])->name('approve-leave');
     Route::get('leave-approvals/{emp_code}', [LeavesController::class, 'leaveApprovals'])->name('leave-approvals');
+    Route::post('/approve-leave/{leave_id}', [LeavesController::class, 'approveLeave'])->name('approve-leave');
+    Route::post('/approve-all-leaves', [LeavesController::class, 'approveAll'])->name('approve-all-leaves');
+    Route::post('/reject-leave/{leave_id}', [LeavesController::class, 'rejectLeave'])->name('reject-leave');
+
     // Route::get('/apply-leave/{emp_code}/{leave_id}', [LeavesController::class, 'editLeave'])->name('edit-leave');
     // Route::post('/apply-leave/{emp_code}/{leave_id}', [LeavesController::class, 'updateLeave'])->name('update-leave');
     // Route::get('/apply-leave/{emp_code}/{leave_id}/delete', [LeavesController::class, 'deleteLeave'])->name('delete-leave');
@@ -39,10 +43,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/shortlisted', [JobController::class, 'shortlisted'])->name('shortlisted');
     Route::get('/designation-jobs/{position}', [JobController::class, 'designationJobs'])->name('designation-jobs');
 
+    Route::get('/tasks', [TaskController::class, 'index'])->name('tasks');
+    Route::get('/sops', [TaskController::class, 'sops'])->name('sops');
 
     Route::get('/inventory/{emp_code}', [InventoryController::class, 'inventory'])->name('inventory');
 
-    Route::get('/team/{emp_code}/', [TeamController::class, 'index'])->name('team');
+    Route::get('/team', [TeamController::class, 'index'])->name('team');
     Route::get('/attendance-filter/{emp_code}/{date_range}', [TeamController::class, 'attendanceFilter'])->name('attendance-filter');
 
 });

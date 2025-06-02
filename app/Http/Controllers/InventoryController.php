@@ -18,7 +18,7 @@ class InventoryController extends Controller
         }
         // Get inventory for the user
         $inventory = Issue::where('emp_code', $emp_code)->orderBy('doc_date', 'desc')->get();
-        $inventory->emp_code = $emp_code;
-        return view('inventory', compact('inventory'))->with('emp_code', $emp_code);
+        // $inventory->emp_code = $emp_code;
+        return view('inventory', compact('inventory'));
     }
 }

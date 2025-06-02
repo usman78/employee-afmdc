@@ -150,7 +150,7 @@ td {
                 </tbody>
             </table>
             <div class="clear-filter text-center">
-                <a href="{{ route('team', $emp_code) }}" class="btn btn-primary">Clear Filter</a>
+                <a href="{{ route('team' ) }}" class="btn btn-primary">Clear Filter</a>
             </div>
         </div>
         </div> 

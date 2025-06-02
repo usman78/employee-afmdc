@@ -46,11 +46,11 @@ td {
   <div class="row">
     <div class="col-12">
       <div class="portfolio-details mt-5 mb-5">
-        <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+        <div class="portfolio-info aos-init aos-animate pt-4" data-aos="fade-up" data-aos-delay="200">
           <h3>Attendance Information</h3>
           <ul>
-            <li><strong>Employee Code: </strong>{{ $emp_code }}</li>
-            <li><strong>Employee Name: </strong>{{ capitalizeWords($emp_name) }}</li>
+            {{-- <li><strong>Employee Code: </strong>{{ $emp_code }}</li> --}}
+            {{-- <li><strong>Employee Name: </strong>{{ capitalizeWords($emp_name) }}</li> --}}
             <li><strong>Current month all attendance records.</strong></li>
             <li class="mt-5">
               @if(session('success'))
@@ -66,7 +66,7 @@ td {
               <tr>
                 <th>Date</th>
                 <th>Time-In/Out</th>
-                <th>Work Mins</th>
+                <th>Work</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -79,9 +79,9 @@ td {
                       <span class="badge badge-info">{{$record['is_holiday'] ? 'Holiday' : 'Sunday'}}</span>
                     @else
                       @if ($record['timein'] && $record['timeout'])
-                        {{ Carbon::parse($record['timein'])->format('h:i A') . " / " . Carbon::parse($record['timeout'])->format('h:i A') }}
+                        {{ Carbon::parse($record['timein'])->format('H:i') . " / " . Carbon::parse($record['timeout'])->format('H:i') }}
                       @elseif ($record['timein'] && !$record['timeout'])
-                        {{ Carbon::parse($record['timein'])->format('h:i A') . " / Not timed out" }}
+                        {{ Carbon::parse($record['timein'])->format('H:i') . " / --:--" }}
                       @else
                         <span class="badge badge-danger">Not timed in</span>
                       @endif
@@ -135,8 +135,6 @@ td {
           </table>
         </div>
       </div>
-
-
     </div>
   </div>
 </div>

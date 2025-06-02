@@ -7,7 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Auth\PlainTextUserProvider;
-
+use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +29,11 @@ class AppServiceProvider extends ServiceProvider
         });
         Auth::provider('plaintext', function ($app, array $config) {
             return new PlainTextUserProvider($config['model']);
+        });
+
+        View::composer('layouts.app', function ($view) {
+            $emp_code = Auth::user()->emp_code;
+            $view->with('emp_code', $emp_code);
         });
         
     }

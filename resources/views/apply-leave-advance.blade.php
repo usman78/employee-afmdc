@@ -121,8 +121,8 @@ ul.error-msg{
                   </div>
                 @endif
                 <ul>
-                  <li><strong>Employee Code: </strong>{{$emp_code}}</li>
-                  <li><strong>Employee Name: </strong>{{capitalizeWords($employee->name)}}</li>
+                  {{-- <li><strong>Employee Code: </strong>{{$emp_code}}</li>
+                  <li><strong>Employee Name: </strong>{{capitalizeWords($employee->name)}}</li> --}}
                   <li class="mt-2"><strong>Select Leave Duration: </strong></li>
                   <div style="margin-bottom: 15px;" class="form-check">
                     <input class="btn-check" type="radio" name="leave_duration" id="full-day" value="full">

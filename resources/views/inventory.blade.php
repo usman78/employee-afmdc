@@ -28,7 +28,7 @@
         <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
           <h3>Store Issuance</h3>
           <ul>
-            <li><strong>Employee Code: </strong>{{$inventory->emp_code}}</li>
+            {{-- <li><strong>Employee Code: </strong>{{$inventory->emp_code}}</li> --}}
             {{-- <li><strong>Employee Name: </strong>{{$inventory->emp_name}}</li> --}}
           </ul>
           <table class="table mt-5 mb-5">
