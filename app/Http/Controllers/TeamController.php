@@ -9,7 +9,7 @@ use Carbon\Carbon;
 
 class TeamController extends Controller
 {
-    public function index($emp_code)
+    public function index()
     {
         $teamMembers = Auth::user()->teamMembers->pluck('emp_code_l');   
         $team = collect();
@@ -26,7 +26,7 @@ class TeamController extends Controller
                 ->whereDate('at_date', $today->toDateString())
                 ->first();    
         }
-        return view('team.team', compact('emp_code', 'team'));
+        return view('team.team', compact( 'team'));
     }
 
     public function attendanceFilter($emp_code, $date_range)
@@ -49,6 +49,7 @@ class TeamController extends Controller
         // Get attendance records in date range
         $attendanceRecords = $user->attendance()
             ->whereBetween('at_date', [$fromDate, $toDate])
+            ->whereNull('att_stat')
             ->get();
 
         // Attach the records for the view
