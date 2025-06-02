@@ -315,7 +315,7 @@ class LeavesController extends Controller
         }
 
         return view('leave-approvals', [
-            'emp_code' => $emp_code,
+            // 'emp_code' => $emp_code,
             'leaves' => $leavesToApprove,
             'hrApprovals' => $hrApprovals,
             'hr' => $hr,
@@ -370,6 +370,41 @@ class LeavesController extends Controller
             return response()->json(['success' => true]);
         }
         return response()->json(['success' => false]);
+    }
+
+    public function approveAll(Request $request)
+    {
+        $user = Auth::user()->emp_code;
+        $leaveIds = $request->input('leave_ids');
+        if (!$leaveIds || !is_array($leaveIds)) {
+            return response()->json(['success' => false, 'message' => 'No leave IDs provided']);
+        }
+
+        foreach ($leaveIds as $leaveId) {
+            $leave = Leave::find($leaveId);
+            if (!$leave) {
+                continue; // Skip if leave not found
+            }
+            Leave::where('leave_id', $leaveId)
+                ->update(['status' => 7, 'user_id_p' => $user, 'terminal_id_p' => 'WEB', 'moddate_p' => now()]);
+            
+            $approvedLeave = new ApprovedLeave();
+            $approvedLeave->pay_date = $leave->leave_date;
+            $approvedLeave->emp_code = $leave->emp_code;
+            $approvedLeave->leav_code = $leave->leave_code;
+            $approvedLeave->leav_date = $leave->from_date;
+            $approvedLeave->days = $leave->l_day;
+            $approvedLeave->end_date = $leave->to_date;
+            $approvedLeave->auth_emp_code = $user;
+            $approvedLeave->post_flag = 'P';
+            $approvedLeave->edit_date = now();
+            $approvedLeave->user_name = $user;
+            $approvedLeave->terminal = 'WEB';
+            $approvedLeave->pre_leave_id = $leave->leave_id;
+            $approvedLeave->leave_nature = 'R';
+            $approvedLeave->save();
+        }
+        return response()->json(['success' => true]);
     }
 
     public function identifyHR($emp_code)
@@ -431,5 +466,35 @@ class LeavesController extends Controller
         })->exists();
 
         return !$leave;    
-    }   
+    }
+    
+    public function rejectLeave(Request $request, $leave_id)
+    {
+        $user = Auth::user()->emp_code; 
+        $leave = Leave::find($leave_id);
+
+        if (!$leave) {
+            return response()->json(['success' => false]);
+        }
+
+        $status = $request->input('status');
+
+        if($status == 1){
+            Leave::where('leave_id', $leave_id)
+                ->update(['status' => 9, 'user_id_r' => $user, 'terminal_id_r' => 'WEB', 'moddate_r' => now()]);
+            return response()->json(['success' => true]);
+        }
+        else if($status == 3){
+            Leave::where('leave_id', $leave_id)
+                ->update(['status' => 9, 'user_id_h' => $user, 'terminal_id_h' => 'WEB', 'moddate_h' => now()]);
+            return response()->json(['success' => true]);
+        }
+        else if($status == 5){
+            Leave::where('leave_id', $leave_id)
+                ->update(['status' => 9, 'user_id_p' => $user, 'terminal_id_p' => 'WEB', 'moddate_p' => now()]);
+            return response()->json(['success' => true]);
+        }
+        
+        return response()->json(['success' => false]);
+    }
 }

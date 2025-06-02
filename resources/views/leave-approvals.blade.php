@@ -106,7 +106,7 @@ td {
   <div class="row">
     <div class="col-12">
       <div class="portfolio-details mt-5 mb-5">
-        <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+        <div class="portfolio-info aos-init aos-animate pt-4" data-aos="fade-up" data-aos-delay="200">
           <h3>Subordinate Leave Approvals</h3>
           <ul>
             <li class="mt-5">
@@ -121,12 +121,12 @@ td {
           <table class="table mt-5 mb-5">
             <thead>
               <tr>
-                <th>Emp Code</th>
+                <th>Code</th>
                 <th>Name</th>
                 <th>Leave type</th>
                 <th>Leave Date</th>
                 <th>Stage</th>
-                <th>Approval</th>
+                <th>Approve/Reject</th>
               </tr>
             </thead>
             <tbody>
@@ -176,7 +176,7 @@ td {
                     </td>
                     <td>
                         <label class="switch">
-                            <input type="checkbox" class="approve-leave" data-url="{{ route('approve-leave', $leave->leave_id) }}" data-status="{{$leave->status}}" data-id="{{$leave->leave_id}}">
+                            <input type="checkbox" class="approve-leave" data-url="{{ route('approve-leave', $leave->leave_id) }}" data-urlreject="{{route('reject-leave', $leave->leave_id)}}" data-status="{{$leave->status}}" data-id="{{$leave->leave_id}}">
                             <span class="slider round"></span>
                         </label>
                     </td>
@@ -196,17 +196,20 @@ td {
       @if ($hrApprovals && $hrApprovals->isNotEmpty())
       <div class="col-12">
         <div class="portfolio-details mt-5 mb-5">
-          <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
-            <h3>HR Leave Approvals</h3>
+          <div class="portfolio-info aos-init aos-animate pt-4" data-aos="fade-up" data-aos-delay="200">
+            <h3 class="d-flex justify-content-between align-items-center">
+              HR Leave Approvals
+              <button id="approveAllBtn" class="btn btn-success btn-sm">Approve All</button>
+            </h3>
             <table class="table mt-5 mb-5">
               <thead>
                 <tr>
-                  <th>Emp Code</th>
+                  <th>Code</th>
                   <th>Name</th>
                   <th>Leave type</th>
                   <th>Leave Date</th>
                   <th>Stage</th>
-                  <th>Approval</th>
+                  <th>Approve/Reject</th>
                 </tr>
               </thead>
               <tbody>
@@ -310,8 +313,10 @@ $(".approve-leave").change(function () {
   Swal.fire({
       title: "Do you want to approve this leave?",
       showDenyButton: true,
+      showCancelButton: true,
+      icon: "question",
       confirmButtonText: "Yes, approve",
-      denyButtonText: "Cancel"
+      denyButtonText: "No, reject",
   }).then((result) => {
       if (result.isConfirmed) {
         
@@ -350,9 +355,97 @@ $(".approve-leave").change(function () {
                   $checkbox.prop("checked", false);
               }
           });
-      } else {
+      }
+      else if (result.isDenied) {
+          $.ajax({
+              url: $checkbox.data("urlreject"),
+              type: "POST",
+              data: {
+                  _token: "{{ csrf_token() }}",
+                  status: status,
+              },
+              success: function (response) {
+                  if (response.success) {
+                      Swal.fire({
+                          title: "Leave Rejected!",
+                          text: "Leave has been rejected successfully.",
+                          icon: "info",
+                      });
+
+                      // Remove the row from the table
+                      $row.fadeOut(300, function () {
+                          $(this).remove();
+                      });
+                  } else {
+                      Swal.fire({
+                          title: "Failed to Reject!",
+                          text: response.error,
+                          icon: "error",
+                      });
+                  }
+              },
+              error: function () {
+                  Swal.fire("An error occurred while rejecting the leave.");
+              }
+          });
+      }
+      else {
           $checkbox.prop("checked", false);
       }
   });
 });
+
+// Approve all leaves in HR section
+$("#approveAllBtn").click(function () {
+    let leaveIds = [];
+
+    // Get all HR approval checkboxes that are not yet checked
+    $(".portfolio-details:contains('HR Leave Approvals') .approve-leave").each(function () {
+        if (!$(this).is(':checked')) {
+            leaveIds.push($(this).data("id"));
+        }
+    });
+
+    if (leaveIds.length === 0) {
+        Swal.fire("No pending leaves to approve.");
+        return;
+    }
+
+    Swal.fire({
+        title: `Approve all ${leaveIds.length} leaves?`,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Yes, approve all"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "{{ route('approve-all-leaves') }}",
+                method: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    leave_ids: leaveIds
+                },
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire("Approved!", response.message, "success");
+                        // Remove rows of approved leaves
+                        $(".portfolio-details:contains('HR Leave Approvals') .approve-leave").each(function () {
+                            if (leaveIds.includes($(this).data("id"))) {
+                                $(this).closest("tr").fadeOut(300, function () {
+                                    $(this).remove();
+                                });
+                            }
+                        });
+                    } else {
+                        Swal.fire("Failed", response.message || "Some error occurred.", "error");
+                    }
+                },
+                error: function () {
+                    Swal.fire("Error", "An error occurred while approving the leaves.", "error");
+                }
+            });
+        }
+    });
+});
+
 @endpush
