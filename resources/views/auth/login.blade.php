@@ -59,7 +59,10 @@
       background: transparent;
       border: none;
     }
-
+    i.mobile-nav-toggle.d-xl-none.bi.bi-list
+    {
+      display: none;
+    }
 
   </style>
 </head>
