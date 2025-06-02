@@ -134,6 +134,7 @@
       <nav id="navmenu" class="navmenu">
         <ul>
           <li class="nav-item"><a href="{{route('home')}}" @if (Route::currentRouteName() == 'home') class="active" @endif>Home</a></li>
+          <li class="nav-item"><a href="{{route('tasks')}}" @if(Route::currentRouteName() == 'tasks') class="active" @endif>Tasks</a></li>
           <li class="nav-item"><a id="attendance" href="{{route('attendance', $emp_code)}}" @if(Route::currentRouteName() == 'attendance') class="active" @endif>Attendance</a></li>
           <li class="nav-item"><a id="leaves" href="{{route('leaves', $emp_code)}}" @if(in_array(Route::currentRouteName(), ['leaves' , 'apply-leave-advance'])) class="active" @endif>Leaves</a></li>
           @if (Auth::user()->isBoss())
@@ -150,7 +151,7 @@
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
       <div class="header-social-links">
-        <a href="#" class="facebook" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa fa-sign-out"></i></a>
+        <a href="#" data-toggle="tooltip" data-placement="right" title="Log Out" class="facebook" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa fa-sign-out"></i></a>
         <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
           @csrf
         </form>
@@ -187,7 +188,9 @@
   <script src="{{asset('js/main.js')}}"></script>
 
   <script>
-
+    $(function () {
+      $('[data-toggle="tooltip"]').tooltip()
+    })
     @stack('scripts');
   </script>
 
