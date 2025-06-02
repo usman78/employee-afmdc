@@ -92,6 +92,9 @@ class AttendanceController extends Controller
                         case '8':
                             $leaveType = 'Short Leave';
                             break;
+                        case '12':
+                            $leaveType = 'Outdoor Duty';
+                            break;    
                         default:
                             $leaveType = 'Unknown Leave';
                             break;
@@ -179,7 +182,7 @@ class AttendanceController extends Controller
 
         return view('attendance', [
             'attendance' => $allDates,
-            'emp_code' => $emp_code,
+            // 'emp_code' => $emp_code,
             'leaves' => $leaves,
             'emp_name' => $employee ? ucfirst($employee->name) : 'Unknown Employee'
         ]);
