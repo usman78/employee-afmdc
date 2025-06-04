@@ -27,7 +27,6 @@ class HomeController extends Controller
     public function index()
     {
         $user = Auth::user();
-        // dd('Employee: ' . $user->emp_code);
         $employee = Employee::where('emp_code', $user->emp_code)->first();
         $today = Attendance::where('emp_code', $user->emp_code)->whereDate('at_date', today())->first();
 
