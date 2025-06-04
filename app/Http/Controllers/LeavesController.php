@@ -99,6 +99,21 @@ class LeavesController extends Controller
         }    
         
         $balance = $leave_balance->leav_open + $leave_balance->leav_credit - $leave_balance->leav_taken - $leave_balance->leave_encashed;
+
+        $pending = $this->checkPendingLeaves($empcode);
+        if ($pending) {
+            switch ($leave_type) {
+                case 1:
+                    $balance -= $pending['casual_leave'];
+                    break;
+                case 2:
+                    $balance -= $pending['medical_leave'];
+                    break;
+                case 3:
+                    $balance -= $pending['annual_leave'];
+                    break;
+            }
+        }
         
         if($balance < $leave_duration){
             return false;
