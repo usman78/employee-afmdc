@@ -127,7 +127,7 @@ td {
                     @foreach($team as $t)
                       <tr>
                         <td>{{ $t->emp_code }}</td>
-                        <td>{{ $t->name }}</td>
+                        <td>{{ capitalizeWords($t->name) }}</td>
                         @if ($t->attendance_today?->timein)
                           <td>{{date('H:i',strtotime($t->attendance_today?->timein))}}</td>
                           <td class="table-primary">Present</td>
