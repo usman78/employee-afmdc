@@ -35,4 +35,12 @@ class Employee extends Model
     {
         return in_array($this->desg_code, ['971', '991', '44', '996']);
     }
+    public function meeting()
+    {
+        return $this->hasMany(Meeting::class, 'app_emp', 'emp_code');
+    }
+    public function meetingChair()
+    {
+        return $this->hasMany(Meeting::class, 'chair', 'emp_code');
+    }
 }
