@@ -136,13 +136,13 @@
                         <h4 class="mt-2 d-block">Applicant Documents</h4>
                     </div>
                     <p class="mb-1" style="display: inline-block;">
-                        <a class="custom-btn btn" href="{{ asset('applications/'.$job->app_no.'/'.$job->cv_id) }}" target="_blank">View CV</a>  
+                        <a data-cv=true class="custom-btn btn" href="{{ route('download-file', ['id' => $job->app_no , 'fileName' => $job->cv_id]) }}">View CV</a>  
                     </p>
                     <p class="mb-1" style="display: inline-block;">
-                        <a class="custom-btn btn" href="{{ asset('applications/'.$job->app_no.'/'.$job->cnic_front) }}" target="_blank">CNIC Front</a>  
+                        <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-file', ['id' => $job->app_no, 'fileName' => $job->cnic_front]) }}" target="_blank">CNIC Front</a>  
                     </p>
                     <p class="mb-1" style="display: inline-block;">
-                        <a class="custom-btn btn" href="{{ asset('applications/'.$job->app_no.'/'.$job->cnic_back) }}" target="_blank">CNIC Back</a>
+                        <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-file', ['id' => $job->app_no,'fileName' => $job->cnic_back]) }}" target="_blank">CNIC Back</a>
                     </p>
                     <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
                         <h4 class="mt-2 d-block">Educational Documents</h4>
@@ -150,7 +150,7 @@
                     @if ($job->education)
                         @foreach ($job->education as $edu)
                             <p class="mb-1" style="display: inline-block;">
-                                <a data-gallery="manual" class="custom-btn btn" href="{{ asset('applications/'.$edu->app_no.'/'.$edu->edu_doc) }}">{{$edu->edu_dgr_name}} Degree</a>  
+                                <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-file',['id' => $edu->app_no,'fileName' => $edu->edu_doc]) }}">{{$edu->edu_dgr_name}} Degree</a>  
                             </p>
                         @endforeach
                     @else 
@@ -357,7 +357,7 @@
                 ],
                 customButtons: {
                     download: {
-                        text: '<img src="{{ asset('icons/download.png') }}" style="width: 20px; height: 20px;"/>',
+                        text: '<i class="bi bi-download"></i>',
                         title: 'Download Image',
                         click: function (context) {
                             // Fallback to options.index if getIndex is not available
@@ -382,6 +382,12 @@
                 }
             });
         });
+    });
+
+    $('[data-cv=true]').click(function (e) {
+        e.preventDefault();
+        const pdfUrl = $(this).attr('href');
+        window.open(pdfUrl);
     });
 
 

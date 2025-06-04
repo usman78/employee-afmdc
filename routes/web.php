@@ -29,13 +29,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/approve-all-leaves', [LeavesController::class, 'approveAll'])->name('approve-all-leaves');
     Route::post('/reject-leave/{leave_id}', [LeavesController::class, 'rejectLeave'])->name('reject-leave');
 
-    // Route::get('/apply-leave/{emp_code}/{leave_id}', [LeavesController::class, 'editLeave'])->name('edit-leave');
-    // Route::post('/apply-leave/{emp_code}/{leave_id}', [LeavesController::class, 'updateLeave'])->name('update-leave');
-    // Route::get('/apply-leave/{emp_code}/{leave_id}/delete', [LeavesController::class, 'deleteLeave'])->name('delete-leave');
-    // Route::get('/apply-leave/{emp_code}/cancel', [LeavesController::class, 'cancelLeave'])->name('cancel-leave');
-    // Route::get('/apply-leave/{emp_code}/approve', [LeavesController::class, 'approveLeave'])->name('approve-leave');
-    // Route::get('/apply-leave/{emp_code}/reject', [LeavesController::class, 'rejectLeave'])->name('reject-leave');
-
     Route::get('/job-dashboard', [JobController::class, 'summaryDashboard'])->name('job-dashboard');
     Route::get('/job-bank', [JobController::class, 'index'])->name('job-bank');
     Route::get('/profile/{id}', [JobController::class, 'show'])->name('profile');
@@ -44,6 +37,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/designation-jobs/{position}', [JobController::class, 'designationJobs'])->name('designation-jobs');
 
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks');
+    Route::get('/meetings', [TaskController::class, 'meetings'])->name('meetings');
     Route::get('/sops', [TaskController::class, 'sops'])->name('sops');
 
     Route::get('/inventory/{emp_code}', [InventoryController::class, 'inventory'])->name('inventory');
@@ -52,6 +46,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/attendance-filter/{emp_code}/{date_range}', [TeamController::class, 'attendanceFilter'])->name('attendance-filter');
 
 });
+
+Route::get('applications/{id}/{fileName}', [App\Http\Controllers\FilesController::class, 'download'])
+    // ->where('id', '[0-9]+')
+    // ->where('fileName', '[a-zA-Z0-9\-\_\.]+')
+    ->name('download-file');
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
