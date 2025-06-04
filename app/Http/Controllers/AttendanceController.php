@@ -176,6 +176,7 @@ class AttendanceController extends Controller
         $employee = Employee::where('emp_code', $emp_code)->first();
 
         $leaves = Leave::where('emp_code', $emp_code)
+            ->whereNot('status', 9)
             ->where('from_date',  '>=' , $start_date)
             ->where('to_date', '<=', $end_date)
             ->get(); 
