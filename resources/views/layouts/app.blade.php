@@ -134,7 +134,7 @@
       <nav id="navmenu" class="navmenu">
         <ul>
           <li class="nav-item"><a href="{{route('home')}}" @if (Route::currentRouteName() == 'home') class="active" @endif>Home</a></li>
-          <li class="nav-item"><a href="{{route('tasks')}}" @if(Route::currentRouteName() == 'tasks') class="active" @endif>Tasks</a></li>
+          <li class="nav-item"><a href="{{route('tasks')}}" @if(in_array(Route::currentRouteName(), ['tasks', 'meetings', 'sops'])) class="active" @endif>Tasks</a></li>
           <li class="nav-item"><a id="attendance" href="{{route('attendance', $emp_code)}}" @if(Route::currentRouteName() == 'attendance') class="active" @endif>Attendance</a></li>
           <li class="nav-item"><a id="leaves" href="{{route('leaves', $emp_code)}}" @if(in_array(Route::currentRouteName(), ['leaves' , 'apply-leave-advance'])) class="active" @endif>Leaves</a></li>
           @if (Auth::user()->isBoss())
