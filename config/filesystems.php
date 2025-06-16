@@ -47,6 +47,13 @@ return [
             'report' => false,
         ],
 
+        'sop_documents' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/sop_documents'),
+            'url' => env('APP_URL').'/storage/sop_documents',
+            'visibility' => 'public',
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

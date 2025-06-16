@@ -38,6 +38,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks');
     Route::get('/meetings', [TaskController::class, 'meetings'])->name('meetings');
+    Route::get('/assigned-tasks', [TaskController::class, 'assignedTasks'])->name('assigned-tasks');
     Route::get('/sops', [TaskController::class, 'sops'])->name('sops');
 
     Route::get('/inventory/{emp_code}', [InventoryController::class, 'inventory'])->name('inventory');
@@ -48,13 +49,16 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('applications/{id}/{fileName}', [App\Http\Controllers\FilesController::class, 'download'])
-    // ->where('id', '[0-9]+')
-    // ->where('fileName', '[a-zA-Z0-9\-\_\.]+')
     ->name('download-file');
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::get('/debug', [HomeController::class, 'debug']);
+Route::get('/debug', [TaskController::class, 'createSop'])->name('debug');
+
+Route::get('/pagination-test', function () {
+    $users = \App\Models\User::paginate(5);
+    return view('tasks.pagination-test', compact('users'));
+});
 
 Route::fallback(function () {
     return response()->view('404', [], 404);

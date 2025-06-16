@@ -6,7 +6,6 @@ use App\Models\Employee;
 use App\Models\LeavesBalance;   
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Attendance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Leave;

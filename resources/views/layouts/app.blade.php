@@ -1,6 +1,6 @@
-@php
+{{-- @php
     use App\Models\Employee;
-@endphp
+@endphp --}}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -35,6 +35,8 @@
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
   <!-- Main CSS File -->
   <link href="{{asset('css/main.css')}}" rel="stylesheet">
+
+  {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
 
   <style>
     .btn-primary {
@@ -88,6 +90,13 @@
     {
       font-size: 20px;
     }
+    .section-title h2:after
+      {
+      background: #973594;
+    }
+    .accordion-body {
+      background-color: aliceblue;
+    }
     @media (max-width: 768px) {
       .table {
         display: block;
@@ -134,7 +143,7 @@
       <nav id="navmenu" class="navmenu">
         <ul>
           <li class="nav-item"><a href="{{route('home')}}" @if (Route::currentRouteName() == 'home') class="active" @endif>Home</a></li>
-          <li class="nav-item"><a href="{{route('tasks')}}" @if(in_array(Route::currentRouteName(), ['tasks', 'meetings', 'sops'])) class="active" @endif>Tasks</a></li>
+          <li class="nav-item"><a href="{{route('tasks')}}" @if(in_array(Route::currentRouteName(), ['tasks', 'meetings', 'sops', 'assigned-tasks'])) class="active" @endif>Tasks</a></li>
           <li class="nav-item"><a id="attendance" href="{{route('attendance', $emp_code)}}" @if(Route::currentRouteName() == 'attendance') class="active" @endif>Attendance</a></li>
           <li class="nav-item"><a id="leaves" href="{{route('leaves', $emp_code)}}" @if(in_array(Route::currentRouteName(), ['leaves' , 'apply-leave-advance'])) class="active" @endif>Leaves</a></li>
           @if (Auth::user()->isBoss())

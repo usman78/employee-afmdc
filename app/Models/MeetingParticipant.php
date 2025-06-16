@@ -12,6 +12,7 @@ class MeetingParticipant extends Model
     public $timestamps = false;
     public function meeting()
     {
-        return $this->belongsTo(Meeting::class, ['meet_no', 'cat'], ['meet_no', 'cat']);
+        return $this->belongsTo(Meeting::class, 'meet_no', 'meet_no')
+                    ->whereColumn('meet.mm_meet_part.cat', 'meet.mm_meet_master.cat');
     }
 }

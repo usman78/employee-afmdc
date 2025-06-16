@@ -3,15 +3,17 @@
     <section id="services" class="services section">
       <!-- Section Title -->
       <div class="container section-title aos-init aos-animate" data-aos="fade-up">
-        <h2>SOP's</h2>
-        <p>View the SOPs defined for your role, your department and all other departments.</p>
+        <h2>Assigned Tasks</h2>
+        <p>View your assigned tasks as discussed in meetings to keep track of completion dates.</p>
       </div><!-- End Section Title -->
       <div class="container">
-        <div class="accordion" id="accordionExample">
-          @foreach ($sops as $sop_group)
-            @if ($sop_group == null)
-              @continue
-            @else
+        @if ($assignedTasks->isEmpty())
+          <div class="alert alert-info text-center" role="alert">
+            No tasks assigned to you yet.
+          </div>
+        @else
+          <div class="accordion" id="accordionExample">
+            @foreach ($assignedTasks as $task)
               <div class="accordion-item bg-blue-500 text-green p-2">
                   <h2 class="accordion-header" id="heading{{ $loop->index }}">
                       <button class="accordion-button {{ $loop->first ? '' : 'collapsed' }}" 
@@ -20,31 +22,28 @@
                               data-bs-target="#collapse{{ $loop->index }}" 
                               aria-expanded="{{ $loop->first ? 'true' : 'false' }}" 
                               aria-controls="collapse{{ $loop->index }}">
-                              DEPARTMENT OF &nbsp;<strong>{{  $sop_group['department'] }}</strong>&nbsp; SOPs
+                          <strong>{{ Str::words($task->task_desc, 15, '...') }}</strong>
                       </button>
                   </h2>
-
                   <div id="collapse{{ $loop->index }}" 
                       class="accordion-collapse collapse {{ $loop->first ? 'show' : '' }}" 
                       aria-labelledby="heading{{ $loop->index }}" 
                       data-bs-parent="#accordionExample">
                       <div class="accordion-body">
-                        @if ($sop_group['sops']->isEmpty())
-                          <p><em>No SOPs available for this department.</em></p>
-                        @else
-                          @foreach ($sop_group['sops'] as $sop)
-                            @php
-                              $pdfPath = asset("storage/sop_documents/{$sop->department_id}/{$sop->document_path}");
-                            @endphp
-                            <li><a href="{{$pdfPath}}">{{ $sop->title }}</a></li>
-                          @endforeach
-                        @endif
+                          <b>Meeting Type: </b>{{ $task->cat }}<br>
+                          <b>Meeting Number: </b>{{ $task->meet_no }}<br>
+                          <b>Task Number: </b>{{ $task->task_no }}<br>
+                          <b>Target Date: </b>{{ dateFormat($task->targ_date) }}<br>
+                          <b>Task Description: </b>{{ $task->task_desc }}<br>     
                       </div>
                   </div>
               </div>
-            @endif
-          @endforeach  
+            @endforeach  
         </div>
+        <div class="mt-4 flex justify-center">
+          {{ $assignedTasks->links('pagination::bootstrap-5') }}
+        </div>  
+        @endif
       </div>
     </section>
-@endsection      
+@endsection     

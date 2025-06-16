@@ -42,7 +42,7 @@
                 </svg>
                 <i class="bi bi-ui-checks-grid"></i>
               </div>
-              <a href="#" class="stretched-link">
+              <a href="{{route('assigned-tasks')}}" class="stretched-link">
                 <h3>Assigned Tasks</h3>
               </a>
               <p>View your assigned tasks as discussed in meetings to keep track of completion dates.</p>
