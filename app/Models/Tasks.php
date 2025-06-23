@@ -21,4 +21,8 @@ class Tasks extends Model
                     ->where('cat', $this->cat)
                     ->where('task_no', $this->task_no);
     }
+    public function taskProgress()
+    {
+        return $this->belongsTo(TaskProgress::class);
+    }
 }

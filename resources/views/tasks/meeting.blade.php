@@ -42,7 +42,10 @@
               </div>
             @endforeach  
           </div>
-        @endif
+        @endif  
+        <div class="mt-4 flex justify-center">
+          {{ $meetings->links('pagination::bootstrap-5') }}
+        </div>
       </div>
     </section>
 @endsection     

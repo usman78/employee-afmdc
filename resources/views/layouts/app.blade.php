@@ -8,8 +8,9 @@
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title>AFMDC Employee Portal</title>
-  <meta name="description" content="">
-  <meta name="keywords" content="">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta content="AFMDC Employee Portal" name="description">
+  <meta content="AFMDC, Employee Portal, Employee Management" name="keywords">
 
   <!-- Favicons -->
   <link href="assets/img/favicon.png" rel="icon">

@@ -38,7 +38,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks');
     Route::get('/meetings', [TaskController::class, 'meetings'])->name('meetings');
-    Route::get('/assigned-tasks', [TaskController::class, 'assignedTasks'])->name('assigned-tasks');
+    Route::get('/assigned-tasks', [TaskController::class, 'tasks'])->name('assigned-tasks');
+    Route::post('/update-progress', [TaskController::class, 'updateProgress'])->name('update-progress');
     Route::get('/sops', [TaskController::class, 'sops'])->name('sops');
 
     Route::get('/inventory/{emp_code}', [InventoryController::class, 'inventory'])->name('inventory');
