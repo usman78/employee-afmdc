@@ -1,6 +1,3 @@
-{{-- @php
-    use App\Models\Employee;
-@endphp --}}
 <!DOCTYPE html>
 <html lang="en">
 
