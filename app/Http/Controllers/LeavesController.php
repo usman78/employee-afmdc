@@ -120,6 +120,46 @@ class LeavesController extends Controller
         return true;
     }
 
+    public function hasNoLeavesLeft($empcode)
+    {
+        $pending = $this->checkPendingLeaves($empcode);
+
+        // If there are no pending leaves, default to 0
+        $pendingCasual = $pending['casual_leave'] ?? 0;
+        $pendingMedical = $pending['medical_leave'] ?? 0;
+        $pendingAnnual = $pending['annual_leave'] ?? 0;
+
+        // Check casual leave (leave_code = 1)
+        $casualBalance = LeavesBalance::where('emp_code', $empcode)->where('leav_code', 1)->first();
+        $casualAvailable = $casualBalance ? 
+            $casualBalance->leav_open + $casualBalance->leav_credit - $casualBalance->leav_taken - $casualBalance->leave_encashed - $pendingCasual 
+            : 0;
+
+        // Check medical leave (leave_code = 2)
+        $medicalBalance = LeavesBalance::where('emp_code', $empcode)->where('leav_code', 2)->first();
+        $medicalAvailable = $medicalBalance ? 
+            $medicalBalance->leav_open + $medicalBalance->leav_credit - $medicalBalance->leav_taken - $medicalBalance->leave_encashed - $pendingMedical 
+            : 0;
+
+        // Check annual leave (leave_code = 3)
+        $annualBalance = LeavesBalance::where('emp_code', $empcode)->where('leav_code', 3)->first();
+        $annualAvailable = $annualBalance ? 
+            $annualBalance->leav_open + $annualBalance->leav_credit - $annualBalance->leav_taken - $annualBalance->leave_encashed - $pendingAnnual 
+            : 0;
+
+        // If all types are 0 or less, then user has no leave left
+        return $casualAvailable <= 0 && $medicalAvailable <= 0 && $annualAvailable <= 0;
+    }
+
+    public function checkIfAnyLeave($emp_code)
+    {
+        if($this->hasNoLeavesLeft($emp_code)) {
+            return view('apply-leave-unpaid', ['emp_code' => $emp_code]);
+        }
+        // $this->applyLeaveAdvance($emp_code);
+        return redirect()->route('apply-leave-advance', ['emp_code' => $emp_code]);
+    }
+
     public function checkShortBalance($empcode){
         $startDate = Carbon::now()->startOfMonth();
         $endDate = Carbon::now()->endOfMonth();
@@ -291,7 +331,7 @@ class LeavesController extends Controller
         }
         else {
             // Handle invalid leave exception
-            return redirect()->back()->with('error', 'Failed to submit leave application due to network.');
+            return redirect()->back()->with('error', 'Invalid leave type selected. Please try again!');
         }
     }
 
@@ -511,4 +551,93 @@ class LeavesController extends Controller
         
         return response()->json(['success' => false]);
     }
+
+    public function storeUnpaidLeave(Request $request, $emp_code)
+    {
+        // Ensure logged-in user matches the requested employee code
+        $authUser = Auth::user();
+        if ($authUser->emp_code != $emp_code) {
+            return redirect()->route('home');
+        }
+
+        // Validate the request
+        $request->validate([
+            'leave_duration' => 'required|string|in:full,half,short',
+            'single_leave_date' => 'required_if:leave_duration,half|date',
+            'leave_from_date' => 'required_if:leave_duration,full|date',
+            'leave_to_date' => 'required_if:leave_duration,full|date',
+            'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2',
+            'reason' => 'required|string|max:255',
+        ]);
+
+        // Get the leave type and duration from the request
+        $leave_duration = $request->input('leave_duration');
+
+        if ($leave_duration == 'full') {
+            
+            $range = $request->input('leave_from_date') . ' - ' . $request->input('leave_to_date');
+            list($from, $to) = explode(' - ', $range);
+            $to = date('d-m-Y', strtotime($to));
+            $from = date('d-m-Y', strtotime($from));
+            $fromDate = Carbon::parse($from);
+            $toDate = Carbon::parse($to);
+            $numberOfDays = (int) $fromDate->diffInDays($toDate) + 1;
+
+            $leave = new Leave();
+            $leave->from_date = Carbon::createFromDate($from)->format('Y-m-d');
+            $leave->to_date = Carbon::createFromDate($to)->format('Y-m-d');
+            $leave->leave_id = self::getNextLeaveId();
+            $leave->leave_date = Carbon::today();
+            $leave->leave_code = 5; // Unpaid leave code
+            $leave->l_day = $numberOfDays;
+            list($employeeType, $deptCode) = $this->empType($emp_code);
+            $leave->status = $employeeType == 'Regular' ? '1' : '3';
+            $leave->dept_code = $deptCode;
+            $leave->user_id = $emp_code;
+            $leave->terminal_id = 'online';
+            $leave->moddate = now();
+            $leave->remark = $request->input('reason');
+            $leave->emp_code = $emp_code;
+            $leave->leave_date = Carbon::today();
+            $leave->save();
+            return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+        }
+        else if($leave_duration == 'half') {
+
+            $leave = new Leave();
+            $leave->leave_id = self::getNextLeaveId();
+            $leave->leave_date = Carbon::today();
+            $leave->emp_code = $emp_code;
+            $leave->leave_code = 5; // Unpaid leave code
+            $leaveDate = $request->input('single_leave_date');
+            $leaveDate = date('d-m-Y', strtotime($leaveDate));
+            $time = Employee::where('emp_code', $emp_code)->first();
+            $startTime = Carbon::parse(  "$leaveDate $time->st_time");
+            $endTime = Carbon::parse( "$leaveDate $time->end_time");
+            $durationMinutes = $startTime->diffInMinutes($endTime);
+            $halfDuration = $durationMinutes / 2;
+            $midPoint = $startTime->copy()->addMinutes($halfDuration);
+            Carbon::parse($midPoint);
+            if($request->input('leave_interval') == 1){
+                $leave->from_date = $startTime;
+                $leave->to_date = $midPoint;
+            } else {
+                $leave->from_date = $midPoint;
+                $leave->to_date = $endTime;
+            }
+            $leave->l_day = 0.5;
+            list($employeeType, $deptCode) = $this->empType($emp_code);
+            $leave->status = $employeeType == 'Regular' ? '1' : '3';
+            $leave->dept_code = $deptCode;
+            $leave->user_id = $emp_code;
+            $leave->terminal_id = 'online';
+            $leave->moddate = now();
+            $leave->remark = $request->input('reason');
+            $leave->save();
+            return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+        } else {
+            // Handle invalid leave exception
+            return redirect()->back()->with('error', 'Invalid leave type selected. Please try again!');
+        }
+    }      
 }

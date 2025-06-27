@@ -22,11 +22,8 @@
     <div class="col-12">
       <div class="portfolio-details mt-5">
         <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
-          <h3>Leaves information</h3>
+          <h3>Leaves Balance</h3>
           <ul>
-            <li><strong>Employee Code: </strong>{{$leaves->emp_code}}</li>
-            <li><strong>Employee Name: </strong>{{$leaves->emp_name}}</li>
-            {{-- <li><a class="btn btn-primary" href="{{route('apply-leave-advance', $leaves->emp_code)}}"><i class="fa-solid fa-house-person-leave"></i>Apply Leave</a></li> --}}
             <li class="mt-5">
               @if(session('success'))
                 <span class="alert alert-success">{{session('success')}}</span>
@@ -50,7 +47,6 @@
                         <td>{{ $leave->leave_type }}</td>
                         <td style="color: #2196F3"><strong>{{ $leave->leav_open + $leave->leav_credit - $leave->leav_taken - $leave->leave_encashed }}</strong></td>
                         <td>
-                          {{-- {{ $leave->leav_code }} --}}
                           @if ($leave->leav_code == 1)
                             {{ $pendingLeaves['casual_leave'] ?? 0 }}
                           @elseif ($leave->leav_code == 2) 
@@ -63,16 +59,16 @@
                 @endforeach
             </tbody>
         </table>
+          <div class="row mt-5">
+            <div class="col-12" style="text-align: center;">
+              <a class="btn btn-primary" href="{{route('check-if-any-leave', parameters: $leaves->emp_code)}}"><i class="fa-solid fa-house-person-leave"></i>Apply For Leave</a>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
+  </div>
 
-    </div>
-  </div>
-  <div class="row mt-5">
-    <div class="col-12" style="text-align: center;">
-      <a class="btn btn-primary" href="{{route('apply-leave-advance', $leaves->emp_code)}}"><i class="fa-solid fa-house-person-leave"></i>Apply Leave</a>
-    </div>
-  </div>
 </div>
 @endsection
 
