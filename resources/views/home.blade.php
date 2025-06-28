@@ -86,7 +86,7 @@ strong {
           <a href="#" class="stretched-link">
             <h3>{{capitalizeWords($employee->name)}}</h3>
           </a>
-          <p>{{capitalizeAbbreviation(capitalizeWords($employee->designation->desg_short))}}</p>
+          <p>{{$employee->designation->desg_short}}</p>
         </div>
       </div>
       <div class="col-md-5 d-block mx-auto">
