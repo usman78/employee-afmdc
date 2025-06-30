@@ -104,7 +104,7 @@
       }
       @media (max-width: 1199px) {
           .navmenu a:hover, .navmenu .active, .navmenu .active:focus {
-              color: #2196f3;
+              color: #973594;
           }
       }
     }
@@ -150,7 +150,13 @@
           @if (Auth::user()->isBoss())
             <li class="nav-item"><a href="{{route('team', $emp_code)}}" @if(in_array(Route::currentRouteName(), [ 'team', 'attendance-filter'])) class="active" @endif>Team</a></li>
           @endif
-          <li class="nav-item"><a href="{{route('tasks')}}" @if(in_array(Route::currentRouteName(), ['tasks', 'meetings', 'sops', 'assigned-tasks'])) class="active" @endif>Tasks</a></li>
+          <li class="dropdown nav-item"><a href="{{route('tasks')}}" @if(in_array(Route::currentRouteName(), ['tasks', 'meetings', 'sops', 'assigned-tasks'])) class="active" @endif><span>Tasks</span><i class="bi bi-chevron-down toggle-dropdown"></i></a>
+            <ul>
+              <li><a href="{{route('meetings')}}">Meetings</a></li>
+              <li><a href="{{route('assigned-tasks')}}">Assigned Tasks</a></li>
+              <li><a href="{{route('sops')}}">SOPs</a></li>
+            </ul>
+          </li>
           @if (Auth::user()->isHR())
             <li class="nav-item"><a href="{{route('job-dashboard', $emp_code)}}" target="_blank">Jobs Bank</a></li>
           @endif
