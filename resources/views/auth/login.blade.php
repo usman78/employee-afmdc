@@ -33,7 +33,7 @@
         font-size: x-large;
     }
     .main {
-      height: 100vh;
+      height: calc(100vh - 80px);
       background-image: url({{asset('/img/4th.jpg') }});
       /* background-color: #4a163c; */
       background-size: cover;
