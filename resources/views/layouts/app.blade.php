@@ -33,13 +33,37 @@
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
   <!-- Main CSS File -->
   <link href="{{asset('css/main.css')}}" rel="stylesheet">
-
+  @vite('resources/css/app.css')
   {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
 
   <style>
     .btn-primary {
       --bs-btn-bg: #2196f3;
     }
+    .navmenu .dropdown.d-xl-none {
+      display: inline-block;
+    }
+    .header .header-social-links .dropdown {
+      display: inline-block;
+    }
+    .header .header-social-links .dropdown a.btn.dropdown-toggle {
+      border: none;
+    } 
+    .navmenu a.dropdown-toggle {
+      padding: 10px 0;
+    }
+    .navmenu .dropdown .btn.dropdown-toggle {
+      border: none;
+    }
+    .navmenu .dropdown .dropdown-toggle::after {
+      display: none;
+    }
+    span.position-absolute.top-0.start-100.translate-middle.badge.rounded-pill.bg-danger
+    {
+      font-size: x-small;
+          transform: translate(-175%, -20%) !important;
+    }
+
     .thick-underline {
       text-decoration-line: underline;
       text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
@@ -82,12 +106,12 @@
       margin-bottom: 0;
     }
     .header .header-social-links a:hover {
-      color: #E91E63;
+      color: #973594;
     }
     .header .header-social-links a
     {
-      font-size: 20px;
-    }
+      font-size: 16px;
+    } 
     .section-title h2:after
       {
       background: #973594;
@@ -95,36 +119,59 @@
     .accordion-body {
       background-color: aliceblue;
     }
-    @media (max-width: 768px) {
-      .table {
-        display: block;
-        width: 100%;
-        overflow-x: auto;
-        white-space: nowrap;
-      }
-      @media (max-width: 1199px) {
-          .navmenu a:hover, .navmenu .active, .navmenu .active:focus {
-              color: #973594;
-          }
-      }
+  @media (max-width: 768px) {
+    .table {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      white-space: nowrap;
     }
-    @media (min-width: 1200px) {
-      .navmenu li:hover>a, .navmenu .active, .navmenu .active:focus {
-          color: #973594;
-      }
-      .navmenu>ul>li>a:before {
-        background-color: #973594;
-      }
-      .navmenu a:hover:before, .navmenu li:hover>a:before, .navmenu .active:before {
-        width: 100%;
-      }
-      .navmenu a, .navmenu a:focus {
-        color: #353636;
-        font-size: 15px;
-        font-weight: 700;
+    @media (max-width: 1199px) {
+        .navmenu a:hover, .navmenu .active, .navmenu .active:focus {
+            color: #973594;
+        }
     }
   }
-    @stack('styles');
+  @media (min-width: 1200px) {
+    .navmenu li:hover>a, .navmenu .active, .navmenu .active:focus {
+        color: #973594;
+    }
+    .navmenu>ul>li>a:before {
+      background-color: #973594;
+    }
+    .navmenu a:hover:before, .navmenu li:hover>a:before, .navmenu .active:before {
+      width: 100%;
+    }
+    .navmenu a, .navmenu a:focus {
+      color: #353636;
+      font-size: 15px;
+      font-weight: 700;
+    }
+  }
+  /* @media (max-width: 1199.98px) {
+    .container-fluid.position-relative {
+      justify-content: space-around !important;
+    }
+    .header-social-links {
+      order: 3; 
+      margin-left: 10px;
+    }
+    .navmenu {
+      order: 2;
+    }
+    .logo {
+      order: 1;
+    }
+  }
+  @media (max-width: 1199.98px) {
+  .header-social-links {
+    display: flex;
+    gap: 5px; 
+    align-items: center;
+  }
+} */
+
+@stack('styles');
   </style>
 </head>
 
@@ -135,7 +182,7 @@
       <div class="logo">
         <a href="/" class="logo d-flex align-items-center me-auto me-xl-0">
           <img src="{{asset('/img/AFMDC-Logo.png')}}" alt="">
-          <h1 class="sitename">AFMDC Employee Portal</h1>
+          <h1 class="sitename">AFMDC E-Portal</h1>
         </a>
       </div>
       <nav id="navmenu" class="navmenu">
@@ -161,10 +208,64 @@
             <li class="nav-item"><a href="{{route('job-dashboard', $emp_code)}}" target="_blank">Jobs Bank</a></li>
           @endif
         </ul>
+        <div class="dropdown d-xl-none">
+          <a class="btn dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa-solid fa-bell"></i>
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+            <li><a class="dropdown-item" href="#">Action</a></li>
+            <li><a class="dropdown-item" href="#">Another action</a></li>
+            <li><a class="dropdown-item" href="#">Something else here</a></li>
+          </ul>
+        </div>
+        <div class="dropdown d-xl-none">
+          <a class="btn dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa-solid fa-user"></i>
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+            <li><a class="dropdown-item" href="#">Profile</a></li>
+            <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Log Out</a></li>
+          </ul>
+        </div>
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
-      <div class="header-social-links">
-        <a href="#" data-toggle="tooltip" data-placement="right" title="Log Out" class="facebook" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fa fa-sign-out"></i></a>
+      <div class="header-social-links d-none d-xl-block">
+        <div class="dropdown">
+          <a class="btn dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa-solid fa-bell"></i>
+              @if(auth()->user()->unreadNotifications->count() > 0)
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                  {{ auth()->user()->unreadNotifications->count() }}
+                  <span class="visually-hidden">unread notifications</span>
+                </span>
+              @endif
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+            {{-- <li><a class="dropdown-item" href="#">Action</a></li>
+            <li><a class="dropdown-item" href="#">Another action</a></li>
+            <li><a class="dropdown-item" href="#">Something else here</a></li> --}}
+            
+            @if (auth()->user()->unreadNotifications->count() > 0)
+              @foreach (auth()->user()->unreadNotifications as $notification)
+                <li>       
+                  {{-- <pre>{{ print_r($notification->data, true) }}</pre> --}}
+                  <a class="dropdown-item" href="{{ route('service-requests.show', $notification->data['request_id']) }}">{{ $notification->data['message'] }}</a>
+                </li>
+              @endforeach
+            @else
+              <li><a class="dropdown-item" href="#">No new notifications</a></li>
+            @endif
+          </ul>
+        </div>
+        <div class="dropdown">
+          <a class="btn dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa-solid fa-user"></i>
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+            <li><a class="dropdown-item" href="#">Profile</a></li>
+            <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Log Out</a></li>
+          </ul>
+        </div>
         <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
           @csrf
         </form>

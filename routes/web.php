@@ -12,12 +12,13 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\ServiceRequestController;
 
 Auth::routes();
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+    Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home')->middleware(EnsureNoQuit::class);
 
     Route::get('/attendance/{emp_code}', [AttendanceController::class, 'attendance'])->name('attendance');
 
@@ -48,6 +49,14 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/team', [TeamController::class, 'index'])->name('team');
     Route::get('/attendance-filter/{emp_code}/{date_range}', [TeamController::class, 'attendanceFilter'])->name('attendance-filter');
+
+    Route::prefix('service-requests')->group(function () {
+        Route::get('/', [ServiceRequestController::class, 'index'])->name('service-requests.index');
+        Route::get('/create', [ServiceRequestController::class, 'create'])->name('service-requests.create');
+        Route::post('/', [ServiceRequestController::class, 'store'])->name('service-requests.store');
+        Route::get('/{id}', [ServiceRequestController::class, 'show'])->name('service-requests.show');
+        Route::get('/hod-approvals', [ServiceRequestController::class, 'hodApprovals'])->name('service-requests.hod-approvals');
+    });
 
 });
 

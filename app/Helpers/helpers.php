@@ -63,3 +63,19 @@ function numberOfLeaveDays($fromDate, $toDate)
     $numberOfDays = $fromDate->diffInDays($toDate) + 1;
     return $numberOfDays;
 }
+
+function hisBoss($emp_code)
+{
+    $boss = \DB::table('pre_leave_auth')
+        ->where('emp_code_l', $emp_code)
+        ->where('type', 'A')
+        ->value('emp_code_a');
+
+    return $boss;    
+}
+
+function getIncrementedId($tableName, $columnName)
+{
+    $max = DB::table($tableName)->max($columnName);
+    return $max + 1;
+}
