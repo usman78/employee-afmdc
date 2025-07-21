@@ -89,6 +89,11 @@ class LeavesController extends Controller
 
     public function checkBalance($empcode, $leave_type, $leave_duration)
     {
+        if($leave_type == 5) {
+            // Unpaid leave does not require balance check
+            return true;
+        }
+
         $leave_balance = LeavesBalance::where('emp_code', $empcode)
             ->where('leav_code', $leave_type)
             ->first();
@@ -205,7 +210,7 @@ class LeavesController extends Controller
         // Validate the request
         $request->validate([
             'leave_duration' => 'required|string|in:full,half,short',
-            'leave_type' => 'required_if:leave_duration,half,full|integer|in:1,2,3',
+            'leave_type' => 'required_if:leave_duration,half,full|integer|in:1,2,3,5',
             'single_leave_date' => 'required_if:leave_duration,half,short|date',
             'leave_from_date' => 'required_if:leave_duration,full|date',
             'leave_to_date' => 'required_if:leave_duration,full|date',
@@ -507,6 +512,10 @@ class LeavesController extends Controller
 
     public function checkConsecutiveLeave($emp_code, $leave_code, $from_date, $to_date)
     {
+        if($leave_code == 5) {
+            // Unpaid leave does not require consecutive check
+            return true;
+        }
         $from = Carbon::parse($from_date);
         $to = Carbon::parse($to_date);
         $yesterday = Carbon::parse($from)->copy()->subDay();

@@ -39,6 +39,7 @@ class AttendanceController extends Controller
             '2025-06-09', // Eid
             '2025-06-10', // Eid
             '2025-06-11', // Eid
+            '2025-07-05', // Ashura
             '2025-11-09', // Iqbal Day
             '2025-12-25', // Christmas
         ];
@@ -89,6 +90,9 @@ class AttendanceController extends Controller
                         case '3':
                             $leaveType = 'Annual Leave';
                             break;
+                        case '5':
+                            $leaveType = 'Without Pay Leave';
+                            break;    
                         case '8':
                             $leaveType = 'Short Leave';
                             break;

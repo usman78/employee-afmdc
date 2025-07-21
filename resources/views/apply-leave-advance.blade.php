@@ -22,7 +22,7 @@ label.btn.btn-outline-primary {
   display: inline-block;
   padding-left: 0.5em;
 }
-li {
+.portfolio-info li {
     margin-bottom: 15px;
 }
 li.error-msg {
@@ -188,27 +188,33 @@ ul.error-msg{
                       </label>
                     </div>
                   </li>
-
-                  <li id="leave-type-section"><strong>Select Leave Type: </strong></li>
-                    <div style="margin-bottom: 15px;" class="form-check mt-2">
+                  <div id="leave-type-section">
+                    <li><strong>Select Leave Type: </strong></li>
+                      <div style="margin-bottom: 15px;" class="form-check mt-2">
                         <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault1" value="1">
                         <label class="btn btn-outline-primary" for="flexRadioDefault1" style="width: 70px;">
                           Casual
                         </label>
-                    </div>
-                    <div class="form-check">
+                      </div>
+                      <div class="form-check">
                         <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault2" value="2">
                         <label class="btn btn-outline-primary" for="flexRadioDefault2" style="width: 75px;">
                           Medical
                         </label>
-                    </div>
-                    <div class="form-check">
+                      </div>
+                      <div class="form-check">
                         <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault3" value="3">
                         <label class="btn btn-outline-primary" for="flexRadioDefault3" style="width: 70px;">
                           Annual
                         </label>
-                    </div>
-                    
+                      </div>
+                      <div class="form-check">
+                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault4" value="5">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault4" style="width: 70px;">
+                          W/O Pay
+                        </label>
+                      </div>    
+                  </div>  
                   <li class="mt-2"><strong>Reason of Leave: </strong></li>
                   <input type="text" class="form-control mt-2" name="reason" id="reason" placeholder="Enter reason of leave" required>
                   <li style="margin-top: 20px;">
