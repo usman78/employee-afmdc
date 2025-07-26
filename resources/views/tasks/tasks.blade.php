@@ -5,6 +5,7 @@
   }
   .collapse {
     transition: height 0.4s ease;
+    visibility: visible;
   }
 @endpush
 @section('content')

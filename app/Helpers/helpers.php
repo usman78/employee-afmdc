@@ -74,6 +74,16 @@ function hisBoss($emp_code)
     return $boss;    
 }
 
+function getItManagerCode()
+{
+    $itManager = \DB::table('pay_pers')
+        ->where('desg_code', 44)
+        ->where('quit_stat', null)
+        ->value('emp_code');
+    
+    return $itManager;    
+}
+
 function getIncrementedId($tableName, $columnName)
 {
     $max = DB::table($tableName)->max($columnName);

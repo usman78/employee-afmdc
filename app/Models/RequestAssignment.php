@@ -22,17 +22,21 @@ class RequestAssignment extends Model
 
     public function request()
     {
-        return $this->belongsTo(ServiceRequest::class, 'SERVICE_REQUEST_ID');
+        return $this->belongsTo(ServiceRequest::class, 'service_request_id');
     }
 
     public function updates()
     {
-        return $this->hasMany(RequestUpdate::class, 'ASSIGNMENT_ID');
+        return $this->hasMany(RequestUpdate::class, 'assignment_id');
     }
 
     public function assignee()
     {
-        // Optional: Link to a User model if you have one
-        return $this->belongsTo(User::class, 'ASSIGNED_TO', 'id');
+        return $this->belongsTo(User::class, 'assigned_to', 'emp_code');
+    }
+
+    public function approvals()
+    {
+        return $this->hasMany(RequestApproval::class, 'service_request_id', 'service_request_id');
     }
 }

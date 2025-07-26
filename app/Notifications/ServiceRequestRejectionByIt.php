@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class NewServiceRequestNotification extends Notification
+class ServiceRequestRejectionByIt extends Notification
 {
     use Queueable;
 
@@ -15,12 +15,10 @@ class NewServiceRequestNotification extends Notification
      * Create a new notification instance.
      */
     public $serviceRequest;
-
     public function __construct($serviceRequest)
     {
         $this->serviceRequest = $serviceRequest;
     }
-
     /**
      * Get the notification's delivery channels.
      *
@@ -49,8 +47,8 @@ class NewServiceRequestNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'message' => 'New service request created.',
-            'request_id' => $this->serviceRequest->ID,
+            'message' => 'Your service request has been rejected by IT manager.',
+            'request_id' => $this->serviceRequest->id,
         ];
     }
 }

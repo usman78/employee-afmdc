@@ -13,12 +13,13 @@ use App\Http\Controllers\JobController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ServiceRequestController;
+use App\Http\Controllers\NotificationsController;
 
 Auth::routes();
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home')->middleware(EnsureNoQuit::class);
+    Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
     Route::get('/attendance/{emp_code}', [AttendanceController::class, 'attendance'])->name('attendance');
 
@@ -54,8 +55,17 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [ServiceRequestController::class, 'index'])->name('service-requests.index');
         Route::get('/create', [ServiceRequestController::class, 'create'])->name('service-requests.create');
         Route::post('/', [ServiceRequestController::class, 'store'])->name('service-requests.store');
-        Route::get('/{id}', [ServiceRequestController::class, 'show'])->name('service-requests.show');
+        Route::get('/notifications/redirect/{notification}', [NotificationsController::class, 'handle'])->name('notifications.redirect');
+        Route::get('/assignment/{id}', [ServiceRequestController::class, 'assignment'])->name('service-requests.assignment');
+        Route::post('/approve/{id}', [ServiceRequestController::class, 'approve'])->name('service-requests.approve');
         Route::get('/hod-approvals', [ServiceRequestController::class, 'hodApprovals'])->name('service-requests.hod-approvals');
+        Route::post('/approve_assign/{id}', [ServiceRequestController::class, 'approveAssignment'])->name('service-requests.approve_assign');
+        Route::post('/reject-assign/{id}', [ServiceRequestController::class, 'rejectAssignment'])->name('service-requests.reject_assign');
+        Route::get('/assignment-details/{requestId}', [ServiceRequestController::class, 'assignmentDetails'])->name('service-requests.assignment-details');
+        Route::get('/debug', [ServiceRequestController::class, 'debug'])->name('service-requests.debug');
+        Route::post('/assignment-update/{id}', [ServiceRequestController::class, 'assignmentUpdate'])->name('service-requests.assignment-update');
+        Route::get('show/{id}', [ServiceRequestController::class, 'show'])->name('service-requests.show');
+        Route::post('/update-status/{id}', [ServiceRequestController::class, 'addUpdate'])->name('service-requests.add-update');
     });
 
 });

@@ -204,6 +204,7 @@
               <li><a href="{{route('sops')}}">SOPs</a></li>
             </ul>
           </li>
+          <li class="nav-item"><a href="{{route('service-requests.index')}}" @if(in_array(Route::currentRouteName(), ['service-requests.index', 'service-requests.show', 'service-requests.assign'])) class="active" @endif>Service Requests</a></li>
           @if (Auth::user()->isHR())
             <li class="nav-item"><a href="{{route('job-dashboard', $emp_code)}}" target="_blank">Jobs Bank</a></li>
           @endif
@@ -241,19 +242,16 @@
               @endif
           </a>
           <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-            {{-- <li><a class="dropdown-item" href="#">Action</a></li>
-            <li><a class="dropdown-item" href="#">Another action</a></li>
-            <li><a class="dropdown-item" href="#">Something else here</a></li> --}}
-            
             @if (auth()->user()->unreadNotifications->count() > 0)
               @foreach (auth()->user()->unreadNotifications as $notification)
-                <li>       
-                  {{-- <pre>{{ print_r($notification->data, true) }}</pre> --}}
-                  <a class="dropdown-item" href="{{ route('service-requests.show', $notification->data['request_id']) }}">{{ $notification->data['message'] }}</a>
+                <li>
+                    <a class="dropdown-item" href="{{ route('notifications.redirect', $notification->id) }}">
+                        {{ $notification->data['message'] }}
+                    </a>
                 </li>
               @endforeach
             @else
-              <li><a class="dropdown-item" href="#">No new notifications</a></li>
+              <li><a class="dropdown-item" href="#"><i class="fa-solid fa-bell-slash"></i> No new notifications</a></li>
             @endif
           </ul>
         </div>
@@ -262,8 +260,18 @@
             <i class="fa-solid fa-user"></i>
           </a>
           <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-            <li><a class="dropdown-item" href="#">Profile</a></li>
-            <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Log Out</a></li>
+            <li>
+              <a class="dropdown-item" href="#">
+                <i class="fa-solid fa-user"></i>
+                Profile
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Log Out
+              </a>
+            </li>
           </ul>
         </div>
         <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
