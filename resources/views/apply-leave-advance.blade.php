@@ -109,7 +109,7 @@ ul.error-msg{
           <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
             <h3>Leave Application</h3>
             <div class="row">
-              <form action="{{ route('store-leave-advance', $emp_code) }}" method="POST" enctype="multipart/form-data">
+              <form action="{{ route('store-leave-advance', $emp_code) }}" method="POST" id="leaveForm" enctype="multipart/form-data">
                 @csrf
                 @if ($errors->any())
                   <div class="alert alert-danger">
@@ -150,7 +150,7 @@ ul.error-msg{
                     <strong>To Date: </strong>
                     <input type="text" name="leave_to_date" class="form-control pull-right" style="margin-top: 15px;">
                   </li>
-                  <!-- Single Date Leave -->
+                  <!-- Half Day Leave -->
                   <li id="single-date-section" class="mt-2" style="display: none;">
                     <strong>Leave Date: </strong>
                     <input type="text" name="single_leave_date" class="form-control pull-right" style="margin-top: 15px;">
@@ -397,5 +397,54 @@ ul.error-msg{
       endTime.value = minutesToTime(endMinutes);
     });
 
-    
+  
+  document.getElementById('leaveForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const form = e.target;
+      const formData = new FormData(form);
+
+      fetch("{{ route('leave.preview') }}", {
+          method: 'POST',
+          headers: {
+              'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          },
+          body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.sandwich === true) {
+              Swal.fire({
+                  title: 'Heads up!',
+                  text: `Your rest day (${data.rest_day}) will also be counted as leave due to sandwich leave policy.`,
+                  icon: 'info',
+                  confirmButtonText: 'OK'
+              }).then(() => {
+                  submitLeave(formData); // call actual save function
+              });
+          } else {
+              submitLeave(formData);
+          }
+      })
+      .catch(error => {
+          console.error('Error:', error);
+      });
+
+      function submitLeave(formData) {
+          fetch("{{ route('store-leave-advance', $emp_code) }}", {
+              method: 'POST',
+              headers: {
+                  'X-CSRF-TOKEN': '{{ csrf_token() }}',
+              },
+              body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+              Swal.fire('Success', data.message, 'success');
+              document.getElementById('leaveForm').reset();
+          });
+      }
+  });
+
+
 @endpush

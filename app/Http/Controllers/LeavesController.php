@@ -199,6 +199,19 @@ class LeavesController extends Controller
         ]);
     }
 
+    public function preview(Request $request)
+    {
+        $emp_code = auth()->user()->emp_code;
+        $from = $request->input('leave_from_date');
+        $to = $request->input('leave_to_date');
+        $sandwichDate = $this->checkSandwichLeave($emp_code, $from, $to);
+
+        return response()->json([
+            'sandwich' => $sandwichDate !== false,
+            'rest_day' => $sandwichDate ? Carbon::parse($sandwichDate)->format('l') : null,
+        ]);
+    }
+
     public function storeLeaveAdvance(Request $request, $emp_code)
     {
         // Ensure logged-in user matches the requested employee code
@@ -261,7 +274,8 @@ class LeavesController extends Controller
                 return redirect()->back()->with('error', 'You cannot apply for consecutive leaves of different leave types.');
             }
             $leave->save();
-            return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+            return response()->json(['message' => 'Your leave has been submitted successfully!']);
+            // return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
 
         } elseif ($leave_duration == 'half') {
 
@@ -305,7 +319,8 @@ class LeavesController extends Controller
                 return redirect()->back()->with('error', 'You cannot apply for consecutive leaves of different leave types.');
             }
             $leave->save();
-            return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+            return response()->json(['message' => 'Your leave has been submitted successfully!']);
+            // return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
         } elseif ($leave_duration == 'short') {
             if(! $this->checkShortBalance($emp_code)){
                 return redirect()->back()->with('error', 'You already availed your short leave.');
@@ -332,7 +347,8 @@ class LeavesController extends Controller
             $leave->remark = $request->input('reason');
 
             $leave->save();
-            return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+            return response()->json(['message' => 'Your leave has been submitted successfully!']);
+            // return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
         }
         else {
             // Handle invalid leave exception
@@ -508,6 +524,39 @@ class LeavesController extends Controller
         }
     
         return $pending;
+    }
+
+    public function checkSandwichLeave($emp_code, $from_date, $to_date)
+    {
+        // CHECK THE REST DAY OF USER
+        $user = Employee::where('emp_code', $emp_code)->first();
+        $restDay = $user->rest_day;
+        $restDay = ucfirst(strtolower($restDay));
+        // check if the user applies leave consecutively with the rest day, if yes check if leave exists on the previous day or next day
+
+        $from = Carbon::parse($from_date);
+        $to = Carbon::parse($to_date);
+        $dayBefore = $from->copy()->subDay();
+        $dayAfter = $to->copy()->addDay();
+
+        
+        // Case 1: applied only on the day before rest day, check if after day is on leave
+        if ($dayAfter->format('l') === $restDay) {
+            $checkNext = $dayAfter->copy()->addDay();
+            if (checkFullLeaveExists($emp_code, $checkNext->toDateString())) {
+                return $dayAfter; // sandwich leave applies
+            }
+        }
+
+        // Case 2: applied only on the day after rest day, check if before day is on leave
+        if ($dayBefore->format('l') === $restDay) {
+            $checkPrev = $dayBefore->copy()->subDay();
+            if (checkFullLeaveExists($emp_code, $checkPrev->toDateString())) {
+                return $dayBefore; // sandwich leave applies
+            }
+        }
+
+        return false; // No sandwich leave
     }
 
     public function checkConsecutiveLeave($emp_code, $leave_code, $from_date, $to_date)

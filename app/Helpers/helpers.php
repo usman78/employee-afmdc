@@ -89,3 +89,14 @@ function getIncrementedId($tableName, $columnName)
     $max = DB::table($tableName)->max($columnName);
     return $max + 1;
 }
+
+function checkFullLeaveExists($emp_code, $date)
+{
+    $leave = \DB::table('pre_leave_tran')
+        ->where('emp_code', $emp_code)
+        ->where('from_date', '<=', $date)
+        ->where('to_date', '>=', $date)
+        ->first();
+
+    return $leave ? true : false;
+}
