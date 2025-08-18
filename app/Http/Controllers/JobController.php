@@ -42,6 +42,44 @@ class JobController extends Controller
         ]);   
     }
 
+    public function openJobs()
+    {
+        $open_jobs = DB::select("SELECT p.desg_short, COUNT(j.job_id) AS application_count
+            FROM online_job_mst j
+            JOIN pay_desig p ON j.position_id = p.desg_code
+            WHERE j.job_id = 9999
+            GROUP BY p.desg_short");
+        $total_jobs = Job::count();
+        $total_open_jobs = Job::where('job_id', 9999)->count();
+        $total_vacancy_jobs = $total_jobs - $total_open_jobs;
+        $total_shortlisted_jobs = Job::where('status', 'S')->count();
+            
+        return view('jobs.open-jobs', [
+            'open_jobs' => $open_jobs, 
+            'total_jobs' => $total_jobs, 
+            'total_open_jobs' => $total_open_jobs, 
+            'total_vacancy_jobs' => $total_vacancy_jobs, 
+            'total_shortlisted_jobs' => $total_shortlisted_jobs
+        ]); 
+    }
+
+    public function vacancyJobs()
+    {
+        $vacancy_jobs = Vacancy::withCount('jobs')->get();
+        $total_jobs = Job::count();
+        $total_open_jobs = Job::where('job_id', 9999)->count();
+        $total_vacancy_jobs = $total_jobs - $total_open_jobs;
+        $total_shortlisted_jobs = Job::where('status', 'S')->count();
+
+        return view('jobs.vacancy-jobs', [
+            'vacancy_jobs' => $vacancy_jobs, 
+            'total_jobs' => $total_jobs, 
+            'total_open_jobs' => $total_open_jobs, 
+            'total_vacancy_jobs' => $total_vacancy_jobs, 
+            'total_shortlisted_jobs' => $total_shortlisted_jobs
+        ]);
+    }
+
     public function show($id)
     {
         $job = Job::find($id);
@@ -56,7 +94,8 @@ class JobController extends Controller
         }
         else{
             $vacany = Vacancy::find($job->job_id);
-            $job->designation = $vacany->job_id;
+            // $job->designation = $vacany->job_id;
+            $job->vacancy = $vacany->job_description;
         }
         return view('jobs.profile', ['job' => $job]);
     }

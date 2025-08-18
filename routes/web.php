@@ -14,6 +14,7 @@ use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ServiceRequestController;
 use App\Http\Controllers\NotificationsController;
+use App\Http\Controllers\TimetableController;
 
 Auth::routes();
 
@@ -25,6 +26,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/leaves/{emp_code}', [LeavesController::class, 'leaves'])->name('leaves');
     Route::get('/apply-leave-advance/{emp_code}', [LeavesController::class, 'applyLeaveAdvance'])->name('apply-leave-advance');
+    Route::post('/leave/preview', [LeavesController::class, 'preview'])->name('leave.preview');
     Route::post('/apply-leave-advance/{emp_code}', [LeavesController::class, 'storeLeaveAdvance'])->name('store-leave-advance');
     Route::post('/apply-unpaid-leave/{emp_code}', [LeavesController::class, 'storeUnpaidLeave'])->name('store-unpaid-leave');
     Route::get('/check-if-any-leave/{emp_code}', [LeavesController::class, 'checkIfAnyLeave'])->name('check-if-any-leave');
@@ -34,6 +36,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reject-leave/{leave_id}', [LeavesController::class, 'rejectLeave'])->name('reject-leave');
 
     Route::get('/job-dashboard', [JobController::class, 'summaryDashboard'])->name('job-dashboard');
+    Route::get('/open-jobs', [JobController::class, 'openJobs'])->name('open-jobs');
+    Route::get('/vacancy-jobs', [JobController::class, 'vacancyJobs'])->name('vacancy-jobs');
     Route::get('/job-bank', [JobController::class, 'index'])->name('job-bank');
     Route::get('/profile/{id}', [JobController::class, 'show'])->name('profile');
     Route::post('/change-status/{app_no}', [JobController::class, 'changeStatus'])->name('change-status');
@@ -66,6 +70,15 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/assignment-update/{id}', [ServiceRequestController::class, 'assignmentUpdate'])->name('service-requests.assignment-update');
         Route::get('show/{id}', [ServiceRequestController::class, 'show'])->name('service-requests.show');
         Route::post('/update-status/{id}', [ServiceRequestController::class, 'addUpdate'])->name('service-requests.add-update');
+    });
+
+    Route::prefix('timetables')->group(function () {
+        Route::get('/', [TimetableController::class, 'index'])->name('timetables.index');
+        Route::get('/calendar/events', [TimetableController::class, 'getTimetables'])->name('timetables.get');
+        Route::get('/new-timetable', [TimetableController::class, 'newTimetable'])->name('timetables.new-timetable');
+        Route::post('/create-timetable', [TimetableController::class, 'store'])->name('timetables.store');
+        Route::post('/create', [TimetableController::class, 'create'])->name('timetables.create');
+        Route::post('/get-subject', [TimetableController::class, 'getSubject'])->name('timetables.get-subject'); 
     });
 
 });

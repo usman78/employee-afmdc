@@ -104,17 +104,6 @@
                                             <td>{{$open_job->application_count}}</td>
                                             <td><a href="{{route('designation-jobs', str_replace('/', '-', $open_job->desg_short))}}">{{$open_job->desg_short}}</a></td>
                                         </tr>
-                                    @if($loop->last)
-                                        @foreach ($vacancy_jobs as $vacancy_job)
-                                            @if ($vacancy_job->jobs_count != 0)
-                                                <tr>
-                                                    <td>{{$vacancy_job->jobs_count}}</td>
-                                                    <td><a href="{{route('designation-jobs',str_replace('/', '-', $vacancy_job->job_description))}}">{{$vacancy_job->job_description}}</a></td>
-                                                </tr>
-                                            @endif
-                                            @continue
-                                        @endforeach
-                                    @endif    
                                 @endforeach
                             </tbody>
                         </table>
