@@ -31,11 +31,14 @@
   <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
   <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.18/index.global.min.js"></script>
+  @stack('cdn-styles')
   <!-- Main CSS File -->
   <link href="{{asset('css/main.css')}}" rel="stylesheet">
-  @vite('resources/css/app.css')
+  {{-- @vite('resources/css/app.css') --}}
   {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
-
+  
   <style>
     .btn-primary {
       --bs-btn-bg: #2196f3;
@@ -204,6 +207,7 @@
               <li><a href="{{route('sops')}}">SOPs</a></li>
             </ul>
           </li>
+          <li class="nav-item"><a href="{{route('timetables.index')}}" @if(in_array(Route::currentRouteName(), ['timetables.index', 'timetables.new-timetable', 'timetables.create'])) class="active" @endif>Timetable</a></li>
           <li class="nav-item"><a href="{{route('service-requests.index')}}" @if(in_array(Route::currentRouteName(), ['service-requests.index', 'service-requests.show', 'service-requests.assign'])) class="active" @endif>Service Requests</a></li>
           @if (Auth::user()->isHR())
             <li class="nav-item"><a href="{{route('job-dashboard', $emp_code)}}" target="_blank">Jobs Bank</a></li>
@@ -308,7 +312,7 @@
 
   <!-- Main JS File -->
   <script src="{{asset('js/main.js')}}"></script>
-
+  @stack('cdn-scripts')
   <script>
     $(function () {
       $('[data-toggle="tooltip"]').tooltip()

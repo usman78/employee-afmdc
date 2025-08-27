@@ -100,3 +100,20 @@ function checkFullLeaveExists($emp_code, $date)
 
     return $leave ? true : false;
 }
+function allDoctors()
+{
+    $doctors = \DB::table('pay_pers')
+        ->select('emp_code', 'name')
+        ->where('catg_code', 2)
+        ->where('quit_stat', null) // Assuming 1 is the designation code for doctors
+        ->get();
+
+    return $doctors;
+}
+function getSessionYear($classYear)
+{
+    $currentYear = (int) date('Y');       // ensures it's an integer
+    $classYear   = (int) $classYear;      // converts input to integer
+    $sessionYear = $currentYear - $classYear;
+    return $sessionYear;
+}
