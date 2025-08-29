@@ -179,6 +179,26 @@ class LeavesController extends Controller
         return false;
     }
 
+    public function checkLeaveCurrentMonth($singleLeave = null, $leaveFrom = null, $leaveTo = null)
+    {
+        if ($singleLeave) {
+            $leaveDate = Carbon::parse($singleLeave);
+            return $leaveDate->isCurrentMonth() || $leaveDate->isNextMonth();
+        } 
+        
+        if ($leaveFrom && $leaveTo) {
+            $fromDate = Carbon::parse($leaveFrom);
+            $toDate = Carbon::parse($leaveTo);
+
+            // ✅ Both must be in current month
+            return $fromDate->isCurrentMonth() && $toDate->isCurrentMonth() || 
+            $fromDate->isCurrentMonth() && $toDate->isNextMonth() || 
+            $fromDate->isNextMonth() && $toDate->isNextMonth();
+        }
+
+        return false; // default fallback
+    }
+
     public function applyLeaveAdvance($emp_code)
     {
         // Ensure logged-in user matches the requested employee code
@@ -242,11 +262,15 @@ class LeavesController extends Controller
             list($from, $to) = explode(' - ', $range);
             $to = date('d-m-Y', strtotime($to));
             $from = date('d-m-Y', strtotime($from));
+            // check if the leave dates range are in the current month
+            if (! $this->checkLeaveCurrentMonth(null, $from, $to)) {
+                return response()->json(['error' => 'For full day leave, both From and To dates must be within the current month.']);
+            }
             $fromDate = Carbon::parse($from);
             $toDate = Carbon::parse($to);
             $numberOfDays = (int) $fromDate->diffInDays($toDate) + 1;
             if(! $this->checkBalance($emp_code, $request->input('leave_type'), $numberOfDays)){
-                return redirect()->back()->with('error', 'You do not have the leave balance.');
+                return response()->json(['error' => 'You do not have the leave balance.']);
             }
 
             $leave = new Leave();
@@ -271,7 +295,7 @@ class LeavesController extends Controller
                 $request->input('leave_from_date'), 
                 $request->input('leave_to_date'));
             if($check == false){
-                return redirect()->back()->with('error', 'You cannot apply for consecutive leaves of different leave types.');
+                return response()->json(['error' => 'You cannot apply for consecutive leaves of different leave types.']);
             }
             $leave->save();
             return response()->json(['message' => 'Your leave has been submitted successfully!']);
@@ -280,7 +304,7 @@ class LeavesController extends Controller
         } elseif ($leave_duration == 'half') {
 
             if(! $this->checkBalance($emp_code, $request->input('leave_type'), 0.5)){
-                return redirect()->back()->with('error', 'You do not have the leave balance.');
+                return response()->json(['error' => 'You do not have the leave balance.']);
             }
             $leave = new Leave();
             $leave->leave_id = self::getNextLeaveId();
@@ -289,6 +313,10 @@ class LeavesController extends Controller
             $leave->leave_code = $request->input('leave_type');
             $leaveDate = $request->input('single_leave_date');
             $leaveDate = date('d-m-Y', strtotime($leaveDate));
+            // check if the leave date is in the current month
+            if (! $this->checkLeaveCurrentMonth($leaveDate)) {
+                return response()->json(['error' => 'For half day leave, the selected date must be within the current month.']);
+            }
             $time = Employee::where('emp_code', $emp_code)->first();
             $startTime = Carbon::parse(  "$leaveDate $time->st_time");
             $endTime = Carbon::parse( "$leaveDate $time->end_time");
@@ -316,14 +344,14 @@ class LeavesController extends Controller
                 $request->input('single_leave_date'), 
                 $request->input('single_leave_date'));
             if($check == false){
-                return redirect()->back()->with('error', 'You cannot apply for consecutive leaves of different leave types.');
+                return response()->json(['error' => 'You cannot apply for consecutive leaves of different leave types.']);
             }
             $leave->save();
             return response()->json(['message' => 'Your leave has been submitted successfully!']);
             // return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
         } elseif ($leave_duration == 'short') {
             if(! $this->checkShortBalance($emp_code)){
-                return redirect()->back()->with('error', 'You already availed your short leave.');
+                return response()->json(['error' => 'You already availed your short leave.']);
             }
             $leave = new Leave();
             $leave->leave_id = self::getNextLeaveId();
@@ -333,6 +361,10 @@ class LeavesController extends Controller
             $fromTime = $request->input('start_time');
             $toTime = $request->input('end_time');
             $leaveDate = $request->input('single_leave_date');
+            // check if the leave date is in the current month
+            if (! $this->checkLeaveCurrentMonth($leaveDate)) {
+                return response()->json(['error' => 'For short leave, the selected date must be within the current month.']);
+            }
             $fromTime = Carbon::parse("$leaveDate $fromTime");
             $toTime = Carbon::parse("$leaveDate $toTime");
             $leave->from_date = $fromTime;
@@ -352,7 +384,7 @@ class LeavesController extends Controller
         }
         else {
             // Handle invalid leave exception
-            return redirect()->back()->with('error', 'Invalid leave type selected. Please try again!');
+            return response()->json(['error' => 'Invalid leave type selected. Please try again!']);
         }
     }
 

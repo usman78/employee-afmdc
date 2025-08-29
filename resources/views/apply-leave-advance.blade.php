@@ -440,6 +440,10 @@ ul.error-msg{
           })
           .then(response => response.json())
           .then(data => {
+              if(data.error){
+                Swal.fire('Error', data.error, 'error');
+                return;
+              }
               Swal.fire('Success', data.message, 'success');
               document.getElementById('leaveForm').reset();
           });
