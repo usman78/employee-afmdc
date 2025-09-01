@@ -121,8 +121,6 @@ ul.error-msg{
                   </div>
                 @endif
                 <ul>
-                  {{-- <li><strong>Employee Code: </strong>{{$emp_code}}</li>
-                  <li><strong>Employee Name: </strong>{{capitalizeWords($employee->name)}}</li> --}}
                   <li class="mt-2"><strong>Select Leave Duration: </strong></li>
                   <div style="margin-bottom: 15px;" class="form-check">
                     <input class="btn-check" type="radio" name="leave_duration" id="full-day" value="full">
@@ -229,7 +227,11 @@ ul.error-msg{
                 <div class="row">
                     <div class="col-12 justify-content-center text-center mt-5">
                         <a href="{{ route('leaves', $emp_code) }}" class="btn btn-primary mt-3"><i class="fa-solid fa-backward"></i> Back</a>
-                        <button type="submit" class="btn btn-success mt-3"><i class="fa-solid fa-person-walking-arrow-right"></i> Apply Leave</button>
+                        <button type="submit" class="btn btn-success mt-3" id="submitBtn">
+                          <i class="fa-solid fa-person-walking-arrow-right me-1" aria-hidden="true"></i>
+                          <span id="btnLabel">Apply Leave</span>
+                          <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        </button>
                     </div>
                 </div>
               </form>
@@ -272,6 +274,21 @@ ul.error-msg{
 @endsection
 
 @push('scripts')
+    const formEl     = document.getElementById('leaveForm');
+    const btn        = document.getElementById('submitBtn');
+    const btnLabel   = document.getElementById('btnLabel');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    function setSubmitting(on) {
+      btn.disabled = on;
+      if (on) {
+        btnSpinner.classList.remove('d-none');
+        btnLabel.textContent = 'Submitting...';
+      } else {
+        btnSpinner.classList.add('d-none');
+        btnLabel.textContent = 'Apply Leave';
+      }
+    }
     {{-- date range picker --}}
     $(function() {
       $('input[name="leave_from_date"]').daterangepicker({
@@ -398,7 +415,7 @@ ul.error-msg{
     });
 
   
-  document.getElementById('leaveForm').addEventListener('submit', function(e) {
+  {{-- document.getElementById('leaveForm').addEventListener('submit', function(e) {
       e.preventDefault();
 
       const form = e.target;
@@ -448,7 +465,54 @@ ul.error-msg{
               document.getElementById('leaveForm').reset();
           });
       }
-  });
+  }); --}}
 
+  formEl.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const previewRes = await fetch("{{ route('leave.preview') }}", {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: new FormData(formEl)
+      });
+      const preview = await previewRes.json();
+
+      if (preview.sandwich === true) {
+        const r = await Swal.fire({
+          title: 'Heads up!',
+          text: `Your rest day (${preview.rest_day}) will also be counted as leave due to sandwich leave policy.`,
+          icon: 'info',
+          confirmButtonText: 'OK'
+        });
+        if (!r.isConfirmed) { setSubmitting(false); return; }
+      }
+
+      // New FormData for the actual save (avoids any reuse issues)
+      const saveRes = await fetch("{{ route('store-leave-advance', $emp_code) }}", {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: new FormData(formEl)
+      });
+
+      const data = await saveRes.json();
+
+      if (data.error) {
+        console.log("error debug: ", data.error);
+        await Swal.fire('Error', data.error, 'error');
+        return;
+      }
+
+      await Swal.fire('Success', data.message, 'success');
+      formEl.reset();
+    } catch (err) {
+      console.error(err);
+      await Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
+    } finally {
+      setSubmitting(false); // always restore button for next submission
+      formEl.reset();   
+    }
+  });
 
 @endpush
