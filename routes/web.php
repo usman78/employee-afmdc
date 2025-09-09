@@ -74,6 +74,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('timetables')->group(function () {
         Route::get('/', [TimetableController::class, 'index'])->name('timetables.index');
+        Route::get('/calendar', [TimetableController::class, 'show'])->name('timetables.show');
         Route::get('/calendar/events', [TimetableController::class, 'getTimetables'])->name('timetables.get');
         Route::get('/new-timetable', [TimetableController::class, 'newTimetable'])->name('timetables.new-timetable');
         Route::post('/create-timetable', [TimetableController::class, 'store'])->name('timetables.store');
@@ -94,6 +95,13 @@ Route::get('/pagination-test', function () {
     $users = \App\Models\User::paginate(5);
     return view('tasks.pagination-test', compact('users'));
 });
+
+Route::get('/query', [HomeController::class, 'query'])
+    ->name('query.get');
+Route::post('/query', [HomeController::class, 'queryDown'])
+    ->name('query.post');
+
+
 
 Route::fallback(function () {
     return response()->view('404', [], 404);

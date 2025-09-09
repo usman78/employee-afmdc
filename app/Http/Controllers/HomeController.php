@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Attendance;
 use App\Models\Leave;
 use App\Models\LeaveAuth;
+use Illuminate\Support\Facades\DB;
 
 class HomeController extends Controller
 {
@@ -46,5 +47,23 @@ class HomeController extends Controller
         $attendanceRecords = Leave::where('emp_code', '1171')->first();
         numberOfLeaveDays($attendanceRecords->from_date, $attendanceRecords->to_date);
         return response()->json(numberOfLeaveDays($attendanceRecords->from_date, $attendanceRecords->to_date));
+    }
+
+    public function query(Request $request)
+    {
+        return view('query');
+    }
+
+    public function queryDown(Request $request)
+    {
+        $query = $request->input('query');
+        
+        $test = DB::select($query);
+        // dd($test);
+        // make the json response and send it to the view
+        $jsonResponse = json_encode($test);
+        // return response()->json($jsonResponse);
+
+        return view('testing', compact('jsonResponse'));
     }
 }
