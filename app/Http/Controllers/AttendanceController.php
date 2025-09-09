@@ -40,6 +40,7 @@ class AttendanceController extends Controller
             '2025-06-10', // Eid
             '2025-06-11', // Eid
             '2025-07-05', // Ashura
+            '2025-08-14', // Independance Day
             '2025-11-09', // Iqbal Day
             '2025-12-25', // Christmas
         ];
@@ -73,41 +74,25 @@ class AttendanceController extends Controller
                                             ->get();
                 //  Fetch the record for the date available in the database
                 if ($attendanceRecords->isNotEmpty()) {
+                    $leave = null;
                     // Determine if multiple records exist
                     foreach ($attendanceRecords as $record) {
-                        if ($record->att_stat != null) {
-                            $isLeave = true;
-                            $leaveType = $record->att_stat;
+                        if (ifLeaveExists($emp_code, $dateString)) {
+                                    $isLeave = true;
+                            $leave = Leave::whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
+                                ->whereRaw("TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
+                                ->where('emp_code', $emp_code)
+                                ->first();
+                            $leaveType = $leave->leave_code;   
+                            // Log::info('Leave Date: ' . $dateString); 
+                            continue;
                         }
+                        // Log::info('Leave Date: ' . $dateString);
+                        $timein = $record->timein;
+                        $timeout = $record->timeout;
                     }
-                    switch ($leaveType) {
-                        case '1':
-                            $leaveType = 'Casual Leave';
-                            break;
-                        case '2':
-                            $leaveType = 'Medical Leave';
-                            break;
-                        case '3':
-                            $leaveType = 'Annual Leave';
-                            break;
-                        case '5':
-                            $leaveType = 'Without Pay Leave';
-                            break;    
-                        case '8':
-                            $leaveType = 'Short Leave';
-                            break;
-                        case '12':
-                            $leaveType = 'Outdoor Duty';
-                            break;    
-                        default:
-                            $leaveType = 'Unknown Leave';
-                            break;
-                    }
-
-                    $timein = $attendanceRecords->min('timein'); 
-                    $timeout = $attendanceRecords->max('timeout');
-
-                    // $workedMinutes = 0;
+                    $leaveType = leaveDescription($leaveType, $leave ? $leave->from_date : null, $leave ? $leave->to_date : null);
+                    
                     $leaveRemark = null;
 
                     // Check if timein and timeout are within the official working hours
@@ -160,6 +145,16 @@ class AttendanceController extends Controller
                     ]);
                     
                 } else {
+                    if (ifLeaveExists($emp_code, $dateString)) {
+                        $isLeave = true;
+                        $leave = Leave::whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
+                            ->whereRaw("TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
+                            ->where('emp_code', $emp_code)
+                            ->first();
+                        $leaveType = $leave->leave_code;
+                        $leaveType = leaveDescription($leaveType, $leave ? $leave->from_date : null, $leave ? $leave->to_date : null);   
+                        // Log::info('Leave Date: ' . $dateString); 
+                    }
                     // Manually create a placeholder record for non-leave days
                     $allDates->push([
                         'at_date' => $dateString,
@@ -167,7 +162,8 @@ class AttendanceController extends Controller
                         'timeout' => null,
                         'is_sunday' => false,
                         'is_holiday' => $isHoliday,
-                        'is_leave' => false
+                        'is_leave' => $isLeave ? true : false,
+                        'leave_type' => $isLeave ? $leaveType : null,
                     ]);
                 }
             }
@@ -175,7 +171,7 @@ class AttendanceController extends Controller
         }
 
         $allDates = $allDates->sortByDesc('at_date')->values();
-
+        // dd($allDates); 
         // Get employee details
         $employee = Employee::where('emp_code', $emp_code)->first();
 
@@ -191,5 +187,46 @@ class AttendanceController extends Controller
             'leaves' => $leaves,
             'emp_name' => $employee ? ucfirst($employee->name) : 'Unknown Employee'
         ]);
+    }
+}
+
+function leaveDescription($leaveCode, $fromDate = null, $toDate = null)
+{
+    // identify full day leave using isStartOfDay and isEndOfDay methods
+    if ($fromDate && $toDate) {
+        $fromDate = Carbon::parse($fromDate);
+        $toDate = Carbon::parse($toDate);
+        if ($fromDate->isStartOfDay() && $toDate->isStartOfDay()) {
+            switch ($leaveCode) {
+                case '1':
+                    return 'Full Day Casual Leave';
+                case '2':
+                    return 'Full Day Medical Leave';
+                case '3':
+                    return 'Full Day Annual Leave';
+                case '5':
+                    return 'Full Day Without Pay Leave';
+                case '12':
+                    return 'Full Day Outdoor Duty';
+                default:
+                    return 'Unknown Leave';
+            }
+        }
+    }
+    switch ($leaveCode) {
+        case '1':
+            return 'Casual ' . date('H:i', strtotime($fromDate)) . ' > ' . date('H:i',strtotime($toDate));
+        case '2':
+            return 'Medical ' . date('H:i', strtotime($fromDate)) . ' > ' . date('H:i',strtotime($toDate));
+        case '3':
+            return 'Annual '  . date('H:i', strtotime($fromDate)) . ' > ' . date('H:i',strtotime($toDate));
+        case '5':
+            return 'Without Pay Leave';
+        case '8':
+            return 'Short ' . date('H:i', strtotime($fromDate)) . ' > ' . date('H:i',strtotime($toDate));
+        case '12':
+            return 'Outdoor Duty';
+        default:
+            return 'Unknown Leave';
     }
 }

@@ -19,6 +19,12 @@ if (!function_exists('dateFormat')) {
         return date('d-m-Y', strtotime($string));
     }
 }
+// Format date as e.g. 25-Dec-2023
+if (!function_exists('dateDayMonthFormat')) {
+    function dateDayMonthFormat($string) {
+        return date('d-M-Y', strtotime($string));
+    }
+}
 
 if (!function_exists('dateAndTimeFormat')) {
     function dateAndTimeFormat($string) {
@@ -98,6 +104,18 @@ function checkFullLeaveExists($emp_code, $date)
         ->where('to_date', '>=', $date)
         ->first();
 
+    return $leave ? true : false;
+}
+function ifLeaveExists($emp_code, $date)
+{
+    $leave = \DB::table('pre_leave_tran')
+        ->where('emp_code', $emp_code)
+        ->where(function ($query) use ($date) {
+            $query->whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$date])
+                  ->whereRaw("TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')", [$date]);
+        })
+        ->first();
+        Log::info('Leave Date in helper function: ' . $date);
     return $leave ? true : false;
 }
 function allDoctors()

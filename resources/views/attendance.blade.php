@@ -117,11 +117,15 @@ td {
                           <span class="badge badge-success">{{$record['is_leave'] ? $record['leave_type'] : 'Present' }}</span>
                         @endif
                       @elseif ($record['timein'] && !$record['timeout'])
-                      <span class="badge badge-success">Present</span>           
+                        @if ($record['is_leave'])
+                          <span class="badge badge-success">{{$record['leave_type']}}</span>
+                          
+                        @endif
+                        <span class="badge badge-success">Present</span>           
                       @else
 
                         @if ($leaveFound)
-                          <span class="badge badge-success">Leave already applied</span>
+                          <span class="badge badge-success">{{$record['leave_type']}}</span>
                         @else
                           <span class="badge badge-danger">Absent</span>
                           {{-- <a class="leave-link" href={{route('apply-leave-advance', $emp_code)}}><i class="fa-solid fa-person-walking-arrow-right"></i> Apply for Leave</a> --}}
