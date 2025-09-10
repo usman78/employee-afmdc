@@ -33,6 +33,7 @@
 }
 td {
   font-size: 14px;
+  vertical-align: middle;
 }
 @media (max-width: 768px) {
   .portfolio-details .portfolio-info {
@@ -78,13 +79,27 @@ td {
                     @if ($record['is_sunday'] || $record['is_holiday'])
                       <span class="badge badge-info">{{$record['is_holiday'] ? 'Holiday' : 'Sunday'}}</span>
                     @else
-                      @if ($record['timein'] && $record['timeout'])
+                      {{-- @if ($record['timein'] && $record['timeout'])
                         {{ Carbon::parse($record['timein'])->format('H:i') . " / " . Carbon::parse($record['timeout'])->format('H:i') }}
                       @elseif ($record['timein'] && !$record['timeout'])
                         {{ Carbon::parse($record['timein'])->format('H:i') . " / --:--" }}
                       @else
                         <span class="badge badge-danger">Not timed in</span>
-                      @endif
+                      @endif --}}
+                      @if(!empty($record['time_logs']))
+                        {{-- Loop through each time log and display them --}}
+                        @foreach ($record['time_logs'] as $logs)
+                          @if ($logs['timein'] && $logs['timeout'])
+                            {{ Carbon::parse($logs['timein'])->format('H:i') . " / " . Carbon::parse($logs['timeout'])->format('H:i') }} <br>
+                          @elseif ($logs['timein'] && !$logs['timeout'])
+                            {{ Carbon::parse($logs['timein'])->format('H:i') . " / --:--" }} <br>
+                          @else
+                            <span class="badge badge-danger">Not timed in</span>
+                          @endif
+                        @endforeach
+                      @else
+                        <span class="badge badge-danger">Not timed in</span>
+                      @endif    
                     @endif
                   </td>
                   <td>
