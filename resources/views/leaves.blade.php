@@ -61,7 +61,7 @@
         </table>
           <div class="row mt-5">
             <div class="col-12" style="text-align: center;">
-              <a class="btn btn-primary" href="{{route('check-if-any-leave', parameters: $leaves->emp_code)}}"><i class="fa-solid fa-house-person-leave"></i>Apply For Leave</a>
+              <a class="btn btn-primary" id="apply-leave" href="{{route('check-if-any-leave', $leaves->emp_code)}}"><i class="fa-solid fa-house-person-leave"></i>Apply For Leave</a>
             </div>
           </div>
         </div>
@@ -73,5 +73,40 @@
 @endsection
 
 @push('scripts')
+
+  document.getElementById('apply-leave').addEventListener('click', function(event) {
+    event.preventDefault(); // Prevent the default link behavior
+    // send ajax request to check if any leave available
+    const url = this.href; // Get the URL from the link's href attribute
+    $.get(url).then(response => {
+      console.log(response);
+      if (response.has_no_leaves) {
+          console.log("he has no leaves");     // <-- no need for response.data
+        if (response.has_no_short_leave) {
+          console.log("he has short leaves");  
+          Swal.fire({
+            title: 'Unpaid Leave or Short Leave',
+            text: 'You have no leaves available. You can apply for Short Leave or Unpaid Leave only.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Apply Short Leave',
+            cancelButtonText: 'Unpaid Leave'
+          }).then((result) => {
+            if (result.isConfirmed) {
+              // send a flag to disable buttons except short leave                                                                                                                      
+              window.location.href = "{{ route('apply-leave-advance', ['emp_code' => $leaves->emp_code, 'shortLeaveOnly' => true])}}";
+            } else {
+              window.location.href = "{{ route('apply-unpaid-leave', ['emp_code' => $leaves->emp_code]) }}";
+            }
+          });
+        } else {
+          window.location.href = "{{ route('apply-unpaid-leave', ['emp_code' => $leaves->emp_code]) }}";
+        }
+      } else {
+        window.location.href = "{{ route('apply-leave-advance', ['emp_code' => $leaves->emp_code, 'shortLeaveOnly' => false]) }}";
+      }
+
+    });
+  });  
   
 @endpush

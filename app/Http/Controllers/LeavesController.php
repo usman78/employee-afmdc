@@ -158,11 +158,28 @@ class LeavesController extends Controller
 
     public function checkIfAnyLeave($emp_code)
     {
-        if($this->hasNoLeavesLeft($emp_code)) {
-            return view('apply-leave-unpaid', ['emp_code' => $emp_code]);
+        // Ensure logged-in user matches the requested employee code
+        $authUser = Auth::user();
+        if ($authUser->emp_code != $emp_code) {
+            return redirect()->route('home');
         }
-        // $this->applyLeaveAdvance($emp_code);
-        return redirect()->route('apply-leave-advance', ['emp_code' => $emp_code]);
+
+        $response = [
+            'has_no_leaves' => false,
+            'has_no_short_leave' => false,
+        ];
+
+        if ($this->hasNoLeavesLeft($emp_code)) {
+            $response['has_no_leaves'] = true;
+
+            if ($this->checkShortBalance($emp_code)) {
+                $response['has_no_short_leave'] = true;
+            } else {
+                $response['has_no_short_leave'] = false;
+            }
+        }
+
+        return response()->json($response);
     }
 
     public function checkShortBalance($empcode){
@@ -172,6 +189,7 @@ class LeavesController extends Controller
             ->where('from_date', '>=', $startDate)
             ->where('to_date', '<=', $endDate)
             ->where('leave_code', 8)
+            ->whereNot('status', 9)
             ->get(); 
         if($leave->isEmpty()){
             return true;
@@ -199,7 +217,7 @@ class LeavesController extends Controller
         return false; // default fallback
     }
 
-    public function applyLeaveAdvance($emp_code)
+    public function applyLeaveAdvance($emp_code, $shortLeaveOnly = null)
     {
         // Ensure logged-in user matches the requested employee code
         $authUser = Auth::user();
@@ -214,6 +232,7 @@ class LeavesController extends Controller
 
         return view('apply-leave-advance', [
             'emp_code' => $emp_code,
+            'shortLeaveOnly' => $shortLeaveOnly,
             'employee' => $employee,
             'pendingLeaves' => $pendingLeaves,
         ]);
@@ -400,7 +419,11 @@ class LeavesController extends Controller
         $hrApprovals = null;
         $hr = $this->identifyHR($emp_code);
         if($hr != null){
-            $hrApprovals = Leave::where('status', 5)->get();
+            $hrApprovals = Leave::where('status', 5)
+            ->where(function ($query) {     //only get leaves that are of current or previous month
+                $query->whereMonth('leave_date', Carbon::now()->month)
+                      ->orWhereMonth('leave_date', Carbon::now()->subMonth()->month);
+            })->get();
         }
 
         $leavesToApprove = collect();

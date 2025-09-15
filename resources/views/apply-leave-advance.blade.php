@@ -123,13 +123,17 @@ ul.error-msg{
                 <ul>
                   <li class="mt-2"><strong>Select Leave Duration: </strong></li>
                   <div style="margin-bottom: 15px;" class="form-check">
-                    <input class="btn-check" type="radio" name="leave_duration" id="full-day" value="full">
+                    <input class="btn-check" type="radio" name="leave_duration" id="full-day" value="full"
+                    @if($shortLeaveOnly) disabled @endif
+                    >
                     <label class="btn btn-outline-primary" for="full-day" style="width: 70px;">
                       Full
                     </label>
                   </div>
                   <div class="form-check mt-2">
-                    <input class="btn-check" type="radio" name="leave_duration" id="half-day" value="half">
+                    <input class="btn-check" type="radio" name="leave_duration" id="half-day" value="half"
+                    @if($shortLeaveOnly) disabled @endif
+                    >
                     <label class="btn btn-outline-primary" for="half-day" style="width: 70px;">
                       Half
                     </label>
@@ -414,59 +418,6 @@ ul.error-msg{
       endTime.value = minutesToTime(endMinutes);
     });
 
-  
-  {{-- document.getElementById('leaveForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const form = e.target;
-      const formData = new FormData(form);
-
-      fetch("{{ route('leave.preview') }}", {
-          method: 'POST',
-          headers: {
-              'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          },
-          body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-          if (data.sandwich === true) {
-              Swal.fire({
-                  title: 'Heads up!',
-                  text: `Your rest day (${data.rest_day}) will also be counted as leave due to sandwich leave policy.`,
-                  icon: 'info',
-                  confirmButtonText: 'OK'
-              }).then(() => {
-                  submitLeave(formData); // call actual save function
-              });
-          } else {
-              submitLeave(formData);
-          }
-      })
-      .catch(error => {
-          console.error('Error:', error);
-      });
-
-      function submitLeave(formData) {
-          fetch("{{ route('store-leave-advance', $emp_code) }}", {
-              method: 'POST',
-              headers: {
-                  'X-CSRF-TOKEN': '{{ csrf_token() }}',
-              },
-              body: formData
-          })
-          .then(response => response.json())
-          .then(data => {
-              if(data.error){
-                Swal.fire('Error', data.error, 'error');
-                return;
-              }
-              Swal.fire('Success', data.message, 'success');
-              document.getElementById('leaveForm').reset();
-          });
-      }
-  }); --}}
-
   formEl.addEventListener('submit', async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -484,7 +435,8 @@ ul.error-msg{
           title: 'Heads up!',
           text: `Your rest day (${preview.rest_day}) will also be counted as leave due to sandwich leave policy.`,
           icon: 'info',
-          confirmButtonText: 'OK'
+          showCancelButton: true,
+          confirmButtonText: 'Apply Leave'
         });
         if (!r.isConfirmed) { setSubmitting(false); return; }
       }

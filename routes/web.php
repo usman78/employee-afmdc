@@ -25,9 +25,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/attendance/{emp_code}', [AttendanceController::class, 'attendance'])->name('attendance');
 
     Route::get('/leaves/{emp_code}', [LeavesController::class, 'leaves'])->name('leaves');
-    Route::get('/apply-leave-advance/{emp_code}', [LeavesController::class, 'applyLeaveAdvance'])->name('apply-leave-advance');
+    Route::get('/apply-leave-advance/{emp_code}/{shortLeaveOnly?}', [LeavesController::class, 'applyLeaveAdvance'])->name('apply-leave-advance');
     Route::post('/leave/preview', [LeavesController::class, 'preview'])->name('leave.preview');
     Route::post('/apply-leave-advance/{emp_code}', [LeavesController::class, 'storeLeaveAdvance'])->name('store-leave-advance');
+    Route::get('/apply-unpaid-leave/{emp_code}', function() {
+        return view('apply-leave-unpaid', [
+            'emp_code' => request()->route('emp_code')
+        ]);
+    })->name('apply-unpaid-leave');
     Route::post('/apply-unpaid-leave/{emp_code}', [LeavesController::class, 'storeUnpaidLeave'])->name('store-unpaid-leave');
     Route::get('/check-if-any-leave/{emp_code}', [LeavesController::class, 'checkIfAnyLeave'])->name('check-if-any-leave');
     Route::get('leave-approvals/{emp_code}', [LeavesController::class, 'leaveApprovals'])->name('leave-approvals');
