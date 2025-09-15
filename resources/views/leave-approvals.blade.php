@@ -256,7 +256,7 @@ td {
                           </td>
                           <td>
                               <label class="switch">
-                                  <input type="checkbox" class="approve-leave" data-url="{{ route('approve-leave', $leave->leave_id)}}" data-status="{{$leave->status}}" data-id="{{$leave->leave_id}}">
+                                  <input type="checkbox" class="approve-leave" data-url="{{ route('approve-leave', $leave->leave_id)}}" data-urlreject="{{route('reject-leave', $leave->leave_id)}}" data-status="{{$leave->status}}" data-id="{{$leave->leave_id}}">
                                   <span class="slider round"></span>
                               </label>
                           </td>
