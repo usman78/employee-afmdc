@@ -94,19 +94,10 @@ Route::get('applications/{id}/{fileName}', [App\Http\Controllers\FilesController
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::get('/debug', [TaskController::class, 'createSop'])->name('debug');
-
-Route::get('/pagination-test', function () {
-    $users = \App\Models\User::paginate(5);
-    return view('tasks.pagination-test', compact('users'));
-});
-
 Route::get('/query', [HomeController::class, 'query'])
     ->name('query.get');
 Route::post('/query', [HomeController::class, 'queryDown'])
     ->name('query.post');
-
-
 
 Route::fallback(function () {
     return response()->view('404', [], 404);
