@@ -22,8 +22,6 @@ class AttendanceController extends Controller
 
         $emp_category = Employee::select('catg_code', 'st_time', 'end_time')->where('emp_code', $emp_code)->first();
         $totalMins = 480;
-        // $startTime = $emp_category->st_time;
-        // $endTime = $emp_category->end_time;
 
         if($emp_category->catg_code == 2){
             $totalMins = 360;
@@ -56,14 +54,9 @@ class AttendanceController extends Controller
             $leaveType = null;  
             $isLeave = false;
             $isHoliday = in_array($dateString, $holidays);
-            // $timein = null;
-            // $timeout = null;
             $minsWorked = 0;
             $timeLogs = [];
-            $count = 0;
             
-             // Log::info('Processing Date: ' . $dateString . ' | Is Holiday: ' . ($isHoliday ? 'Yes' : 'No'));
-
             if ($tempDate->isSunday() || $isHoliday) {
                 // Manually create a placeholder record for Sundays
                 $allDates->push([
@@ -102,44 +95,9 @@ class AttendanceController extends Controller
                             'timeout' => $timeout
                         ];
                     }
-                    // if(ifLeaveExists($emp_code, $dateString) && !$isLeave) {
-                    //     $isLeave = true;
-                    //     $leave = Leave::whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
-                    //         ->whereRaw("TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
-                    //         ->where('emp_code', $emp_code)
-                    //         ->first();
-                    //     $leaveType = $leave->leave_code;   
-                    //     $timein = null;
-                    //     $timeout = null;
-                    // }
                     $leaveType = leaveDescription($leaveType, $leave ? $leave->from_date : null, $leave ? $leave->to_date : null);
                     
                     $leaveRemark = null;
-
-                    // Check if timein and timeout are within the official working hours
-                    // $officialStartTime = Carbon::parse($dateString . ' ' . $startTime);
-                    // $officialEndTime = Carbon::parse($dateString . ' ' . $endTime);
-                    
-                    // $actualIn = Carbon::parse($timein);
-                    // $actualOut = Carbon::parse($timeout);
-                    
-                    // // Add 10-minute grace to official start
-                    // $gracePeriodStart = $officialStartTime->copy()->addMinutes(10);
-                    
-                    // // Apply grace period logic
-                    // if ($actualIn->lessThanOrEqualTo($gracePeriodStart)) {
-                    //     $effectiveIn = $officialStartTime;
-                    // } else {
-                    //     $effectiveIn = $actualIn;
-                    // }
-                    
-                    // // Bound the out time
-                    // $effectiveOut = $actualOut->lessThan($officialEndTime) ? $actualOut : $officialEndTime;
-                    
-                    // // Final worked minutes
-                    // $workedMinutes = max(0, $effectiveIn->diffInMinutes($effectiveOut));
-                    // Calculate minutes worked only if timein and timeout are valid
-
                     
                     if (!$isLeave) {
                         if ($minsWorked >= ($totalMins / 2) && $minsWorked < $totalMins - 120) {
@@ -148,12 +106,11 @@ class AttendanceController extends Controller
                             $leaveRemark = 'Full Day Eligible';
                         }
                     }
-                
-                    
+                     
                     $allDates->push([
                         'at_date' => $dateString,
-                        // 'timein' => $timein,
-                        // 'timeout' => $timeout,
+                        'timein' => $timein,
+                        'timeout' => $timeout,
                         'time_logs' => $timeLogs ?? [],
                         'is_sunday' => false,
                         'is_holiday' => $isHoliday,
@@ -172,13 +129,12 @@ class AttendanceController extends Controller
                             ->first();
                         $leaveType = $leave->leave_code;
                         $leaveType = leaveDescription($leaveType, $leave ? $leave->from_date : null, $leave ? $leave->to_date : null);   
-                        // Log::info('Leave Date: ' . $dateString); 
                     }
                     // Manually create a placeholder record for non-leave days
                     $allDates->push([
                         'at_date' => $dateString,
-                        // 'timein' => null,
-                        // 'timeout' => null,
+                        'timein' => null,
+                        'timeout' => null,
                         'time_logs' => [],
                         'is_sunday' => false,
                         'is_holiday' => $isHoliday,
@@ -191,8 +147,6 @@ class AttendanceController extends Controller
         }
 
         $allDates = $allDates->sortByDesc('at_date')->values();
-        // dd($allDates); 
-        // Get employee details
         $employee = Employee::where('emp_code', $emp_code)->first();
 
         $leaves = Leave::where('emp_code', $emp_code)
@@ -235,15 +189,15 @@ function leaveDescription($leaveCode, $fromDate = null, $toDate = null)
     }
     switch ($leaveCode) {
         case '1':
-            return 'Casual ' . date('H:i', strtotime($fromDate)) . ' > ' . date('H:i',strtotime($toDate));
+            return 'Casual ' . date('H:i', strtotime($fromDate)) . ' to ' . date('H:i',strtotime($toDate));
         case '2':
-            return 'Medical ' . date('H:i', strtotime($fromDate)) . ' > ' . date('H:i',strtotime($toDate));
+            return 'Medical ' . date('H:i', strtotime($fromDate)) . ' to ' . date('H:i',strtotime($toDate));
         case '3':
-            return 'Annual '  . date('H:i', strtotime($fromDate)) . ' > ' . date('H:i',strtotime($toDate));
+            return 'Annual '  . date('H:i', strtotime($fromDate)) . ' to ' . date('H:i',strtotime($toDate));
         case '5':
             return 'Without Pay Leave';
         case '8':
-            return 'Short ' . date('H:i', strtotime($fromDate)) . ' > ' . date('H:i',strtotime($toDate));
+            return 'Short ' . date('H:i', strtotime($fromDate)) . ' to ' . date('H:i',strtotime($toDate));
         case '12':
             return 'Outdoor Duty';
         default:
