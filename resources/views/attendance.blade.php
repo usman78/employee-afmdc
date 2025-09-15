@@ -50,8 +50,6 @@ td {
         <div class="portfolio-info aos-init aos-animate pt-4" data-aos="fade-up" data-aos-delay="200">
           <h3>Attendance Information</h3>
           <ul>
-            {{-- <li><strong>Employee Code: </strong>{{ $emp_code }}</li> --}}
-            {{-- <li><strong>Employee Name: </strong>{{ capitalizeWords($emp_name) }}</li> --}}
             <li><strong>Current month all attendance records.</strong></li>
             <li class="mt-5">
               @if(session('success'))
@@ -79,13 +77,6 @@ td {
                     @if ($record['is_sunday'] || $record['is_holiday'])
                       <span class="badge badge-info">{{$record['is_holiday'] ? 'Holiday' : 'Sunday'}}</span>
                     @else
-                      {{-- @if ($record['timein'] && $record['timeout'])
-                        {{ Carbon::parse($record['timein'])->format('H:i') . " / " . Carbon::parse($record['timeout'])->format('H:i') }}
-                      @elseif ($record['timein'] && !$record['timeout'])
-                        {{ Carbon::parse($record['timein'])->format('H:i') . " / --:--" }}
-                      @else
-                        <span class="badge badge-danger">Not timed in</span>
-                      @endif --}}
                       @if(!empty($record['time_logs']))
                         {{-- Loop through each time log and display them --}}
                         @foreach ($record['time_logs'] as $logs)
@@ -126,7 +117,6 @@ td {
                             <span class="badge badge-success">Leave already applied</span>
                           @else 
                           <span class="badge badge-warning">{{$record['short_duty_status']}}</span>
-                          {{-- <a class="leave-link" href={{route('apply-leave-advance', $emp_code)}}><i class="fa-solid fa-person-walking-arrow-right"></i> Apply for Leave</a> --}}
                           @endif
                         @else
                           <span class="badge badge-success">{{$record['is_leave'] ? $record['leave_type'] : 'Present' }}</span>
@@ -143,7 +133,6 @@ td {
                           <span class="badge badge-success">{{$record['leave_type']}}</span>
                         @else
                           <span class="badge badge-danger">Absent</span>
-                          {{-- <a class="leave-link" href={{route('apply-leave-advance', $emp_code)}}><i class="fa-solid fa-person-walking-arrow-right"></i> Apply for Leave</a> --}}
                         @endif
                       @endif
                     @endif
