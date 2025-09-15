@@ -115,7 +115,6 @@ function ifLeaveExists($emp_code, $date)
                   ->whereRaw("TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')", [$date]);
         })
         ->first();
-        Log::info('Leave Date in helper function: ' . $date);
     return $leave ? true : false;
 }
 function allDoctors()
