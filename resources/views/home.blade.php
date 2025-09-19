@@ -87,6 +87,7 @@ strong {
             <h3>{{capitalizeWords($employee->name)}}</h3>
           </a>
           <p>{{$employee->designation->desg_short}}</p>
+          <small class="d-inline-flex mt-3 px-2 py-1 fw-semibold text-success-emphasis bg-success-subtle border border-success-subtle rounded-2">{{$employeeStatus}}</small>
         </div>
       </div>
       <div class="col-md-5 d-block mx-auto">

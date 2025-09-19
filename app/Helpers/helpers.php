@@ -134,3 +134,33 @@ function getSessionYear($classYear)
     $sessionYear = $currentYear - $classYear;
     return $sessionYear;
 }
+
+function employeeStatus($emp_code)
+{
+    $status = \DB::table('pay_pers')
+        ->where('emp_code', $emp_code)
+        ->value('stat_code');
+
+    switch ($status) {
+        case 1:
+            $status = "Permanent";
+            break;
+        case 2:
+            $status = "Temporary"; 
+            break;
+        case 3:
+            $status = "Probational"; 
+            break;  
+        case 4:
+            $status = "Contract"; 
+            break;
+        case 5:
+            $status = "Training"; 
+            break;          
+        
+        default:
+            $status = 'N/A';
+            break;
+    }    
+    return $status;
+}

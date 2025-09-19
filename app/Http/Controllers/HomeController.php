@@ -30,6 +30,7 @@ class HomeController extends Controller
         $user = Auth::user();
         $employee = Employee::where('emp_code', $user->emp_code)->first();
         $today = Attendance::where('emp_code', $user->emp_code)->whereDate('at_date', today())->first();
+        $employeeStatus = employeeStatus($user->emp_code);
 
         if($today){
             if($today->timein != null){
@@ -39,7 +40,7 @@ class HomeController extends Controller
                 $today->timeout = date('H:i', strtotime($today->timeout));
             }
         }   
-        return view('home', compact('employee', 'today'))->with('emp_code', $user);
+        return view('home', compact('employee', 'today', 'employeeStatus'))->with('emp_code', $user);
     }
 
     public function debug()
