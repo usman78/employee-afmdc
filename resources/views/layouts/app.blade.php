@@ -10,8 +10,7 @@
   <meta content="AFMDC, Employee Portal, Employee Management" name="keywords">
 
   <!-- Favicons -->
-  <link href="assets/img/favicon.png" rel="icon">
-  <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+  <link href="{{asset("/img/AFMDC-Logo.png")}}" rel="icon">
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com" rel="preconnect">
@@ -36,8 +35,6 @@
   @stack('cdn-styles')
   <!-- Main CSS File -->
   <link href="{{asset('css/main.css')}}" rel="stylesheet">
-  {{-- @vite('resources/css/app.css') --}}
-  {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
   
   <style>
     .btn-primary {
