@@ -60,7 +60,6 @@
                                                 </a>
                                             </td>
                                         @endif
-
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -72,10 +71,6 @@
     </div>
 @endsection 
 @push('scripts')
-
-
-
-
     $(document).ready(function () {
         const viewBtn = document.getElementById('view-button');
 
@@ -108,5 +103,4 @@
             table.search(this.value).draw();
         });
     });
-
 @endpush       

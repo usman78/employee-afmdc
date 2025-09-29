@@ -164,3 +164,48 @@ function employeeStatus($emp_code)
     }    
     return $status;
 }
+
+function getClassId($yearId, $programId)
+{
+    $currentYear = (int) date('Y'); // ensures it's an integer
+    $sessionId = $currentYear - (int)$yearId; // calculates session ID based on current year and yearId
+    $classId = \DB::table('mis.si_class')
+        ->where('program_id', $programId)
+        ->where('session_id', $sessionId)
+        ->value('class_id');
+
+    return $classId;
+}
+function getSubjectTitle($subjectId)
+{
+    $title = \DB::table('mis.si_subject')
+        ->where('subject_id', $subjectId)
+        ->value('title');
+
+    return $title;
+}
+function getProgramName($programId)
+{
+    switch ($programId) {
+        case 1:
+            $programId = "DPT";
+            break;
+        case 2:
+            $programId = "MIT";
+            break;
+        case 3:
+            $programId = "MLT";
+            break;
+        case 4:
+            $programId = "OTT";
+            break;
+        case 5:
+            $programId = "BS Nutrition";
+            break;
+        default:
+            $programId = "N/A";
+            break;
+    }
+
+    return $programId;
+}

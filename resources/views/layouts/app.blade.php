@@ -148,30 +148,8 @@
       font-weight: 700;
     }
   }
-  /* @media (max-width: 1199.98px) {
-    .container-fluid.position-relative {
-      justify-content: space-around !important;
-    }
-    .header-social-links {
-      order: 3; 
-      margin-left: 10px;
-    }
-    .navmenu {
-      order: 2;
-    }
-    .logo {
-      order: 1;
-    }
-  }
-  @media (max-width: 1199.98px) {
-  .header-social-links {
-    display: flex;
-    gap: 5px; 
-    align-items: center;
-  }
-} */
 
-@stack('styles');
+  @stack('styles');
   </style>
 </head>
 
@@ -202,6 +180,9 @@
               <li><a href="{{route('meetings')}}">Meetings</a></li>
               <li><a href="{{route('assigned-tasks')}}">Assigned Tasks</a></li>
               <li><a href="{{route('sops')}}">SOPs</a></li>
+              @if(Auth::user()->isHR())
+                <li><a href="{{route('admissions')}}">Admissions</a></li>
+              @endif
             </ul>
           </li>
           <li class="nav-item"><a href="{{route('timetables.index')}}" @if(in_array(Route::currentRouteName(), ['timetables.index', 'timetables.new-timetable', 'timetables.create'])) class="active" @endif>Timetable</a></li>

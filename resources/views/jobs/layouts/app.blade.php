@@ -42,7 +42,7 @@
 
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-        <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+        {{-- <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script> --}}
 
         <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
 
@@ -283,7 +283,7 @@
     <script src="{{asset('vendor/isotope-layout/isotope.pkgd.min.js')}}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    {{-- <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script> --}}
     <script src="{{asset('js/jquery.min.js')}}"></script>
     <script src="{{asset('js/DataTables.js')}}"></script>
     <script src="{{asset('js/bootstrap.min.js')}}"></script>
@@ -294,7 +294,6 @@
     <script src="{{asset('js/custom.js')}}"></script>
     <script src="{{asset('js/photoviewer.js')}}"></script>
     <script src="{{asset('js/sweetalert2.all.min.js')}}"></script>
-    {{-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script> --}}
 
   <!-- Main JS File -->
   <script src="{{asset('js/main.js')}}"></script>

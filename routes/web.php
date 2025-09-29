@@ -15,6 +15,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\ServiceRequestController;
 use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\TimetableController;
+use App\Http\Controllers\AdmissionController;
 
 Auth::routes();
 
@@ -23,7 +24,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
     Route::get('/attendance/{emp_code}', [AttendanceController::class, 'attendance'])->name('attendance');
-
     Route::get('/leaves/{emp_code}', [LeavesController::class, 'leaves'])->name('leaves');
     Route::get('/apply-leave-advance/{emp_code}/{shortLeaveOnly?}', [LeavesController::class, 'applyLeaveAdvance'])->name('apply-leave-advance');
     Route::post('/leave/preview', [LeavesController::class, 'preview'])->name('leave.preview');
@@ -80,17 +80,23 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('timetables')->group(function () {
         Route::get('/', [TimetableController::class, 'index'])->name('timetables.index');
         Route::get('/calendar', [TimetableController::class, 'show'])->name('timetables.show');
-        Route::get('/calendar/events', [TimetableController::class, 'getTimetables'])->name('timetables.get');
+        Route::get('/calendar/events/{year_id}/{program_id}', [TimetableController::class, 'getTimetables'])->name('timetables.get');
         Route::get('/new-timetable', [TimetableController::class, 'newTimetable'])->name('timetables.new-timetable');
         Route::post('/create-timetable', [TimetableController::class, 'store'])->name('timetables.store');
         Route::post('/create', [TimetableController::class, 'create'])->name('timetables.create');
         Route::post('/get-subject', [TimetableController::class, 'getSubject'])->name('timetables.get-subject'); 
     });
 
+    Route::prefix('student-admissions')->group(function() {
+        Route::get('/', [AdmissionController::class, 'admissions'])->name('admissions');
+        Route::get('/applicant/{id}', [AdmissionController::class, 'applicant'])->name('applicant');
+        Route::post('/update-applicant-status/{id}', [AdmissionController::class, 'updateApplicantStatus'])->name('update-applicant-status');
+    });
 });
 
 Route::get('applications/{id}/{fileName}', [App\Http\Controllers\FilesController::class, 'download'])
     ->name('download-file');
+Route::get('admissions/{id}/{fileName}/{fileFormat}', [App\Http\Controllers\FilesController::class, 'downloadAdmissionFile'])->name('download-admission-file');    
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
