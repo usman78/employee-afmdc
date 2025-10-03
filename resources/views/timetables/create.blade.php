@@ -161,7 +161,6 @@ th.date, td.date {
                 clone.classList.add('table-success');
                 clone.classList.remove('table-danger');
                 clone.dataset.originalId = originalRow.dataset.rowId; // link to original
-
                 const cells = clone.children;
 
                 // Helper: Get value from cell
@@ -197,7 +196,6 @@ th.date, td.date {
                                             <option value="G" ${groupVal == "G" ? 'selected' : ''}>G</option>
                                             <option value="H" ${groupVal == "H" ? 'selected' : ''}>H</option>     
                                     </select>`;
-
                 // Subject ID
                 const subjectVal = getCellValue(currentRow.children[5]);
                 cells[5].innerHTML = `<select name="subject_id[]" class="form-select form-select-sm js-example-basic-single" required>
@@ -235,7 +233,6 @@ th.date, td.date {
                                             <option value="CASE PREPARATION" ${periodTypeVal == "CASE PREPARATION" ? 'selected' : ''}>Case Preparation</option>
                                             <option value="CASE PRESENTATION" ${periodTypeVal == "CASE PRESENTATION" ? 'selected' : ''}>Case Presentation</option>
                                     </select>`;
-
                 // HOD
                 const hodVal = getCellValue(currentRow.children[9]);
                 cells[9].innerHTML = `<select name="hod[]" class="form-select form-select-sm search-hod" required>
@@ -321,6 +318,47 @@ th.date, td.date {
                     title: "No Rows Added",
                     text: "Please add at least one row before submitting."
                 });
+                return;
+            }
+
+            // --- Time Overlap Validation In A Day ---
+            const lecturesByDay = {};
+
+            clonedRows.forEach(row => {
+                const day = row.querySelector('[name="day[]"]').value.trim();
+                const start = row.querySelector('[name="start_time[]"]').value;
+                const end = row.querySelector('[name="end_time[]"]').value;
+
+                if (!day || !start || !end) return;
+
+                if (!lecturesByDay[day]) {
+                    lecturesByDay[day] = [];
+                }
+
+                lecturesByDay[day].push({ start, end, row });
+            });
+
+            // Check overlaps for each day
+            for (let day in lecturesByDay) {
+                const lectures = lecturesByDay[day];
+
+                for (let i = 0; i < lectures.length; i++) {
+                    for (let j = i + 1; j < lectures.length; j++) {
+                        const a = lectures[i];
+                        const b = lectures[j];
+
+                        // overlap check
+                        if (a.start < b.end && b.start < a.end) {
+                            e.preventDefault();
+                            Swal.fire({
+                                icon: "error",
+                                title: "Overlap Detected",
+                                text: `On ${day}, ${a.start}-${a.end} overlaps with ${b.start}-${b.end}. Please fix it.`
+                            });
+                            return; // stop checking further
+                        }
+                    }
+                }
             }
         });
     });
@@ -347,5 +385,5 @@ th.date, td.date {
         }
     });
 
-    @endpush
+@endpush
                 
