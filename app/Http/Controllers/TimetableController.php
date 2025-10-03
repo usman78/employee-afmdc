@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\StudentLectureDuplicate;
 use App\Models\TimetableDuplicate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Validator;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\DB;
 use App\Models\Year;
+use Log;
 
 class TimetableController extends Controller
 {
@@ -23,7 +25,6 @@ class TimetableController extends Controller
 
     public function newTimetable()
     {
-        // $years = StudentClass::select('session_id')->distinct()->pluck('session_id');
         $years = Year::all();
         $programs = StudentClass::select('program_id')->distinct()->pluck('program_id');
 
@@ -39,15 +40,6 @@ class TimetableController extends Controller
             'to_date' => 'required|date|after_or_equal:from_date',
         ]);
 
-        $validator->after(function ($validator) use ($request) {
-            $from = Carbon::parse($request->from_date);
-            $to = Carbon::parse($request->to_date);
-
-            if ($from->diffInDays($to) > 7) {
-                $validator->errors()->add('to_date', 'The date range should not exceed 7 days.');
-            }
-        });
-
         $validated = $validator->validate();
 
         $period = CarbonPeriod::create($validated['from_date'], $validated['to_date']);
@@ -57,15 +49,14 @@ class TimetableController extends Controller
         foreach ($period as $date) {
             $weekday = strtoupper($date->format('l')); // e.g., MONDAY
             $dayNum = $date->dayOfWeekIso; // 1 (Mon) to 7 (Sun)
-            $key = $dayNum . '-' . $weekday;
+            $value = $dayNum . '-' . $weekday;
 
-            if (!isset($dayMap[$key])) {
-                $dayMap[$key] = $date->format('d-m-Y'); // '2025-08-04'
+            if (!isset($dayMap[$date->format('d-m-Y')])) {
+                $dayMap[$date->format('d-m-Y')] = $value; // '2025-08-04'
             }
         }
 
         $sessionYear = getSessionYear($validated['year']);
-        // dd($sessionYear);
 
         $classId = StudentClass::where('program_id', $validated['program'])
             ->where('session_id', $sessionYear)
@@ -88,9 +79,7 @@ class TimetableController extends Controller
             ->distinct()
             ->pluck('subject_id');
         
-        $doctors = allDoctors();
-
-        // dd($subjects);        
+        $doctors = allDoctors();       
         
         return view('timetables.create', [
             'timetable' => $timetable,
@@ -99,18 +88,16 @@ class TimetableController extends Controller
             'subjects' => $subjects,
             'doctors' => $doctors,
             'dayMap' => $dayMap,
+            'to_date' => $validated['to_date'],
+            'from_date' => $validated['from_date'],
         ]);
     }
     public function getSubject(Request $request)
     {
-        
-
         $subjectId = $request->input('subject_id');
         $subject = Subject::select('title')
             ->where('subject_id', $subjectId)
             ->first();    
-
-            \Log::info('outgoing main_subject: ' . $subject->title);
         return response()->json(['main_subject' => $subject->title]);
     }
     public function store(Request $request)
@@ -126,6 +113,7 @@ class TimetableController extends Controller
         $hods = $request->input('hod');
         $startTimes = $request->input('start_time');
         $endTimes = $request->input('end_time');
+        $toDate = $request->input('to_date');
         $userId = auth()->user()->emp_code;
 
         $count = count($subjectIds);
@@ -133,7 +121,7 @@ class TimetableController extends Controller
         // Track if all saves were successful
         $allSaved = true;
         $errors = [];
-
+        $timeNumber = getIncrementedId('mis.si_time_table_exp', 'timet_no');
         for ($i = 0; $i < $count; $i++) {
             try {
                 $oracleDate = Carbon::createFromFormat('D, d-M', $dates[$i])->format('Y-m-d');
@@ -160,6 +148,8 @@ class TimetableController extends Controller
                 $timetableDuplicate->user_id1 = $userId;
                 $timetableDuplicate->timestamp_id1 = now();
                 $timetableDuplicate->terminal_id1 = 'ONLINE';
+                $timetableDuplicate->datedt = $toDate;
+                $timetableDuplicate->timet_no = $timeNumber;
 
                 $timetableDuplicate->save();
             } catch (\Exception $e) {
@@ -177,72 +167,95 @@ class TimetableController extends Controller
                 ->with('details', $errors);
         }
     }
-
-    public function getTimetables(Request $request)
+    public function show()
     {
+        $empCode = auth()->user()->emp_code;
+        $lectures = StudentLectureDuplicate::with('timetable')
+            ->whereHas('timetable', function ($query) use ($empCode) {
+                $query->where('emp_code', $empCode);
+            })
+            ->get();
         $startDate = Carbon::now()->startOfMonth();
         $endDate = Carbon::now()->endOfMonth();
+        return view('timetables.show', compact('startDate', 'endDate', 'lectures', 'empCode'));
+    }
+    public function getTimetables($year_id, $program_id, Request $request)
+    {
+        $startDate = Carbon::parse($request->input('start_date'));
+        $endDate   = Carbon::parse($request->input('end_date'));
+        // $empCode   = $request->input('emp_code');
 
-        $yearId = $request->input('year_id', 'YEAR01');
-        $periodType = $request->input('period_type');
-        // dd($periodType);
-        // $timetables = Timetable::with(['lectures' => function ($query) use ($startDate, $endDate) {
-        //     $query->whereBetween('dated', [$startDate, $endDate]);
-        // }])
-        // ->where('year_id', $yearId)
-        // ->get();
-        $lectures = Lecture::whereBetween('dated', [$startDate, $endDate])
-            ->get();
-        $timetables = $lectures->load('timetable') // eager load
-            ->pluck('timetable') // get timetables from each lecture
-            ->filter(function ($timetable) use ($yearId) {
-                return $timetable && $timetable->year_id === $yearId;
-            })
-            ->unique('doc_id') // prevent duplicates if same timetable used for many lectures
-            ->values();
-        // dd($timetables);    
-
-
-
+        // now you get values directly from URL
+        $yearId    = $year_id;
+        $programId = $program_id;
         $events = [];
 
-        foreach ($timetables as $timetable) {
-
-            $parts = explode('-', $timetable->p_day);
-            
-            $weekdayName = strtoupper(trim($parts[1] ?? ''));
-            
-            if (!$weekdayName) {
-                continue; // skip if invalid
-            }
-
-            $dates = collect();
-            $date = $startDate->copy();
-            
-            while ($date <= $endDate) {
-                // dd($date->format('l'), capitalizeWords($weekdayName));
-                if ($date->format('l') === capitalizeWords($weekdayName)) {
-                    logger("Comparing: " . strtoupper($date->format('l')) . " === $weekdayName");
-
-                    $dates->push($date->copy());   
-                }
-                $date->addDay();
-            }
-
-            foreach ($dates as $lectureDate) {
-                $statusEntry = $timetable->lectures->firstWhere('dated', $lectureDate->toDateString());
-                $delivered = $statusEntry && $statusEntry->status == 1; // Assuming 1 means delivered
-
-                $events[] = [
-                    'title' => 'Subject ' . $timetable->subject_id . ($delivered ? ' (✔)' : ''),
-                    'start' => $lectureDate->format('Y-m-d') . 'T' . $timetable->start_time,
-                    'end' => $lectureDate->format('Y-m-d') . 'T' . $timetable->end_time,
-                    'color' => $delivered ? '#28a745' : '#ffc107',
-                ];
-            }
+        if($yearId == null || $programId == null){
+            return response()->json($events);
         }
-        // dd($events);
+        // Get class ID based on year and program
+        $classId = getClassId($yearId, $programId);
+
+        $timetable = TimetableDuplicate::with('lecture')
+            ->where('class_id', $classId)
+            ->whereBetween('datedm', [$startDate, $endDate])
+            ->get();
+        
+        foreach ($timetable as $lecture) {
+            $hod = getEmployeeNameAndPicture($lecture->emp_code);
+            $delivered = $lecture->lecture?->emp_code != null;
+            if($delivered){
+                $teacher = getEmployeeNameAndPicture($lecture->lecture->emp_code);
+            }
+            $events[] = [
+                'doc_id' => $lecture->doc_id,
+                'is_finalized' => $lecture->lecture->status == 1,
+                'title' =>  ($lecture->lecture->topic ?? 'Not Assigned'),
+                'start' => Carbon::parse($lecture->datedm)->toDateString() . 'T' . ($lecture->start_time ?? '00:00:00'),
+                'end'   => Carbon::parse($lecture->datedm)->toDateString() . 'T' . ($lecture->end_time ?? '00:00:00'),
+                'start_time' => $lecture->start_time ?? 'Not Available',
+                'end_time' => $lecture->end_time ?? 'Not Available',
+                'color' => $delivered ? '#28a745' : '#ffc107',
+                'hod_name' => $hod->name,
+                'hod_picture' => asset('pictures') . '/' . $hod->pic_name,
+                'delivered' => $delivered,
+                'delivered_by' => $delivered ? $teacher->name : null,
+                'teacher_picture' => $delivered ? asset('pictures') . '/' . $teacher->pic_name : null,
+            ];
+        }
+        Log::info('events data from controller: ', $events);
         return response()->json($events);
     }
+    public function markFinalized(Request $request)
+    {
+        Log::info('Mark Finalized Request Data: ', $request->all());
+        $docIds = $request->input('doc_ids');
 
+        if(empty($docIds) || !is_array($docIds)) {
+            return response()->json(['error' => 'No timetable entries are present.'], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($docIds as $docId) {
+                $timetable = StudentLectureDuplicate::where('fk_doc_id', $docId)->first();
+
+                if ($timetable) {
+                    $timetable->status = 1;
+                    $timetable->save();
+                }
+                else {
+                    Log::warning("Timetable entry with doc_id {$docId} not found.");
+                }
+            }
+
+            DB::commit();
+            return response()->json(['success' => 'Timetable marked as finalized.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error finalizing timetable: ' . $e->getMessage());
+            return response()->json(['error' => 'An error occurred while finalizing the timetable.'], 500);
+        }
+    }
 }

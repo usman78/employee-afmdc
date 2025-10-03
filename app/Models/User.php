@@ -73,6 +73,10 @@ class User extends Authenticatable
     {
         return in_array($this->desg_code, ['971', '991', '44', '996']);
     }
+    public function isStudentAffairs()
+    {
+        return in_array($this->emp_code, ['883', '856','851','199', '1045', '1171']);
+    }
     public function isBoss()
     {
         if($this?->leaveAuth?->emp_code_a)

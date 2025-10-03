@@ -185,7 +185,9 @@
               @endif
             </ul>
           </li>
-          <li class="nav-item"><a href="{{route('timetables.index')}}" @if(in_array(Route::currentRouteName(), ['timetables.index', 'timetables.new-timetable', 'timetables.create'])) class="active" @endif>Timetable</a></li>
+          @if(Auth::user()->isStudentAffairs())
+            <li class="nav-item"><a href="{{route('timetables.index')}}" @if(in_array(Route::currentRouteName(), ['timetables.index','timetables.show', 'timetables.new-timetable', 'timetables.create'])) class="active" @endif>Timetable</a></li>
+          @endif
           <li class="nav-item"><a href="{{route('service-requests.index')}}" @if(in_array(Route::currentRouteName(), ['service-requests.index', 'service-requests.show', 'service-requests.assign'])) class="active" @endif>Service Requests</a></li>
           @if (Auth::user()->isHR())
             <li class="nav-item"><a href="{{route('job-dashboard', $emp_code)}}" target="_blank">Jobs Bank</a></li>

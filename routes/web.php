@@ -84,7 +84,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/new-timetable', [TimetableController::class, 'newTimetable'])->name('timetables.new-timetable');
         Route::post('/create-timetable', [TimetableController::class, 'store'])->name('timetables.store');
         Route::post('/create', [TimetableController::class, 'create'])->name('timetables.create');
-        Route::post('/get-subject', [TimetableController::class, 'getSubject'])->name('timetables.get-subject'); 
+        Route::post('/get-subject', [TimetableController::class, 'getSubject'])->name('timetables.get-subject');
+        Route::post('/mark-finalized', [TimetableController::class, 'markFinalized'])->name('timetables.mark-finalized'); 
     });
 
     Route::prefix('student-admissions')->group(function() {

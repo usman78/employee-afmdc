@@ -25,4 +25,8 @@ class TimetableDuplicate extends Model
         'timestamp_id1',
         'terminal_id1',
     ];
+    public function lecture()
+    {
+        return $this->belongsTo(StudentLectureDuplicate::class, 'doc_id', 'fk_doc_id');
+    }
 }

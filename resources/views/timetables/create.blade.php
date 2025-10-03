@@ -44,20 +44,37 @@ th.date, td.date {
                 <div class="portfolio-details">
                     <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
                         <h3>New Time Table</h3>
-                        <p>Here you can create a new time table for the current month.</p>
-                        <div class="row">
-                            <div>
-                                
-                                <p class="d-inline"> <strong>Class ID </strong> <i class="fas fa-angle-right"></i> <div class="badge text-bg-secondary">{{$classId}}</div></p>
+                        <p>You are creating the new timetable for the below period.</p>
+                        <div class="row mb-3 g-3 shadow-sm p-4 rounded bg-white">
+                            <div class="col-md-3">
+                                <div class="border p-3 rounded bg-secondary bg-gradient">
+                                    <small class="text-white">From Date</small>
+                                    <div class="fw-bold text-white">{{dateDayMonthFormat($from_date)}}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="border p-3 rounded bg-secondary bg-gradient">
+                                    <small class="text-white">To Date</small>
+                                    <div class="fw-bold text-white">{{dateDayMonthFormat($to_date)}}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="border p-3 rounded bg-secondary bg-gradient">
+                                    <small class="text-white">Class ID</small>
+                                    <div class="fw-bold text-white">{{$classId}}</div>
+                                </div> 
+                            </div>
+                            <div class="col-md-3">
+                                <div class="border p-3 rounded bg-secondary bg-gradient">
+                                    <small class="text-white">Session Year</small>
+                                    <div class="fw-bold text-white">{{$sessionYear}}</div>
+                                </div> 
                             </div>
                         </div>
-                        <div class="row mb-3">
-                            <div>
-                                <p class="d-inline"><strong>Session </strong> <i class="fas fa-angle-right"></i> <div class="badge text-bg-secondary">{{$sessionYear}}</div></p>
-                            </div>
-                        </div>
+
                         <form id="timetable-form" method="post" action="{{route('timetables.store')}}">
                             @csrf
+                            <input type="hidden" name="to_date" value="{{$to_date}}">
                             <table class="table table-bordered" id="timetable-table">
                                 <thead>
                                     <tr>
@@ -77,7 +94,7 @@ th.date, td.date {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                @foreach ($dayMap as $dayKey => $date)
+                                @foreach ($dayMap as $date => $dayKey)
                                     @if (isset($timetable[$dayKey]))
                                         @foreach ($timetable[$dayKey] as $record)
                                             <tr class="table-danger">

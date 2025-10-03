@@ -209,3 +209,17 @@ function getProgramName($programId)
 
     return $programId;
 }
+function getEmployeeNameAndPicture($emp_code)
+{
+    $nameAndPic = \DB::table('pay_pers')
+        ->select('pic_name', 'name')
+        ->where('emp_code', $emp_code)
+        ->first();
+
+    return $nameAndPic;
+}
+function checkTimetableAccess($emp_code)
+{
+    $access = [851, 199, 883, 856, 1045, 1171];
+    return in_array($emp_code, $access);
+}
