@@ -39,11 +39,8 @@
                 <div class="portfolio-details">
                     <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
                         <h3>Time Table</h3>
-                        <p>Time table for the period current month for all classes.</p>
-                        <input type="hidden" id="start_date" value="{{ $startDate->toDateString() }}">
-                        <input type="hidden" id="end_date" value="{{ $endDate->toDateString() }}">
+                        <p>Timetable for the current month or selected date range for all programs.</p>
                         <input type="hidden" id="emp_code" value="{{ $empCode }}">
-                        
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="border p-3 rounded">
@@ -58,7 +55,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div   div class="col-md-6">
                                 <div class="border p-3 rounded">
                                     <small class="text-muted">Select Program </small>
                                     <span class="text-danger">*</span>
@@ -69,8 +66,23 @@
                                         <option value="MLT">MLT</option>
                                         <option value="NUT">NUT</option>
                                     </select>
+                                </div>
                             </div>
                         </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <div class="border p-3 rounded">
+                                    <small class="text-muted">From Date</small>
+                                    <input type="date" class="form-control" id="start_date" value="{{ $startDate->toDateString() }}">  
+                                </div> 
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border p-3 rounded">
+                                    <small class="text-muted">To Date</small>
+                                    <input type="date" class="form-control" id="end_date" value="{{ $endDate->toDateString() }}">
+                                </div>
+                            </div>    
+                        </div>    
                         <div class="row">
                             <div class="col-md-12 mt-3">
                                 <button type="button" class="btn btn-primary" id="loadTimetableBtn">
@@ -105,19 +117,18 @@
         const yearSelect = document.getElementById('yearSelect');
         const programSelect = document.getElementById('programSelect');
         const markFinalizedBtn = document.getElementById("markFinalized");
+        const startDate = document.getElementById('start_date');
+        const endDate = document.getElementById('end_date');
 
 
         // Initialize calendar with no events initially
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             events: function(fetchInfo, successCallback, failureCallback) {
-                // Use default or selected values
-                const start_date = document.getElementById('start_date').value;
-                const end_date = document.getElementById('end_date').value;
                 const emp_code = document.getElementById('emp_code').value;
                 const year = yearSelect.value;
                 const program = programSelect.value;
-                const url = `/timetables/calendar/events/${year}/${program}?start_date=${start_date}&end_date=${end_date}&emp_code=${emp_code}`;
+                const url = `/timetables/calendar/events/${year}/${program}?start_date=${startDate.value}&end_date=${endDate.value}&emp_code=${emp_code}`;
                 fetch(url)
                     .then(response => response.json())
                     .then(data => successCallback(data))
@@ -131,14 +142,14 @@
                     ? `<small style="color:gray;"> By: ${arg.event.extendedProps.delivered_by}</small>` 
                     : '';
                 let teacherPicture = arg.event.extendedProps.teacher_picture
-                    ? `<img src="${arg.event.extendedProps.teacher_picture}" alt="Teacher" style="width:30px; height:30px; border-radius:50%; vertical-align:middle; margin-right:5px;">`
+                    ? `<img src="${arg.event.extendedProps.teacher_picture}" onerror="this.onerror=null; this.src='/img/default-avatar.jpg';" alt="Teacher Profile Picture" style="width:30px; height:30px; border-radius:50%; vertical-align:middle; margin-right:5px;">`
                     : '';
                 const teacherInfo = `<span style="display: inline-flex; align-items: center;">${teacherPicture}${deliveredBy}</span>`;        
                 let hodName = arg.event.extendedProps.hod_name 
                     ? `<small style="color:#2196F3"> HOD: ${arg.event.extendedProps.hod_name}</small>` 
                     : '';
                 let hodPicture = arg.event.extendedProps.hod_picture
-                    ? `<img src="${arg.event.extendedProps.hod_picture}" alt="HOD" style="width:30px; height:30px; border-radius:50%; vertical-align:middle; margin-right:5px;">`
+                    ? `<img src="${arg.event.extendedProps.hod_picture}" onerror="this.onerror=null; this.src='/img/default-avatar.jpg';" alt="HOD Profile Picture" style="width:30px; height:30px; border-radius:50%; vertical-align:middle; margin-right:5px;">`
                     : '';
                 const hodInfo = `<span style="display: inline-flex; align-items: center;">${hodPicture}${hodName}</span>`;            
                 return {
@@ -191,19 +202,19 @@
                 alert("Please select both Year and Program.");
                 return;
             }
-            const start_date = document.getElementById('start_date').value;
-            const end_date = document.getElementById('end_date').value;
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
             const emp_code = document.getElementById('emp_code').value;
             // Update the calendar's event source URL with new parameters
             calendar.removeAllEvents(); // Clear existing events
-            const url = `/timetables/calendar/events/${year}/${program}?start_date=${start_date}&end_date=${end_date}&emp_code=${emp_code}`;
-            
+            const url = `/timetables/calendar/events/${year}/${program}?start_date=${startDate.value}&end_date=${endDate.value}&emp_code=${emp_code}`;
+            console.log(url);
             calendar.addEventSource({
                 url: url,
                 method: 'GET',
                 extraParams: {
-                    start_date: start_date,
-                    end_date: end_date,
+                    start_date: startDate,
+                    end_date: endDate,
                     emp_code: emp_code
                 },
                 failure: function() {
