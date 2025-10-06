@@ -209,7 +209,7 @@ class TimetableController extends Controller
             }
             $events[] = [
                 'doc_id' => $lecture->doc_id,
-                'is_finalized' => $lecture->lecture->status == 1,
+                'is_finalized' => $lecture->lecture?->status == 1,
                 'title' =>  ($lecture->lecture->topic ?? 'Not Assigned'),
                 'start' => Carbon::parse($lecture->datedm)->toDateString() . 'T' . ($lecture->start_time ?? '00:00:00'),
                 'end'   => Carbon::parse($lecture->datedm)->toDateString() . 'T' . ($lecture->end_time ?? '00:00:00'),
