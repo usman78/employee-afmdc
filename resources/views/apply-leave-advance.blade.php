@@ -445,13 +445,14 @@ ul.error-msg{
       const saveRes = await fetch("{{ route('store-leave-advance', $emp_code) }}", {
         method: 'POST',
         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        'Accept': 'application/json',
         body: new FormData(formEl)
       });
 
       const data = await saveRes.json();
 
       if (data.error) {
-        console.log("error debug: ", data.error);
+        console.log(data.error);
         await Swal.fire('Error', data.error, 'error');
         return;
       }

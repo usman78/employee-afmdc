@@ -223,3 +223,19 @@ function checkTimetableAccess($emp_code)
     $access = [851, 199, 883, 856, 1045, 1171];
     return in_array($emp_code, $access);
 }
+function checkMultipleLeaves($emp_code, $fromDate, $toDate)
+{
+    $query = \DB::table('pre_leave_tran')
+        ->where('emp_code', $emp_code)
+        ->where(function ($q) use ($fromDate, $toDate) {
+            $q->whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$fromDate])
+              ->whereRaw("TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')", [$fromDate]);
+            $q->orWhereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$toDate])
+              ->whereRaw("TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')", [$toDate]);
+            $q->orWhereRaw("TRUNC(from_date) >= TO_DATE(?, 'YYYY-MM-DD')", [$fromDate])
+              ->whereRaw("TRUNC(to_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$toDate]);
+        })
+        ->where('status','!=', 9);
+    $leave = $query->first();
+    return $leave ? true : false;
+}

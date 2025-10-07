@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Validator;
 use App\Models\Employee; 
 use App\Models\LeavesBalance;   
 use Carbon\Carbon;
@@ -258,25 +259,37 @@ class LeavesController extends Controller
         if ($authUser->emp_code != $emp_code) {
             return redirect()->route('home');
         }
-
+        Log::info('Request data: ' . json_encode($request->all()));
         // Validate the request
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'leave_duration' => 'required|string|in:full,half,short',
             'leave_type' => 'required_if:leave_duration,half,full|integer|in:1,2,3,5',
-            'single_leave_date' => 'required_if:leave_duration,half,short|date',
-            'leave_from_date' => 'required_if:leave_duration,full|date',
-            'leave_to_date' => 'required_if:leave_duration,full|date',
+            'single_leave_date' => 'required_if:leave_duration,half,short|nullable|date',
+            'leave_from_date' => 'required_if:leave_duration,full|date|nullable|before_or_equal:leave_to_date',
+            'leave_to_date' => 'required_if:leave_duration,full|date|nullable|after_or_equal:leave_from_date',
             'start_time' => 'required_if:leave_duration,short',
             'end_time' => 'required_if:leave_duration,short',
             'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2',
             'reason' => 'required|string|max:255',
         ]);
 
+        if ($validator->fails()) {
+            return response()->json([
+                'error' => $validator->errors()->first() // send first error only
+                // OR return all errors:
+                // 'errors' => $validator->errors()
+            ], 422);
+        }
+
         // Get the leave type and duration from the request
         $leave_duration = $request->input('leave_duration');
 
         if ($leave_duration == 'full') {
-            
+            if(checkMultipleLeaves($emp_code,  
+                date('Y-m-d',strtotime($request->input('leave_from_date'))), 
+                date('Y-m-d',strtotime($request->input('leave_to_date'))))){
+                return response()->json(['error' => 'You have already applied for leave on one or more of the selected dates.']);
+            }
             $range = $request->input('leave_from_date') . ' - ' . $request->input('leave_to_date');
             list($from, $to) = explode(' - ', $range);
             $to = date('d-m-Y', strtotime($to));
@@ -325,6 +338,13 @@ class LeavesController extends Controller
             if(! $this->checkBalance($emp_code, $request->input('leave_type'), 0.5)){
                 return response()->json(['error' => 'You do not have the leave balance.']);
             }
+            if(checkMultipleLeaves(
+                $emp_code,
+                date('Y-m-d', strtotime($request->input('single_leave_date'))),
+                date('Y-m-d', strtotime($request->input('single_leave_date')))
+            )){
+                return response()->json(['error' => 'You have already applied for leave on the selected date.']);
+            }
             $leave = new Leave();
             $leave->leave_id = self::getNextLeaveId();
             $leave->leave_date = Carbon::today();
@@ -371,6 +391,13 @@ class LeavesController extends Controller
         } elseif ($leave_duration == 'short') {
             if(! $this->checkShortBalance($emp_code)){
                 return response()->json(['error' => 'You already availed your short leave.']);
+            }
+            if(checkMultipleLeaves(
+                $emp_code,
+                date('Y-m-d', strtotime($request->input('single_leave_date'))),
+                date('Y-m-d', strtotime($request->input('single_leave_date')))
+            )){
+                return response()->json(['error' => 'You have already applied for leave on the selected date.']);
             }
             $leave = new Leave();
             $leave->leave_id = self::getNextLeaveId();
