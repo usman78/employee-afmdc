@@ -62,6 +62,10 @@
           <div class="row mt-5">
             <div class="col-12" style="text-align: center;">
               <a class="btn btn-primary" id="apply-leave" href="{{route('check-if-any-leave', $leaves->emp_code)}}"><i class="fa-solid fa-house-person-leave"></i>Apply For Leave</a>
+              <a class="btn btn-success" id="leaves-applied" href="{{route('leaves-applied', $leaves->emp_code)}}">
+                <i class="fa-solid fa-check"></i>
+                Leaves Applied
+              </a>
             </div>
           </div>
         </div>
@@ -108,5 +112,30 @@
 
     });
   });  
+
+  document.getElementById('leaves-applied').addEventListener('click', function(event) {
+    event.preventDefault();
+    const url = this.href;
+    // make a post request along with emp_code
+    $.get(url).then(response => {
+      console.log(response);
+      // handle the response as needed
+      if(response.success) {
+        // perhaps redirect to a new page or update the UI
+        Swal.fire({
+          width: 900,
+          draggable: true,
+          title: 'Leaves Applied (current month)',
+          html: response.html,
+        });
+      } else {
+        Swal.fire({
+          title: 'Error',
+          text: 'Could not fetch leaves applied.',
+          icon: 'error'
+        });
+      }
+    });
+  });
   
 @endpush

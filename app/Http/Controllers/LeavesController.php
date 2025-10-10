@@ -691,7 +691,6 @@ class LeavesController extends Controller
         
         return response()->json(['success' => false]);
     }
-
     public function storeUnpaidLeave(Request $request, $emp_code)
     {
         // Ensure logged-in user matches the requested employee code
@@ -779,5 +778,107 @@ class LeavesController extends Controller
             // Handle invalid leave exception
             return redirect()->back()->with('error', 'Invalid leave type selected. Please try again!');
         }
+    }
+    public function leavesApplied(Request $request, $emp_code)
+    {
+        // Ensure logged-in user matches the requested employee code
+        $authUser = Auth::user();
+        if ($authUser->emp_code != $request->emp_code) {
+            return response()->json(['success' => false, 'html' => '<p>You have been logged out. Please login again!</p>']);
+        }
+        $leaves = Leave::where('emp_code', $emp_code)
+            ->where(function ($query) {
+                $query->where('from_date', '<=', Carbon::now()->endOfMonth())
+                    ->where('to_date', '>=', Carbon::now()->startOfMonth());  
+            })
+            ->orderBy('leave_date', 'desc')
+            ->get();
+
+        foreach ($leaves as $leave) {
+            switch ($leave->leave_code) {
+                case 1:
+                    $leave->leave_type = 'Casual Leave';
+                    break;
+                case 2:
+                    $leave->leave_type = 'Medical Leave';
+                    break;
+                case 3:
+                    $leave->leave_type = 'Annual Leave';
+                    break;
+                case 5:
+                    $leave->leave_type = 'Unpaid Leave';
+                    break;
+                case 8:
+                    $leave->leave_type = 'Short Leave';
+                    break;
+                case 12:
+                    $leave->leave_type = 'Outdoor Duty';
+                    break;    
+                default:
+                    $leave->leave_type = 'Unknown Leave Type';
+            }
+        }
+        $html = "
+            <table class='table table-bordered'>
+                <thead>
+                    <tr>
+                        <th>Leave ID</th>
+                        <th>Leave Type</th>
+                        <th>From Date</th>
+                        <th>To Date</th>
+                        <th>Number of Days</th>
+                        <th>Status</th>
+                        <th>Applied On</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+        ";
+
+        foreach ($leaves as $leave) {
+            $statusBadge = '';
+            switch ($leave->status) {
+                case 1:
+                    $statusBadge = '<span class="badge bg-warning">Pending (Supervisor)</span>';
+                    break;
+                case 3:
+                    $statusBadge = '<span class="badge bg-info">Pending (HOD)</span>';
+                    break;
+                case 5:
+                    $statusBadge = '<span class="badge bg-primary">Pending (HR)</span>';
+                    break;
+                case 7:
+                    $statusBadge = '<span class="badge bg-success">Approved</span>';
+                    break;
+                case 9:
+                    $statusBadge = '<span class="badge bg-danger">Rejected</span>';
+                    break;
+                default:
+                    $statusBadge = '<span class="badge bg-secondary">Unknown</span>';
+            }
+
+            $html .= "
+                <tr>
+                    <td>{$leave->leave_id}</td>
+                    <td>{$leave->leave_type}</td>
+                    <td>" . Carbon::parse($leave->from_date)->format('d-m-Y H:i') . "</td>
+                    <td>" . Carbon::parse($leave->to_date)->format('d-m-Y H:i') . "</td>
+                    <td>{$leave->l_day}</td>
+                    <td>{$statusBadge}</td>
+                    <td>" . Carbon::parse($leave->leave_date)->format('d-m-Y') . "</td>
+                    <td>{$leave->remark}</td>
+                </tr>
+            ";
+        }
+
+        $html .= "
+                </tbody>
+            </table>
+        ";
+                
+        if ($leaves->isEmpty()) {
+            return response()->json(['success' => true, 'html' => '<p>No leaves applied in the current month.</p>']);
+        }
+        return response()->json(['success' => true, 'html' => $html]);
     }      
 }

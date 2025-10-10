@@ -229,13 +229,17 @@ ul.error-msg{
                   </li>
                 </ul>
                 <div class="row">
-                    <div class="col-12 justify-content-center text-center mt-5">
-                        <a href="{{ route('leaves', $emp_code) }}" class="btn btn-primary mt-3"><i class="fa-solid fa-backward"></i> Back</a>
-                        <button type="submit" class="btn btn-success mt-3" id="submitBtn">
+                    <div class="col-12 d-flex justify-content-between mt-5">
+                        <a href="{{ route('leaves', $emp_code) }}" class="btn btn-primary"><i class="fa-solid fa-backward"></i> Back</a>
+                        <button type="submit" class="btn btn-success" id="submitBtn">
                           <i class="fa-solid fa-person-walking-arrow-right me-1" aria-hidden="true"></i>
                           <span id="btnLabel">Apply Leave</span>
                           <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                         </button>
+                        <a class="btn btn-secondary" id="leaves-applied" href="{{route('leaves-applied', $emp_code)}}">
+                          <i class="fa-solid fa-check"></i>
+                          Leaves Applied
+                        </a>
                     </div>
                 </div>
               </form>
@@ -466,6 +470,31 @@ ul.error-msg{
       setSubmitting(false); // always restore button for next submission
       formEl.reset();   
     }
+  });
+
+  document.getElementById('leaves-applied').addEventListener('click', function(event) {
+    event.preventDefault();
+    const url = this.href;
+    // make a post request along with emp_code
+    $.get(url).then(response => {
+      console.log(response);
+      // handle the response as needed
+      if(response.success) {
+        // perhaps redirect to a new page or update the UI
+        Swal.fire({
+          width: 900,
+          draggable: true,
+          title: 'Leaves Applied (current month)',
+          html: response.html,
+        });
+      } else {
+        Swal.fire({
+          title: 'Error',
+          text: 'Could not fetch leaves applied.',
+          icon: 'error'
+        });
+      }
+    });
   });
 
 @endpush
