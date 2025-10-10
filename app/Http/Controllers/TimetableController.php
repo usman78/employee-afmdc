@@ -209,7 +209,7 @@ class TimetableController extends Controller
             }
             $events[] = [
                 'doc_id' => $lecture->doc_id,
-                'is_finalized' => $lecture->lecture?->status == 1,
+                'is_finalized' => $lecture?->status == 1,
                 'title' =>  ($lecture->lecture->topic ?? 'Not Assigned'),
                 'start' => Carbon::parse($lecture->datedm)->toDateString() . 'T' . ($lecture->start_time ?? '00:00:00'),
                 'end'   => Carbon::parse($lecture->datedm)->toDateString() . 'T' . ($lecture->end_time ?? '00:00:00'),
@@ -228,7 +228,6 @@ class TimetableController extends Controller
     }
     public function markFinalized(Request $request)
     {
-        Log::info('Mark Finalized Request Data: ', $request->all());
         $docIds = $request->input('doc_ids');
 
         if(empty($docIds) || !is_array($docIds)) {
@@ -239,7 +238,7 @@ class TimetableController extends Controller
             DB::beginTransaction();
 
             foreach ($docIds as $docId) {
-                $timetable = StudentLectureDuplicate::where('fk_doc_id', $docId)->first();
+                $timetable = TimetableDuplicate::where('doc_id', $docId)->first();
 
                 if ($timetable) {
                     $timetable->status = 1;

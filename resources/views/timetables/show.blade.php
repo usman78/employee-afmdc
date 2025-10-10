@@ -31,6 +31,10 @@
     .fc-daygrid-day-events {
         margin-left: 1px;
     }
+    .masthead-notice {
+        background-color: #d3ff84;
+        box-shadow: inset 0 -2px 1px rgba(var(--bs-body-color-rgb), .15), 0 .25rem 1.5rem rgba(var(--bs-body-bg-rgb), .75);
+    }
 @endpush
 @section('content')
     <div class="container">
@@ -96,8 +100,8 @@
                         <div class="row mt-5">
                             <div class="col-md-12">              
                                 <div id="calendar"></div>
-                                <p class="mt-2" id="finalized-message" style="margin-bottom: 0;"></p>
-                                <button type="button" class="mt-3 btn btn-success" id="markFinalized" disabled>
+                                <p class="d-none align-items-center gap-1 py-2 px-3 me-2 mb-2 mt-3 mb-lg-0 rounded-5 masthead-notice" id="finalized-message" style="margin-bottom: 0;"></p> 
+                                <button type="button" class="d-block mt-3 btn btn-success" id="markFinalized" disabled>
                                     <i class="fa-solid fa-check"></i> Mark Finalized
                                 </button>
                             </div>
@@ -185,10 +189,14 @@
             const allDelivered = events.length > 0 && events.every(event => event.extendedProps.delivered);
             const allFinalized = events.length > 0 && events.every(event => event.extendedProps.is_finalized);
             if(allFinalized) {
-                document.getElementById('finalized-message').innerText = "This timetable has been finalized.";
+                document.getElementById('finalized-message').innerText = "This timetable has been already finalized.";
+                document.getElementById('finalized-message').classList.remove('d-none');
+                document.getElementById('finalized-message').classList.add('d-sm-inline-flex');
                 document.getElementById('markFinalized').disabled = true;
             } else {
                 document.getElementById('finalized-message').innerText = "";
+                document.getElementById('finalized-message').classList.remove('d-sm-inline-flex');
+                document.getElementById('finalized-message').classList.add('d-none');
                 document.getElementById('markFinalized').disabled = !allDelivered;
             }
         });
