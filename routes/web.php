@@ -86,7 +86,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/create-timetable', [TimetableController::class, 'store'])->name('timetables.store');
         Route::post('/create', [TimetableController::class, 'create'])->name('timetables.create');
         Route::post('/get-subject', [TimetableController::class, 'getSubject'])->name('timetables.get-subject');
-        Route::post('/mark-finalized', [TimetableController::class, 'markFinalized'])->name('timetables.mark-finalized'); 
+        Route::post('/mark-finalized', [TimetableController::class, 'markFinalized'])->name('timetables.mark-finalized');
+        Route::get('/timetable/download', [TimetableController::class, 'downloadTimetable'])->name('timetables.download'); 
     });
 
     Route::prefix('student-admissions')->group(function() {

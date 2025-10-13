@@ -38,6 +38,11 @@
 @endpush
 @section('content')
     <div class="container">
+        @if(session('error'))
+            <div class="alert alert-danger mt-3">
+                {{ session('error') }}
+            </div>
+        @endif
         <div class="row my-5">
             <div class="col-md-12 d-block mx-auto">  
                 <div class="portfolio-details">
@@ -104,6 +109,10 @@
                                 <button type="button" class="d-block mt-3 btn btn-success" id="markFinalized" disabled>
                                     <i class="fa-solid fa-check"></i> Mark Finalized
                                 </button>
+                                <button  id="downloadPdfBtn" class="btn btn-primary mt-3" disabled>
+                                    <i class="fa fa-download"></i> Download Timetable (PDF)
+                                </button>
+                                <span id="pdfStatus" style="display:none; margin-left:10px;">Generating PDF… <small id="pdfProgress"></small></span>
                             </div>
                         </div>
                     </div>
@@ -114,6 +123,10 @@
     </div>
 
 @endsection
+@push('cdn-scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+@endpush
 @push('scripts')
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -123,7 +136,7 @@
         const markFinalizedBtn = document.getElementById("markFinalized");
         const startDate = document.getElementById('start_date');
         const endDate = document.getElementById('end_date');
-
+        const downloadBtn = document.getElementById('downloadPdfBtn');
 
         // Initialize calendar with no events initially
         const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -188,6 +201,11 @@
             const events = calendar.getEvents();
             const allDelivered = events.length > 0 && events.every(event => event.extendedProps.delivered);
             const allFinalized = events.length > 0 && events.every(event => event.extendedProps.is_finalized);
+            if(allDelivered) {
+                downloadBtn.disabled = false;
+            } else {
+                downloadBtn.disabled = true;
+            }
             if(allFinalized) {
                 document.getElementById('finalized-message').innerText = "This timetable has been already finalized.";
                 document.getElementById('finalized-message').classList.remove('d-none');
@@ -271,4 +289,79 @@
             }
         });
     });
+    // download the calendar script
+    (async () => {
+        const { jsPDF } = window.jspdf; // jsPDF via CDN
+        const downloadBtn = document.getElementById('downloadPdfBtn');
+        const statusEl = document.getElementById('pdfStatus');
+        const progressEl = document.getElementById('pdfProgress');
+        const calendarEl = document.getElementById('calendar');
+
+        // Helper: ensure fonts & images are ready before snapshot
+        async function waitForResources() {
+            if (document.fonts && document.fonts.ready) await document.fonts.ready;
+            await new Promise(r => setTimeout(r, 300)); // small delay
+
+            const imgs = Array.from(calendarEl.querySelectorAll('img'));
+            await Promise.all(imgs.map(img => {
+                if (img.complete) return Promise.resolve();
+                return new Promise(res => { img.onload = img.onerror = res; });
+            }));
+        }
+
+        function showStatus(show, text = '') {
+            statusEl.style.display = show ? 'inline' : 'none';
+            progressEl.textContent = text;
+            downloadBtn.disabled = show;
+        }
+
+        // Main button click handler
+        downloadBtn.addEventListener('click', async () => {
+            try {
+                showStatus(true, 'Preparing...');
+                await waitForResources();
+
+                showStatus(true, 'Rendering screenshot...');
+                const scale = 2; // improves quality (2 = 2x resolution)
+                const canvas = await html2canvas(calendarEl, {
+                    scale,
+                    useCORS: true,
+                    allowTaint: false,
+                    backgroundColor: '#ffffff',
+                });
+
+                showStatus(true, 'Building PDF...');
+
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+
+                // Convert px → pt (1 px = 0.75 pt approx at 96 dpi)
+                const pdfWidth = imgWidth * 0.75;
+                const pdfHeight = imgHeight * 0.75;
+
+                // Choose orientation dynamically based on aspect ratio
+                const orientation = pdfWidth > pdfHeight ? 'l' : 'p';
+
+                // Create PDF exactly the size of your div
+                const pdf = new jsPDF({
+                    orientation: orientation,
+                    unit: 'pt',
+                    format: [pdfWidth, pdfHeight],
+                });
+
+                // Add image to PDF (fit exactly)
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+                showStatus(true, 'Saving PDF...');
+                pdf.save('timetable.pdf');
+
+                showStatus(false);
+            } catch (err) {
+                console.error('PDF generation error:', err);
+                alert('Could not generate PDF: ' + (err.message || err));
+                showStatus(false);
+            }
+        });
+    })();
 @endpush
