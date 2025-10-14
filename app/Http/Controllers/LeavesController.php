@@ -84,7 +84,6 @@ class LeavesController extends Controller
     public static function getNextLeaveId()
     {
         $max = DB::table('pre_leave_tran')->max('leave_id');
-        log::info('Max leave_id: ' . $max + 1);
         return $max + 1;
     }
 
@@ -259,7 +258,6 @@ class LeavesController extends Controller
         if ($authUser->emp_code != $emp_code) {
             return redirect()->route('home');
         }
-        Log::info('Request data: ' . json_encode($request->all()));
         // Validate the request
         $validator = Validator::make($request->all(), [
             'leave_duration' => 'required|string|in:full,half,short',
@@ -275,9 +273,7 @@ class LeavesController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'error' => $validator->errors()->first() // send first error only
-                // OR return all errors:
-                // 'errors' => $validator->errors()
+                'error' => $validator->errors()->first()
             ], 422);
         }
 
@@ -701,10 +697,10 @@ class LeavesController extends Controller
 
         // Validate the request
         $request->validate([
-            'leave_duration' => 'required|string|in:full,half,short',
-            'single_leave_date' => 'required_if:leave_duration,half|date',
-            'leave_from_date' => 'required_if:leave_duration,full|date',
-            'leave_to_date' => 'required_if:leave_duration,full|date',
+            'leave_duration' => 'required|string|in:full,half',
+            'single_leave_date' => 'required_if:leave_duration,half|date|nullable',
+            'leave_from_date' => 'required_if:leave_duration,full|date|nullable|before_or_equal:leave_to_date',
+            'leave_to_date' => 'required_if:leave_duration,full|date|nullable|after_or_equal:leave_from_date',
             'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2',
             'reason' => 'required|string|max:255',
         ]);
