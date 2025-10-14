@@ -109,7 +109,9 @@ ul.error-msg{
           <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
             <h3>Unpaid Leave Application</h3>
             <div class="row">
-              <form action="{{ route('store-unpaid-leave', $emp_code) }}" method="POST" enctype="multipart/form-data">
+              <form action="{{ route('store-unpaid-leave', $emp_code) }}" 
+                method="POST" enctype="multipart/form-data" 
+                onsubmit="this.querySelector('button[type=submit]').disabled = true;">
                 @csrf
                 @if ($errors->any())
                   <div class="alert alert-danger">

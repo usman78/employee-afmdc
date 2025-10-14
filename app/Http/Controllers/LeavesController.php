@@ -709,7 +709,12 @@ class LeavesController extends Controller
         $leave_duration = $request->input('leave_duration');
 
         if ($leave_duration == 'full') {
-            
+            // check if any leave already exists in the selected range
+            if(checkMultipleLeaves($emp_code,  
+                date('Y-m-d',strtotime($request->input('leave_from_date'))), 
+                date('Y-m-d',strtotime($request->input('leave_to_date'))))){
+                return redirect()->back()->with('error', 'You have already applied for leave on one or more of the selected dates.');
+            }
             $range = $request->input('leave_from_date') . ' - ' . $request->input('leave_to_date');
             list($from, $to) = explode(' - ', $range);
             $to = date('d-m-Y', strtotime($to));
@@ -738,7 +743,14 @@ class LeavesController extends Controller
             return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
         }
         else if($leave_duration == 'half') {
-
+            // check if any leave already exists in the selected date
+            if(checkMultipleLeaves(
+                $emp_code,
+                date('Y-m-d', strtotime($request->input('single_leave_date'))),
+                date('Y-m-d', strtotime($request->input('single_leave_date')))
+            )){
+                return redirect()->back()->with('error', 'You have already applied for leave on the selected date.');
+            }
             $leave = new Leave();
             $leave->leave_id = self::getNextLeaveId();
             $leave->leave_date = Carbon::today();
