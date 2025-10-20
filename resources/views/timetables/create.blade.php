@@ -107,7 +107,7 @@ th.date, td.date {
                                                 <td class="subject-title">{{ $record->subject->title }}</td>
                                                 <td class="topic">Add</td>
                                                 <td>{{ $record->period_type }}</td>
-                                                <td>HOD</td>
+                                                <td class="hod">HOD</td>
                                                 <td class="time">{{ $record->start_time }}</td>
                                                 <td class="time">{{ $record->end_time }}</td>
                                                 <td class="action-btn">
@@ -235,12 +235,7 @@ th.date, td.date {
                                     </select>`;
                 // HOD
                 const hodVal = getCellValue(currentRow.children[9]);
-                cells[9].innerHTML = `<select name="hod[]" class="form-select form-select-sm search-hod" required>
-                                            <option value="">Select HOD</option>
-                                            @foreach($doctors as $doctor)
-                                                <option value="{{ $doctor->emp_code }}" ${hodVal == "{{ $doctor->emp_code }}" ? 'selected' : ''}>{{ $doctor->name }}</option>
-                                            @endforeach
-                                    </select>`;
+                cells[9].innerHTML = `<input type="text" name="hod[]" class="form-control form-control-sm" required>`;
 
                 // START TIME
                 const startTimeVal = getCellValue(currentRow.children[10]);
@@ -265,10 +260,42 @@ th.date, td.date {
 
                 // initialize Select2 for subject ID
                 $('.js-example-basic-single').select2();
-                // initialize Select2 for HOD
-                $('.search-hod').select2({
-                    placeholder: "Select HOD",
-                    allowClear: true
+
+                const hodCell = clone.querySelector('.hod');
+                hodCell.addEventListener('click', function (){
+                    Swal.fire({
+                        title: 'Select HOD',
+                        html: `
+                            <select id="swal-hod-select" class="form-control" style="width:100%">
+                                <option value="">Select HOD</option>
+                                @foreach($doctors as $doctor)
+                                <option value="{{ $doctor->emp_code }}">{{ $doctor->name }}</option>
+                                @endforeach
+                            </select>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Select',
+                        cancelButtonText: 'Cancel',
+                        didOpen: () => {
+                            // Initialize Select2 **after** swal is rendered
+                            $('#swal-hod-select').select2({
+                            dropdownParent: $('.swal2-container'), // ensures dropdown stays inside modal
+                            placeholder: "Select HOD",
+                            width: '100%'
+                            });
+                        },
+                        preConfirm: () => {
+                            return $('#swal-hod-select').val();
+                        }
+                        }).then((result) => {
+                        if (result.isConfirmed && result.value) {
+                            hodCell.innerHTML = `
+                            <select name="hod[]" id="search-hod" class="form-control form-control-sm" required>
+                                <option value="${result.value}">HOD Selected</option>
+                            </select>
+                            `;
+                        }
+                    });
                 });
 
                 // apply sweet alert to topic button
