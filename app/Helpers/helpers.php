@@ -108,14 +108,13 @@ function checkFullLeaveExists($emp_code, $date)
 }
 function ifLeaveExists($emp_code, $date)
 {
-    $leave = \DB::table('pre_leave_tran')
+    return \DB::table('pre_leave_tran')
         ->where('emp_code', $emp_code)
         ->where(function ($query) use ($date) {
             $query->whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$date])
                   ->whereRaw("TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')", [$date]);
         })
-        ->first();
-    return $leave ? true : false;
+        ->exists();
 }
 function allDoctors()
 {

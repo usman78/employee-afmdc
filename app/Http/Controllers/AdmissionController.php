@@ -10,6 +10,7 @@ class AdmissionController extends Controller
 {
     public function admissions() {
         $admissions = Admissions::with('user')
+        ->where('image_name', '!=', null)
         ->orderByDesc('created_at')
         ->get();
         return view('admissions.admissions', ['admissions' => $admissions]);
