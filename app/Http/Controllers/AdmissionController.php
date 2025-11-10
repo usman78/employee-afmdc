@@ -28,22 +28,21 @@ class AdmissionController extends Controller
             'fsc' => "fsc_document_{$id}",
             'bank_receipt' => "bank_receipt_{$id}",
         ];
+        $filesAvailable = [];
+        foreach ($filePaths as $key => $path) {
+            $fullPath = "admissions/{$id}/{$path}";
 
-    $filesAvailable = [];
-    $fileFormat = null;
-    foreach ($filePaths as $key => $path) {
-        $fullPath = "admissions/{$id}/{$path}";
-
-        if(Storage::exists($fullPath . '.jpeg')){
-            $filesAvailable[$key] = true;
-            $fileFormat = 'jpeg';
-        } elseif (Storage::exists($fullPath . '.jpg')) {
-            $filesAvailable[$key] = true;
-            $fileFormat = 'jpg';
-        } else {
-            $filesAvailable[$key] = false;
+            if(Storage::exists($fullPath . '.jpeg')){
+                $filesAvailable[$key] = $fullPath . '.jpeg';
+                $filesAvailable[$path] = 'jpeg';
+            } elseif (Storage::exists($fullPath . '.jpg')) {
+                $filesAvailable[$key] = $fullPath . '.jpg';
+                $filesAvailable[$path] = 'jpg';
+            } else {
+                $filesAvailable[$key] = false;
+                $filesAvailable[$path] = null;
+            }
         }
-    }
-        return view('admissions.applicant', ['profile' => $profile, 'filePaths' => $filePaths, 'filesAvailable' => $filesAvailable, 'fileFormat' => $fileFormat]);
+        return view('admissions.applicant', ['profile' => $profile, 'filePaths' => $filePaths, 'filesAvailable' => $filesAvailable]);
     }
 }

@@ -26,8 +26,14 @@
                         <h5 class="mt-2 d-block">Applicant Profile</h5>
                     </div>
                     <p class="mb-1" style="display: inline-block;">
-                        @if($fileFormat != null && $filesAvailable['profile'])
-                            <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-admission-file', ['id' => $profile->adm_applicant_id, 'fileName' => 'profile', 'fileFormat' => $fileFormat]) }}" target="_blank">View Profile</a>
+                        @if($filesAvailable['profile'])
+                            <a data-gallery="manual" class="custom-btn btn"
+                            href="{{ route('download-admission-file', [
+                                    'id' => $profile->adm_applicant_id,
+                                    'fileName' => 'profile',
+                                    'fileFormat' => $filesAvailable[$filePaths['profile']] ?? 'jpg'
+                            ]) }}"
+                            target="_blank">View Profile</a>
                         @else
                             <span class="alert alert-warning">Profile (Not Uploaded)</span>
                         @endif
@@ -36,18 +42,26 @@
                         <h5 class="mt-2 d-block">Applicant CNIC</h5>
                     </div>
                     <p class="mb-1" style="display: inline-block;">
-                        @if($fileFormat != null && $filesAvailable['cnic_front'])
+                        @if($filesAvailable['cnic_front'])
                             <a data-gallery="manual" class="custom-btn btn"
-                            href="{{ route('download-admission-file', ['id' => $profile->adm_applicant_id, 'fileName' => 'cnic_front', 'fileFormat' => $fileFormat]) }}"
+                            href="{{ route('download-admission-file', [
+                            'id' => $profile->adm_applicant_id, 
+                            'fileName' => 'cnic_front', 
+                            'fileFormat' => $filesAvailable[$filePaths['cnic_front']] ?? 'jpg'
+                            ]) }}"
                             target="_blank">CNIC Front</a>
                         @else
                             <span class="alert alert-warning">CNIC Front (Not Uploaded)</span>
                         @endif
                     </p>
                     <p class="mb-1" style="display: inline-block;">
-                        @if($fileFormat != null && $filesAvailable['cnic_back'])
+                        @if($filesAvailable['cnic_back'])
                             <a data-gallery="manual" class="custom-btn btn"
-                            href="{{ route('download-admission-file', ['id' => $profile->adm_applicant_id, 'fileName' => 'cnic_back', 'fileFormat' => $fileFormat]) }}"
+                            href="{{ route('download-admission-file', [
+                            'id' => $profile->adm_applicant_id, 
+                            'fileName' => 'cnic_back', 
+                            'fileFormat' => $filesAvailable[$filePaths['cnic_back']] ?? 'jpg'
+                            ]) }}"
                             target="_blank">CNIC Back</a>
                         @else
                             <span class="alert alert-warning">CNIC Back (Not Uploaded)</span>
@@ -57,18 +71,26 @@
                         <h5 class="mt-2 d-block">Father CNIC</h5>
                     </div>
                     <p class="mb-1" style="display: inline-block;">
-                        @if($fileFormat != null && $filesAvailable['fr_cnic_front'])
+                        @if($filesAvailable['fr_cnic_front'])
                             <a data-gallery="manual" class="custom-btn btn"
-                            href="{{ route('download-admission-file', ['id' => $profile->adm_applicant_id, 'fileName' => 'fr_cnic_front', 'fileFormat' => $fileFormat]) }}"
+                            href="{{ route('download-admission-file', [
+                            'id' => $profile->adm_applicant_id, 
+                            'fileName' => 'fr_cnic_front', 
+                            'fileFormat' => $filesAvailable[$filePaths['fr_cnic_front']] ?? 'jpg'
+                            ]) }}"
                             target="_blank">CNIC Front</a>
                         @else
                             <span class="alert alert-warning">CNIC Front (Not Uploaded)</span>  
                         @endif
                     </p>
                     <p class="mb-1" style="display: inline-block;">
-                        @if($fileFormat != null && $filesAvailable['fr_cnic_back'])
+                        @if($filesAvailable['fr_cnic_back'])
                             <a data-gallery="manual" class="custom-btn btn"
-                            href="{{ route('download-admission-file', ['id' => $profile->adm_applicant_id, 'fileName' => 'fr_cnic_back', 'fileFormat' => $fileFormat]) }}"
+                            href="{{ route('download-admission-file', [
+                            'id' => $profile->adm_applicant_id, 
+                            'fileName' => 'fr_cnic_back', 
+                            'fileFormat' => $filesAvailable[$filePaths['fr_cnic_back']] ?? 'jpg'
+                            ]) }}"
                             target="_blank">CNIC Back</a>
                         @else
                             <span class="alert alert-warning">CNIC Back (Not Uploaded)</span>
@@ -79,14 +101,22 @@
                     </div>
                     <p class="mb-1" style="display: inline-block;">
                         @if($filesAvailable['matric'])
-                            <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-admission-file', ['id' => $profile->adm_applicant_id, 'fileName' => 'matric', 'fileFormat' => $fileFormat]) }}" target="_blank">Matric Result Card</a>  
+                            <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-admission-file', [
+                            'id' => $profile->adm_applicant_id, 
+                            'fileName' => 'matric', 
+                            'fileFormat' => $filesAvailable[$filePaths['matric']] ?? 'jpg'
+                            ]) }}" target="_blank">Matric Result Card</a>  
                         @else
                             <span class="alert alert-warning">Matric Result Card (Not Uploaded)</span>
                         @endif
                     </p>
                     <p class="mb-1" style="display: inline-block;">
                         @if($filesAvailable['fsc'])
-                            <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-admission-file', ['id' => $profile->adm_applicant_id, 'fileName' => 'fsc', 'fileFormat' => $fileFormat]) }}" target="_blank">Inter Result Card</a>   
+                            <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-admission-file', [
+                            'id' => $profile->adm_applicant_id, 
+                            'fileName' => 'fsc', 
+                            'fileFormat' => $filesAvailable[$filePaths['fsc']] ?? 'jpg'
+                            ]) }}" target="_blank">Inter Result Card</a>   
                         @else
                             <span class="alert alert-warning">Inter Result Card (Not Uploaded)</span>
                         @endif
@@ -96,14 +126,22 @@
                     </div>
                     <p class="mb-1" style="display: inline-block;">
                         @if($filesAvailable['bank_receipt'])
-                            <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-admission-file', ['id' => $profile->adm_applicant_id, 'fileName' => 'bank_receipt', 'fileFormat' => $fileFormat]) }}" target="_blank">Bank Receipt</a>  
+                            <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-admission-file', [
+                            'id' => $profile->adm_applicant_id, 
+                            'fileName' => 'bank_receipt', 
+                            'fileFormat' => $filesAvailable[$filePaths['bank_receipt']] ?? $fileFormat
+                            ]) }}" target="_blank">Bank Receipt</a>  
                         @else
                             <span class="alert alert-warning">Bank Receipt (Not Uploaded)</span>
                         @endif
                     </p>
                     <p class="mb-1" style="display: inline-block;">
                         @if($filesAvailable['domicel'])
-                            <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-admission-file', ['id' => $profile->adm_applicant_id,'fileName' => 'domicel', 'fileFormat' => $fileFormat]) }}" target="_blank">Domicile</a>
+                            <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-admission-file', [
+                            'id' => $profile->adm_applicant_id,
+                            'fileName' => 'domicel', 
+                            'fileFormat' => $filesAvailable[$filePaths['domicel']] ?? $fileFormat
+                            ]) }}" target="_blank">Domicile</a>
                         @else
                             <span class="alert alert-warning">Domicile (Not Uploaded)</span>
                         @endif
