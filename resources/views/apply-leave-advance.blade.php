@@ -230,16 +230,16 @@ ul.error-msg{
                 </ul>
                 <div class="row">
                     <div class="col-12 d-flex justify-content-between mt-5">
-                        <a href="{{ route('leaves', $emp_code) }}" class="btn btn-primary"><i class="fa-solid fa-backward"></i> Back</a>
+                        <a href="{{ route('leaves', $emp_code) }}" class="btn btn-secondary"><i class="fa-solid fa-backward"></i> Cancel</a>
+                        <a class="btn btn-primary" id="leaves-applied" href="{{route('leaves-applied', $emp_code)}}">
+                          <i class="fa-solid fa-check"></i>
+                          Leaves Status
+                        </a>
                         <button type="submit" class="btn btn-success" id="submitBtn">
                           <i class="fa-solid fa-person-walking-arrow-right me-1" aria-hidden="true"></i>
                           <span id="btnLabel">Apply Leave</span>
                           <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                         </button>
-                        <a class="btn btn-secondary" id="leaves-applied" href="{{route('leaves-applied', $emp_code)}}">
-                          <i class="fa-solid fa-check"></i>
-                          Leaves Applied
-                        </a>
                     </div>
                 </div>
               </form>

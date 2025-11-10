@@ -805,19 +805,19 @@ class LeavesController extends Controller
         foreach ($leaves as $leave) {
             switch ($leave->leave_code) {
                 case 1:
-                    $leave->leave_type = 'Casual Leave';
+                    $leave->leave_type = 'Casual';
                     break;
                 case 2:
-                    $leave->leave_type = 'Medical Leave';
+                    $leave->leave_type = 'Medical';
                     break;
                 case 3:
-                    $leave->leave_type = 'Annual Leave';
+                    $leave->leave_type = 'Annual';
                     break;
                 case 5:
-                    $leave->leave_type = 'Unpaid Leave';
+                    $leave->leave_type = 'Unpaid';
                     break;
                 case 8:
-                    $leave->leave_type = 'Short Leave';
+                    $leave->leave_type = 'Short';
                     break;
                 case 12:
                     $leave->leave_type = 'Outdoor Duty';
@@ -830,14 +830,12 @@ class LeavesController extends Controller
             <table class='table table-bordered'>
                 <thead>
                     <tr>
-                        <th>Leave ID</th>
                         <th>Leave Type</th>
                         <th>From Date</th>
                         <th>To Date</th>
-                        <th>Number of Days</th>
+                        <th>Duration</th>
                         <th>Status</th>
                         <th>Applied On</th>
-                        <th>Remarks</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -867,14 +865,12 @@ class LeavesController extends Controller
 
             $html .= "
                 <tr>
-                    <td>{$leave->leave_id}</td>
                     <td>{$leave->leave_type}</td>
                     <td>" . Carbon::parse($leave->from_date)->format('d-m-Y H:i') . "</td>
                     <td>" . Carbon::parse($leave->to_date)->format('d-m-Y H:i') . "</td>
                     <td>{$leave->l_day}</td>
                     <td>{$statusBadge}</td>
                     <td>" . Carbon::parse($leave->leave_date)->format('d-m-Y') . "</td>
-                    <td>{$leave->remark}</td>
                 </tr>
             ";
         }

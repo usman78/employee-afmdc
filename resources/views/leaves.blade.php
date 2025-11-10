@@ -60,11 +60,14 @@
             </tbody>
         </table>
           <div class="row mt-5">
-            <div class="col-12" style="text-align: center;">
-              <a class="btn btn-primary" id="apply-leave" href="{{route('check-if-any-leave', $leaves->emp_code)}}"><i class="fa-solid fa-house-person-leave"></i>Apply For Leave</a>
-              <a class="btn btn-success" id="leaves-applied" href="{{route('leaves-applied', $leaves->emp_code)}}">
+            <div class="col-12 d-flex justify-content-around gap-2" style="text-align: center;">
+              <a class="btn btn-primary" id="leaves-applied" href="{{route('leaves-applied', $leaves->emp_code)}}">
                 <i class="fa-solid fa-check"></i>
-                Leaves Applied
+                Leaves Status
+              </a>
+              <a class="btn btn-success" id="apply-leave" href="{{route('check-if-any-leave', $leaves->emp_code)}}">
+                <i class="fa-solid fa-person-walking-arrow-right me-1" aria-hidden="true"></i>
+                Apply Leave
               </a>
             </div>
           </div>
