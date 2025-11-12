@@ -89,6 +89,10 @@ class User extends Authenticatable
         }
         return false;
     }
+    public function isDGM()
+    {
+        return in_array($this->emp_code, ['431', '1171', '1045', '291']);
+    }
     public function teamMembers()
     {
         return $this->hasMany(LeaveAuth::class, 'emp_code_a', 'emp_code');

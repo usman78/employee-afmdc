@@ -97,10 +97,66 @@ td {
 @endpush
 
 @section('content')
-    <div class="container">
+  <div class="container">
+    @if ($dgm)
+    <div class="row">
+      <div class="col-12">
+        <div class="portfolio-details mt-5 mb-5">
+          <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+            <h3>Department Wise Or Employee Specific</h3>
+            <ul>
+                <li class="mt-5">
+                @if(session('success'))
+                    <span class="alert alert-success">{{session('success')}}</span>
+                @endif  
+                @if(session('error'))
+                    <span class="alert alert-warning">{{session('error')}}</span>
+                @endif
+                </li>
+            </ul>
+            <form action="{{ route('dgm-team-filter') }}" method="GET" class="p-3 border rounded bg-light shadow-sm">
+                <div class="row gy-3 gx-2 align-items-center">
+                    <div class="col-12 col-md-auto">
+                        <label for="filter_type" class="form-label fw-semibold mb-1">Filter Type</label>
+                        <select name="filter_type" id="filter_type" class="form-select" required>
+                            <option value="">Select Filter Type</option>
+                            <option value="department">Department Wise</option>
+                            <option value="employee">Employee Specific</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-auto d-none" id="department_select_div">
+                        <label for="dept_code" class="form-label fw-semibold mb-1">Department</label>
+                        <select name="dept_code" id="dept_code" class="form-select" required>
+                            <option value="">Select Department</option>
+                            @foreach($departments as $dept)
+                                <option value="{{ $dept->dept_code }}">{{ capitalizeWords($dept->dept_desc) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-auto d-none" id="employee_select_div">
+                        <label for="emp_code" class="form-label fw-semibold mb-1">Employee Code</label>
+                        <input type="text" name="emp_code" id="emp_code" class="form-control" placeholder="Enter Employee Code" required>
+                    </div>
+
+                    <div class="col-12 col-md-auto text-center text-md-start">
+                        <label class="form-label fw-semibold mb-1 d-block">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100 w-md-auto">
+                            <i class="bi bi-funnel me-1"></i> Apply Filter
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+          </div>
+        </div>
+      </div>
+    </div>
+    @endif
     <div class="row">
         <div class="col-12">
-        <div class="portfolio-details mt-5 mb-5">
+        <div class="portfolio-details mt-3 mb-5">
             <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
             <h3>Team Members</h3>
             <ul>
@@ -135,7 +191,6 @@ td {
                           <td>Not Signed In</td>
                           <td class="table-danger">Absent</td>
                         @endif
-                        </td>
                         <td>
                           <div class="reportrange" data-emp="{{ $t->emp_code }}" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; display: inline-block;">
                               <i class="fa fa-calendar"></i>&nbsp;
@@ -154,36 +209,10 @@ td {
             </div>
         </div>
         </div> 
-    </div>
-    </div>
+      
+  </div>
 @endsection
 @push('scripts')
-  {{-- $('input[name="attendanceFilter"]').daterangepicker(); --}}
-  {{-- $(function() {
-
-    var start = moment().subtract(29, 'days');
-    var end = moment();
-
-    function cb(start, end) {
-        $('#reportrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
-    }
-
-    $('#reportrange').daterangepicker({
-        startDate: start,
-        endDate: end,
-        ranges: {
-           'Today': [moment(), moment()],
-           'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-           'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-           'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-           'This Month': [moment().startOf('month'), moment().endOf('month')],
-           'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
-        }
-    }, cb);
-
-    cb(start, end);
-
-  }); --}}
   $(function () {
     $('.reportrange').each(function () {
         let $this = $(this);
@@ -227,5 +256,19 @@ td {
         // Redirect
         window.location.href = url;
     });
+});
+  $('#filter_type').on('change', function() {
+    let filterType = $(this).val();
+    if (filterType === 'department') {
+        $('#department_select_div').removeClass('d-none');
+        $('#employee_select_div').addClass('d-none');
+        $('#emp_code').removeAttr('required');
+        $('#dept_code').attr('required', 'required');
+    } else if (filterType === 'employee') {
+        $('#employee_select_div').removeClass('d-none');
+        $('#department_select_div').addClass('d-none');
+        $('#dept_code').removeAttr('required');
+        $('#emp_code').attr('required', 'required');
+    }
 });
 @endpush

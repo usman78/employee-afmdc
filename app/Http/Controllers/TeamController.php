@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,7 +12,8 @@ class TeamController extends Controller
 {
     public function index()
     {
-        $teamMembers = Auth::user()->teamMembers->pluck('emp_code_l');   
+        $teamMembers = Auth::user()->teamMembers->pluck('emp_code_l');
+        $dgm = Auth::user()->isDGM();   
         $team = collect();
         foreach ($teamMembers as $member) {
             $user = User::where('emp_code', $member)
@@ -26,7 +28,8 @@ class TeamController extends Controller
                 ->whereDate('at_date', $today->toDateString())
                 ->first();    
         }
-        return view('team.team', compact( 'team'));
+        $departments = Department::all();
+        return view('team.team', compact( 'team', 'departments', 'dgm'));
     }
 
     public function attendanceFilter($emp_code, $date_range)
@@ -59,5 +62,32 @@ class TeamController extends Controller
         $team = collect([$user]);
 
         return view('team.team-filter', compact('emp_code', 'team', 'date_range'));
+    }
+    public function dgmTeamFilter(Request $request)
+    {
+        $department_id = $request->input('dept_code');
+        $emp_code = $request->input('emp_code');
+    
+        $teamMembersQuery = User::whereNull('quit_stat')->where(function($query) use ($department_id, $emp_code) {
+            if ($department_id) {
+                $query->where('dept_code', $department_id);
+            }
+            if ($emp_code) {
+                $query->where('emp_code', $emp_code);
+            }
+        });
+
+        $teamMembers = $teamMembersQuery->get();
+        // dd($teamMembers);
+        $team = collect();
+        foreach ($teamMembers as $user) {
+            $team->push($user);
+            $today = Carbon::now();
+            $user->attendance_today = $user->attendance()
+                ->whereDate('at_date', $today->toDateString())
+                ->first();    
+        }
+
+        return view('team.dgm-filter', compact('team', 'department_id', 'emp_code'));
     }
 }

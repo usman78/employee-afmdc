@@ -97,12 +97,12 @@ td {
 @endpush
 
 @section('content')
-    <div class="container">
+  <div class="container">
     <div class="row">
         <div class="col-12">
-        <div class="portfolio-details mt-5 mb-5">
+        <div class="portfolio-details mb-5">
             <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
-            <h3>Team Members</h3>
+            <h3>Department Wise Or Employee Specific</h3>
             <ul>
                 <li class="mt-5">
                 @if(session('success'))
@@ -114,100 +114,47 @@ td {
                 </li>
             </ul>
             <table class="table mt-5 mb-5">
-              <thead>
+                <thead>
                 <tr>
-                  <th>Code</th>
-                  <th>Name</th>
-                  <th>Date</th>
-                  <th>Time In</th>
-                  <th>Time Out</th>
-                  <th>Filter</th>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Today's In</th>
+                    <th>Status</th>
+                    <th>Filter</th>
                 </tr>
-              </thead>
-
-              <tbody>
-                @forelse($team as $t)
-                  @php
-                    $records = $t->attendance_records ?? [];
-                  @endphp
-
-                  @if(count($records))
-                    @foreach($records as $index => $attn)
+                </thead>
+                <tbody>
+                    @foreach($team as $t)
                       <tr>
-                        {{-- Only show code & name on first row for each employee --}}
-                        @if($index === 0)
-                          <td rowspan="{{ count($records) }}">{{ $t->emp_code }}</td>
-                          <td rowspan="{{ count($records) }}">{{ capitalizeWords($t->name) }}</td>
+                        <td>{{ $t->emp_code }}</td>
+                        <td>{{ capitalizeWords($t->name) }}</td>
+                        @if ($t->attendance_today?->timein)
+                          <td>{{date('H:i',strtotime($t->attendance_today?->timein))}}</td>
+                          <td class="table-primary">Present</td>
+                        @else  
+                          <td>Not Signed In</td>
+                          <td class="table-danger">Absent</td>
                         @endif
-
-                        <td>{{ dateFormat($attn->at_date) }}</td>
-                        <td>{{ $attn->timein ? date('H:i', strtotime($attn->timein)) : 'Not Signed In' }}</td>
-                        <td>{{ $attn->timeout ? date('H:i', strtotime($attn->timeout)) : 'Not Signed Out' }}</td>
-
-                        @if($index === 0)
-                          <td rowspan="{{ count($records) }}">
-                            <div 
-                              class="reportrange d-inline-block px-2 py-1 border rounded" 
-                              data-emp="{{ $t->emp_code }}"
-                              style="background: #fff; cursor: pointer;"
-                            >
+                        <td>
+                          <div class="reportrange" data-emp="{{ $t->emp_code }}" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; display: inline-block;">
                               <i class="fa fa-calendar"></i>&nbsp;
-                              <span></span>
-                              <i class="fa fa-caret-down"></i>
-                            </div>
-
-                            <button 
-                              type="button" 
-                              class="btn btn-primary btn-sm ms-2 filter-btn"
-                              data-emp="{{ $t->emp_code }}"
-                            >
-                              <i class="fa fa-filter"></i> Filter
-                            </button>
-                          </td>
-                        @endif
+                              <span></span> <i class="fa fa-caret-down"></i>
+                          </div>
+                          <button class="btn btn-primary btn-sm ml-2 filter-btn" data-emp="{{ $t->emp_code }}">
+                              <i class="fa fa-filter"></i> Filter 
+                          </button>
+                        </td>
                       </tr>
                     @endforeach
-                  @else
-                    <tr>
-                      <td>{{ $t->emp_code }}</td>
-                      <td>{{ capitalizeWords($t->name) }}</td>
-                      <td colspan="3" class="text-muted">No attendance records found</td>
-                      <td>
-                        <div 
-                          class="reportrange d-inline-block px-2 py-1 border rounded" 
-                          data-emp="{{ $t->emp_code }}"
-                          style="background: #fff; cursor: pointer;"
-                        >
-                          <i class="fa fa-calendar"></i>&nbsp;
-                          <span></span>
-                          <i class="fa fa-caret-down"></i>
-                        </div>
-
-                        <button 
-                          type="button" 
-                          class="btn btn-primary btn-sm ms-2 filter-btn"
-                          data-emp="{{ $t->emp_code }}"
-                        >
-                          <i class="fa fa-filter"></i> Filter
-                        </button>
-                      </td>
-                    </tr>
-                  @endif
-                @empty
-                  <tr>
-                    <td colspan="6" class="text-center text-muted">No team members found</td>
-                  </tr>
-                @endforelse
-              </tbody>
-
+                </tbody>
             </table>
             <div class="clear-filter text-center">
-                <a href="{{ route('team') }}" class="btn btn-primary">Clear Filter</a>
+                <a href="{{ route('team' ) }}" class="btn btn-primary">Clear Filter</a>
             </div>
         </div>
         </div> 
-    </div>
-    </div>
+      
+  </div>
 @endsection
 @push('scripts')
   $(function () {
@@ -253,5 +200,15 @@ td {
         // Redirect
         window.location.href = url;
     });
+});
+  $('#filter_type').on('change', function() {
+    let filterType = $(this).val();
+    if (filterType === 'department') {
+        $('#department_select_div').removeClass('d-none');
+        $('#employee_select_div').addClass('d-none');
+    } else if (filterType === 'employee') {
+        $('#employee_select_div').removeClass('d-none');
+        $('#department_select_div').addClass('d-none');
+    }
 });
 @endpush

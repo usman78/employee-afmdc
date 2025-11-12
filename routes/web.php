@@ -60,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/team', [TeamController::class, 'index'])->name('team');
     Route::get('/attendance-filter/{emp_code}/{date_range}', [TeamController::class, 'attendanceFilter'])->name('attendance-filter');
+    Route::get('/dgm-team-filter', [TeamController::class, 'dgmTeamFilter'])->name('dgm-team-filter');
 
     Route::prefix('service-requests')->group(function () {
         Route::get('/', [ServiceRequestController::class, 'index'])->name('service-requests.index');
@@ -94,6 +95,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [AdmissionController::class, 'admissions'])->name('admissions');
         Route::get('/applicant/{id}', [AdmissionController::class, 'applicant'])->name('applicant');
         Route::post('/update-applicant-status/{id}', [AdmissionController::class, 'updateApplicantStatus'])->name('update-applicant-status');
+    });
+
+    Route::get('/hr-dashboard', function () {
+        return redirect('http://localhost:5173/');
     });
 });
 
