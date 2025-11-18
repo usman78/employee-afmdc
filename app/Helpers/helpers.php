@@ -238,3 +238,8 @@ function checkMultipleLeaves($emp_code, $fromDate, $toDate)
     $leave = $query->first();
     return $leave ? true : false;
 }
+function getProfilePicName($emp_code)
+{
+    $picName = $emp_code . '.jpg';
+    return $picName;
+}

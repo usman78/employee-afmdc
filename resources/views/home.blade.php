@@ -81,7 +81,7 @@ strong {
       <div class="services col-md-4 justify-content-center d-flex">
         <div class="service-item item-cyan position-relative">
           <div class="icon">
-            <img style="max-width: 100px; object-fit: cover; width: 100%; border: 4px solid #973594;" src="{{asset('pictures') . "/" . $employee->pic_name}}">
+            <img style="max-width: 100px; object-fit: cover; width: 100%; border: 4px solid #973594;" src="{{asset('pictures') . "/" . getProfilePicName($employee->emp_code)}}">
           </div>
           <a href="#" class="stretched-link">
             <h3>{{capitalizeWords($employee->name)}}</h3>
