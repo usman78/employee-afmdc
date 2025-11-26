@@ -180,7 +180,7 @@
               <li><a href="{{route('meetings')}}">Meetings</a></li>
               <li><a href="{{route('assigned-tasks')}}">Assigned Tasks</a></li>
               <li><a href="{{route('sops')}}">SOPs</a></li>
-              @if(Auth::user()->isHR())
+              @if(Auth::user()->isAllowedToSeeAdmissions())
                 <li><a href="{{route('admissions')}}">Admissions</a></li>
               @endif
             </ul>
