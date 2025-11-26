@@ -15,25 +15,54 @@ td, th {
   text-overflow: ellipsis; /* 5️⃣ Show "..." */
 }
 th.subject-title, td.subject-title {
-  width: 200px; /* Set your desired width */
+  width: 155px; /* Set your desired width */
 }
 th.group-title, td.group-title {
-    width: 100px;
+    width: 73px;
 }
 th.subject-id, td.subject-id {
     width: 150px;
 }
 th.action-btn, td.action-btn {
-    width: 90px;
+    width: 82px;
 }
 th.time, td.time {
     width: 125px;
 }
 th.topic, td.topic {
-    width: 60px;
+    width: 170px;
 }
 th.date, td.date {
     width: 100px;
+}
+th.period-type {
+    width: 151px;
+}
+
+@media (min-width: 576px) {
+    .container {
+        max-width: 100%;
+    }
+}
+@media (min-width: 768px) {
+    .container {
+        max-width: 100%;
+    }
+}
+@media (min-width: 992px) {
+    .container {
+        max-width: 100%;
+    }
+}
+@media (min-width: 1200px) {
+    .container {
+        max-width: 100%;
+    }
+}
+@media (min-width: 1400px) {
+    .container {
+        max-width: 100%;
+    }
 }
     
 @endpush
@@ -86,7 +115,7 @@ th.date, td.date {
                                         <th class="subject-id">Subject ID</th>
                                         <th class="subject-title">Subject Title</th>
                                         <th class="topic">Topic</th>
-                                        <th>Period Type</th>
+                                        <th class="period-type">Period Type</th>
                                         <th class="min-width-hod-class">HOD</th>
                                         <th class="time">Start Time</th>
                                         <th class="time">End Time</th>
@@ -210,7 +239,7 @@ th.date, td.date {
                 cells[6].innerHTML = `<input type="text" name="subject_title[]" class="form-control form-control-sm" value="${subjTitleVal}" readonly>`;
 
                 // Topic
-                cells[7].innerHTML = `<button type="button" class="btn btn-primary btn-sm add-topic-btn">Add</button>`;
+                cells[7].innerHTML = `<button type="button" class="btn btn-primary btn-sm add-topic-btn" style="width: -webkit-fill-available; width: -moz-available;">Add</button>`;
 
                 // PERIOD TYPE
                 const periodTypeVal = getCellValue(currentRow.children[8]);
@@ -285,13 +314,17 @@ th.date, td.date {
                             });
                         },
                         preConfirm: () => {
-                            return $('#swal-hod-select').val();
+                            const select = $('#swal-hod-select');
+                            return {
+                                code: select.val(),
+                                name: select.find("option:selected").text()
+                            };
                         }
                         }).then((result) => {
                         if (result.isConfirmed && result.value) {
                             hodCell.innerHTML = `
                             <select name="hod[]" id="search-hod" class="form-control form-control-sm" required>
-                                <option value="${result.value}">HOD Selected</option>
+                                <option value="${result.value.code}">${result.value.name}</option>
                             </select>
                             `;
                         }

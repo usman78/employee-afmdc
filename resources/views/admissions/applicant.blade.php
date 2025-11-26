@@ -13,6 +13,9 @@
     .services-thumb {
         border: 2px solid var(--border-color);
     }
+    .alert.alert-warning {
+        line-height: 3.3;
+    }
 @endpush
 @section('content')
     <div class="container">
