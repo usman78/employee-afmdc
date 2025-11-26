@@ -28,7 +28,7 @@ class TeamController extends Controller
                 ->whereDate('at_date', $today->toDateString())
                 ->first();    
         }
-        $departments = Department::all();
+        $departments = Department::whereNotIn('dept_code', [61, 60, 64, 48, 54, 11, 13, 17, 18, 19, 31, 32, 58, 65])->get();
         return view('team.team', compact( 'team', 'departments', 'dgm'));
     }
 
