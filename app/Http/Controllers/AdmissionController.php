@@ -16,7 +16,7 @@ class AdmissionController extends Controller
         return view('admissions.admissions', ['admissions' => $admissions]);
     } 
     public function applicant($id) {
-        $profile = Admissions::with('user')->where('ADM_APPLICANT_ID', $id)->first();
+        $profile = Admissions::with('user', 'program')->where('ADM_APPLICANT_ID', $id)->first();
         $filePaths = [
             'profile' => "profile_{$id}",
             'cnic_front' => "cnic_front_{$id}",

@@ -17,7 +17,7 @@
 @section('content')
     <div class="container">
         <div class="row mt-5">
-            <div class="col-lg-12">
+            <div class="col-lg-6">
                 <div class="services-thumb" style="max-height: 1098px;">
                     <div class="d-flex flex-wrap align-items-center mb-4 pb-3">
                         <h3 class="mb-0">Admission Application Documents</h3>
@@ -146,6 +146,65 @@
                             <span class="alert alert-warning">Domicile (Not Uploaded)</span>
                         @endif
                     </p>     
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="services-thumb">
+                    <div class="d-flex flex-wrap align-items-center mb-4 pb-3">
+                        <h3 class="mb-0">Admission Application Data</h3>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">Applicant Name</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ $profile->user->name }}</p>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">Applicant Father Name</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ $profile->father_name }}</p>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">Date of Birth</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ dateFormat($profile->date_of_birth) }}</p>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">Gender</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ $profile->gender_label }}</p>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">City</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ $profile->city }}</p>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">Address</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ $profile->postal_address }}</p>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">Student Mobile</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ $profile->st_mobile_phone }}</p>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">Father Mobile</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ $profile->fr_mobile_phone }}</p>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">Accomodation</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ $profile->accomodation_label }}</p>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">Emergency Contact</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ $profile->emg_cont_pname }}</p>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">Emergency Contact Number</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ $profile->emg_cont_mno }}</p>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">Relation</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ $profile->relation }}</p>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">Program Applied</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ $profile->program->program_name }}</p>
                 </div>
             </div>
         </div>

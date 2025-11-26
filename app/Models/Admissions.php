@@ -14,4 +14,16 @@ class Admissions extends Model
     {
         return $this->belongsTo(AdmissionUsers::class, 'user_id', 'id');
     }
+    public function program()
+    {
+        return $this->belongsTo(AdmissionPrograms::class, 'program_id', 'program_id');
+    }
+    public function getAccomodationLabelAttribute()
+    {
+        return $this->accommodation === 'y' ? 'Yes' : 'No';
+    }
+    public function getGenderLabelAttribute()
+    {
+        return $this->gender === 'f' ? 'Female' : 'Male';
+    }
 }
