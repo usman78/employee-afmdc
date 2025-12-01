@@ -57,7 +57,7 @@ class LeavesController extends Controller
     public function empType($emp_code)
     {
         $typeOfEmployee = DB::table('pay_pers')
-        ->join('pre_leave_auth', 'pay_pers.emp_code', '=', 'pre_leave_auth.emp_code_l')
+        ->leftJoin('pre_leave_auth', 'pay_pers.emp_code', '=', 'pre_leave_auth.emp_code_l')
         ->where('pay_pers.emp_code', $emp_code)
         ->select('pay_pers.*', 'pre_leave_auth.*')
         ->get();
