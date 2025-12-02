@@ -1,5 +1,13 @@
 @extends('layouts.app')
 @push('styles')
+    a#view-button {
+        display: inline-block;
+    }
+
+    a.services-price.view-button {
+        display: inline-block;
+    }
+    
     .dt-layout-row:first-child {
         display: flex;
         justify-content: flex-start;
@@ -68,9 +76,15 @@
                                         <td>{{ getProgramName($admission->program_id) }}</td>
                                         <td>{{date('d-m-Y', strtotime($admission->created_at))}}</td>                                        
                                         <td>
-                                            <a href="{{route('applicant', $admission->adm_applicant_id)}}" class="services-price view-button" id="view-button">
+                                            <a href="{{route('applicant', $admission->adm_applicant_id)}}" class="btn btn-small btn-primary services-price view-button" id="view-button">
                                                 <div class="services-price-wrap ms-auto">
                                                     <p class="services-price-text mb-0">View</p>
+                                                    <div class="services-price-overlay"></div>
+                                                </div>
+                                            </a>
+                                            <a href="{{ route('preview-admission', $admission->adm_applicant_id) }}" class="btn btn-small btn-secondary services-price view-button">
+                                                <div class="services-price-wrap ms-auto">
+                                                    <p class="services-price-text mb-0">Download</p>
                                                     <div class="services-price-overlay"></div>
                                                 </div>
                                             </a>
@@ -92,4 +106,4 @@
     let table = $('#applicants-data').DataTable({
         order: 'desc',
     });
-@endpush   
+@endpush    

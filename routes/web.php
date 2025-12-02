@@ -95,6 +95,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [AdmissionController::class, 'admissions'])->name('admissions');
         Route::get('/applicant/{id}', [AdmissionController::class, 'applicant'])->name('applicant');
         Route::post('/update-applicant-status/{id}', [AdmissionController::class, 'updateApplicantStatus'])->name('update-applicant-status');
+        Route::get('/download-admission-pdf/{id}', [AdmissionController::class, 'downloadAdmissionPDF'])->name('download-admission-pdf');
+        Route::get('/preview-admission/{id}', [AdmissionController::class, 'previewAdmission'])->name('preview-admission');
+        Route::get('/private/admissions/{admission}/{file}', [App\Http\Controllers\FilesController::class, 'getAdmissionFiles'])->name('get.admission.files');
+
     });
 
     Route::get('/hr-dashboard', function () {

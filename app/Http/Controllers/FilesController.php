@@ -26,6 +26,21 @@ class FilesController extends Controller
 
         return response()->file(Storage::path($path));;
     }
+    public function getAdmissionFiles($admission, $file)
+    {
+        if (!Auth::check()) {
+            abort(403, 'Unauthorized');
+        }
+
+        $path = "admissions/{$admission}/{$file}";
+
+        if (!Storage::exists($path)) {
+            Log::error("File not found: " . $path);
+            abort(404, 'File not found.');
+        }
+
+        return response()->file(Storage::path($path));
+    }
     public function downloadAdmissionFile($id, $fileName, $fileFormat)
     {
         if (!Auth::check()) {
