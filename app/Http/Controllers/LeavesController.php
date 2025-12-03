@@ -639,8 +639,8 @@ class LeavesController extends Controller
 
     public function checkConsecutiveLeave($emp_code, $leave_code, $from_date, $to_date)
     {
-        if($leave_code == 5) {
-            // Unpaid leave does not require consecutive check
+        if($leave_code == 5 || $leave_code == 3) {
+            // Unpaid leave & annual leave does not require consecutive check
             return true;
         }
         $from = Carbon::parse($from_date);
@@ -648,7 +648,7 @@ class LeavesController extends Controller
         $yesterday = Carbon::parse($from)->copy()->subDay();
         $tomorrow = Carbon::parse($to)->copy()->addDay();
         $leave = Leave::where('emp_code', $emp_code)
-        ->whereIn('leave_code', [1, 2, 3])  // restricted leave codes
+        ->whereIn('leave_code', [1, 2])  // restricted leave codes
         ->where('leave_code', '!=', $leave_code) // different leave type
         ->where(function ($query) use ($yesterday, $tomorrow) {
             $query->whereDate('to_date', $yesterday) // ends right before new leave
