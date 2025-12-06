@@ -1,3 +1,19 @@
+@php
+    $baseDir = base_path('../online-admission/public/applications/' . $profile->adm_applicant_id . '/');
+    $fileNameBase = 'profile_' . $profile->adm_applicant_id;
+
+    $possibleExtensions = ['jpg', 'jpeg'];
+    $photoPath = null;
+
+    foreach ($possibleExtensions as $ext) {
+        $fullPath = realpath($baseDir . $fileNameBase . '.' . $ext);
+        if ($fullPath && file_exists($fullPath)) {
+            // convert backslashes for DomPDF
+            $photoPath = str_replace('\\', '/', $fullPath);
+            break;
+        }
+    }
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
@@ -144,12 +160,12 @@
 
                 <!-- Center Logo -->
                 <td class="logo-cell">
-                    <img src="{{ public_path('img\AFMDC-Logo.png') }}" class="logo-img">
+                    <img src="{{ public_path('img/AFMDC-Logo.png') }}" class="logo-img">
                 </td>
 
                 <!-- Student Photo -->
                 <td class="photo-cell">
-                    <img src="{{ Storage::path('admissions') . '/' . $profile->adm_applicant_id . '/profile_' . $profile->adm_applicant_id . '.jpg'  }}" class="photo-img">
+                    <img src="{{ $photoPath }}" style="width: 100px; height: 150px;" alt="profile photo">
                 </td>
             </tr>
 

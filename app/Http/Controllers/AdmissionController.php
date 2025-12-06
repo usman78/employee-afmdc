@@ -56,33 +56,16 @@ class AdmissionController extends Controller
         $pdf = Pdf::loadView('pdf.admission-form', ['profile' => $profile]);
         return $pdf->download("admission_{$id}.pdf");
     }
-    // public function previewAdmission($id) {
-    //     $profile = Admissions::with('user', 'program')->where('ADM_APPLICANT_ID', $id)->first();
-
-    //     if (!$profile) {
-    //         return redirect()->back()->with('error', 'Applicant not found.');
-    //     }
-
-    //     $pdf = Pdf::loadView('pdf.admission-form', ['profile' => $profile]);
-    //     return $pdf->stream("admission_{$id}.pdf");
-    // }
-        public function previewAdmission($id) {
+    public function previewAdmission($id) 
+    {
         $profile = Admissions::with('user', 'program')->where('ADM_APPLICANT_ID', $id)->first();
 
         if (!$profile) {
             return redirect()->back()->with('error', 'Applicant not found.');
         }
 
-
-
         $pdf = Pdf::loadView('pdf.admission-form', ['profile' => $profile]);
         return $pdf->stream("admission_{$id}.pdf");
         // return view('pdf.admission-form', ['profile' => $profile]);
-    }
-    public function checkStorageFile($id) {
-        if(!Storage::exists("admissions/{$id}/profile_{$id}.jpg")) {
-            return 'jpeg';
-        }
-        return 'jpg';
     }
 }
