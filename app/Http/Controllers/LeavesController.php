@@ -240,6 +240,12 @@ class LeavesController extends Controller
 
     public function preview(Request $request)
     {
+        if($request->input('leave_type') == null) {
+            return response()->json([
+                'sandwich' => false,
+                'rest_day' => null,
+            ]);
+        }
         $emp_code = auth()->user()->emp_code;
         $from = $request->input('leave_from_date');
         $to = $request->input('leave_to_date');

@@ -100,6 +100,7 @@ function checkFullLeaveExists($emp_code, $date)
 {
     $leave = \DB::table('pre_leave_tran')
         ->where('emp_code', $emp_code)
+        ->whereIn('leave_code', [1,2,3])
         ->where('from_date', '<=', $date)
         ->where('to_date', '>=', $date)
         ->first();
