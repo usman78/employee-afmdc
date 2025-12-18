@@ -5,6 +5,18 @@
 @endphp
 
 @push('styles')
+.stats .stats-item {
+  padding: 0;
+}
+.stats .stats-item span {
+    margin-bottom: 10px;
+    padding-bottom: 0px;
+}
+.portfolio .stats .stats-item.text-center.w-100.h-100 {
+    background: gainsboro !important;
+    border-radius: 10px !important;
+    box-shadow: 6px 7px 5px gray !important;
+}
 .badge-success {
   background-color: #2196f3;
 }
@@ -35,6 +47,9 @@ td {
   font-size: 14px;
   vertical-align: middle;
 }
+{{-- .remaining-negative {
+  color: #f44336 !important;
+} --}}
 @media (max-width: 768px) {
   .portfolio-details .portfolio-info {
     padding: 0 15px;
@@ -49,23 +64,45 @@ td {
       <div class="portfolio-details mt-5 mb-5">
         <div class="portfolio-info aos-init aos-animate pt-4" data-aos="fade-up" data-aos-delay="200">
           <h3>Attendance Information</h3>
+          <div class="row gy-4 stats">
+            <div class="col-md-4">
+              <div class="stats-item text-center w-100 h-100">
+                <span data-purecounter-start="0" data-purecounter-end="232" data-purecounter-duration="0" class="purecounter late-mins"></span>
+                <p>Late Coming Mins</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stats-item text-center w-100 h-100">
+                <span data-purecounter-start="0" data-purecounter-end="521" data-purecounter-duration="0" class="purecounter early-mins"></span>
+                <p>Early Off Mins</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stats-item text-center w-100 h-100">
+                <span data-purecounter-start="0" data-purecounter-end="521" data-purecounter-duration="0" class="purecounter total-mins"></span>
+                <p>Total Mins Effect</p>
+              </div>
+            </div>
+          </div>
           <ul>
-            <li><strong>Current month all attendance records.</strong></li>
+          @if(session('success'))
             <li class="mt-5">
-              @if(session('success'))
-                <span class="alert alert-success">{{session('success')}}</span>
-              @endif  
-              @if(session('error'))
-                <span class="alert alert-warning">{{session('error')}}</span>
-              @endif
+              <span class="alert alert-success">{{session('success')}}</span>
             </li>
+          @endif  
+          @if(session('error'))
+            <li class="mt-5">
+              <span class="alert alert-warning">{{session('error')}}</span>
+            </li>
+          @endif
           </ul>
-          <table class="table mt-5 mb-5">
+          <table class="table mt-2 mb-5">
             <thead>
               <tr>
                 <th>Date</th>
                 <th>Time-In/Out</th>
-                <th>Work</th>
+                <th>Late Mins</th>
+                <th>Early Mins</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -82,6 +119,10 @@ td {
                         @foreach ($record['time_logs'] as $logs)
                           @if ($logs['timein'] && $logs['timeout'])
                             {{ Carbon::parse($logs['timein'])->format('H:i') . " / " . Carbon::parse($logs['timeout'])->format('H:i') }} <br>
+                            @php
+                             $lateMins = $logs['late_minutes'] ?? 0;
+                             $earlyMins = $logs['early_minutes'] ?? 0;
+                            @endphp 
                           @elseif ($logs['timein'] && !$logs['timeout'])
                             {{ Carbon::parse($logs['timein'])->format('H:i') . " / --:--" }} <br>
                           @else
@@ -95,8 +136,25 @@ td {
                   </td>
                   <td>
                     @if($record['timein'] && $record['timeout'])
-                      {{ $record['worked_minutes'] }} mins
+                      @foreach ($record['time_logs'] as $logs)
+                        @if ($lateMins >= 10)
+                          {{ $lateMins }} mins 
+                        @endif
+                        <br>
+                        @break
+                      @endforeach
                     @endif  
+                  </td>
+                  <td>
+                    @if($record['timein'] && $record['timeout'])
+                      @foreach ($record['time_logs'] as $logs)
+                        {{-- @if ($earlyMins > 0) --}}
+                          {{ $earlyMins }} mins
+                        {{-- @endif --}}
+                        <br>
+                        @break
+                      @endforeach
+                    @endif
                   </td>
                   <td>
                     @php 
@@ -149,4 +207,55 @@ td {
 @endsection
 
 @push('scripts')
+
+  function sumLateAndEarlyMinutes() {
+      let totalLate = 0;
+      let totalEarly = 0;
+
+      // Select all table rows except header
+      document.querySelectorAll("table tbody tr").forEach(row => {
+
+          // Adjust column indexes if needed
+          let lateCell = row.cells[2];   // Late Mins column
+          let earlyCell = row.cells[3];  // Early Mins column
+
+          if (lateCell) {
+              let lateText = lateCell.innerText.trim();
+              let lateValue = parseInt(lateText);
+              if (!isNaN(lateValue)) {
+                  totalLate += lateValue;
+              }
+          }
+
+          if (earlyCell) {
+              let earlyText = earlyCell.innerText.trim();
+              let earlyValue = parseInt(earlyText);
+              if (!isNaN(earlyValue)) {
+                  totalEarly += earlyValue;
+              }
+          }
+      });
+      {{-- Calculate total effect --}}
+      let total = totalLate + totalEarly;
+
+      return {
+          lateMinutes: totalLate,
+          earlyMinutes: totalEarly,
+          totalMins: total
+      };
+  }
+  const totals = sumLateAndEarlyMinutes();
+  const lateEl = document.querySelector('.late-mins');
+  const earlyEl = document.querySelector('.early-mins');
+  const totalEl = document.querySelector('.total-mins');
+
+  if (lateEl) {
+    lateEl.setAttribute('data-purecounter-end', totals.lateMinutes);
+  }
+  if (earlyEl) {
+    earlyEl.setAttribute('data-purecounter-end', totals.earlyMinutes);
+  }
+  if (totalEl) {
+    totalEl.setAttribute('data-purecounter-end', totals.totalMins);
+  }
 @endpush
