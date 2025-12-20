@@ -20,7 +20,7 @@ class AttendanceController extends Controller
             return redirect()->route('home');
         }
 
-        $emp_category = Employee::select('catg_code', 'st_time', 'end_time')->where('emp_code', $emp_code)->first();
+        $emp_category = Employee::select('catg_code', 'loca_code', 'st_time', 'end_time')->where('emp_code', $emp_code)->first();
         $totalMins = 480;
 
         if($emp_category->catg_code == 2){
@@ -91,14 +91,18 @@ class AttendanceController extends Controller
                                 ->setTimeFromTimeString('08:00:00');
                             $endTimeCarbon = $workDate->copy()
                                 ->setTimeFromTimeString('13:00:00');    
+                        } else if($emp_category->catg_code == 1 && $emp_category->loca_code == 2 && $workDate->isFriday()){
+                            $totalMins = 390;
+                            $startTimeCarbon = $workDate->copy()
+                                ->setTimeFromTimeString('08:00:00');
+                            $endTimeCarbon = $workDate->copy()
+                                ->setTimeFromTimeString('14:30:00');
                         } else {
-
                         $startTimeCarbon = $workDate->copy()
                             ->setTimeFromTimeString($emp_category->st_time);
 
                         $endTimeCarbon = $workDate->copy()
                             ->setTimeFromTimeString($emp_category->end_time);
-
                         }
 
                         /* -------------------------
@@ -213,8 +217,8 @@ class AttendanceController extends Controller
                         /* -------------------------
                         Safety clamp
                         -------------------------- */
-                        $lateMins  = max(0, round($lateMins));
-                        $earlyMins = max(0, round($earlyMins));
+                        $lateMins  = max(0, round($lateMins, 1));
+                        $earlyMins = max(0, round($earlyMins, 1));
 
                         /* -------------------------
                         Output
