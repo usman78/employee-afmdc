@@ -14,290 +14,292 @@ class AttendanceController extends Controller
 {
     public function attendance($emp_code)
     {
-        // Ensure logged-in user matches the requested employee code
         $authUser = Auth::user();
         if ($authUser->emp_code != $emp_code) {
             return redirect()->route('home');
         }
 
-        $emp_category = Employee::select('catg_code', 'loca_code', 'st_time', 'end_time')->where('emp_code', $emp_code)->first();
+        $emp_category = Employee::select(
+            'catg_code', 'loca_code', 'st_time', 'end_time', 'twh'
+        )->where('emp_code', $emp_code)->first();
+
+        /* -------------------------
+        Required minutes
+        -------------------------- */
         $totalMins = 480;
 
-        if($emp_category->catg_code == 2){
+        if ($emp_category->catg_code == 2) {
             $totalMins = 360;
-        }       
+        } elseif ($emp_category->twh == 12) {
+            $totalMins = 720;
+        }
 
-        // Define national holidays
+        /* -------------------------
+        Holidays
+        -------------------------- */
         $holidays = [
-            '2025-03-31', // Eid
-            '2025-04-01', // Eid
-            '2025-04-02', // Eid
-            '2025-05-01', // Labor Day
-            '2025-05-07', // Holiday due to hostility
-            '2025-06-09', // Eid
-            '2025-06-10', // Eid
-            '2025-06-11', // Eid
-            '2025-07-05', // Ashura
-            '2025-08-14', // Independance Day
-            '2025-11-09', // Iqbal Day
-            '2025-12-25', // Christmas
+            '2025-03-31','2025-04-01','2025-04-02',
+            '2025-05-01','2025-05-07',
+            '2025-06-09','2025-06-10','2025-06-11',
+            '2025-07-05','2025-08-14',
+            '2025-11-09','2025-12-25'
         ];
 
-        // Get attendance records (excluding Sundays)
         $start_date = Carbon::now()->startOfMonth();
-        $end_date = Carbon::today();     
+        $end_date   = Carbon::today();
+
         $allDates = collect();
         $tempDate = $start_date->copy();
 
         while ($tempDate->lte($end_date)) {
-            $dateString = $tempDate->toDateString(); // Format: YYYY-MM-DD
-            $leaveType = null;  
-            $isLeave = false;
-            $isHoliday = in_array($dateString, $holidays);
-            $minsWorked = 0;
-            $timeLogs = [];
-            
+
+            $dateString = $tempDate->toDateString();
+            $isHoliday  = in_array($dateString, $holidays);
+
+            /* ===============================
+            SUNDAY / HOLIDAY
+            ================================ */
             if ($tempDate->isSunday() || $isHoliday) {
-                // Manually create a placeholder record for Sundays
+
                 $allDates->push([
-                    'at_date' => $dateString,
-                    'timein' => null,
-                    'timeout' => null,
+                    'at_date'   => $dateString,
                     'time_logs' => [],
-                    'is_sunday' => true,
-                    'is_holiday' => $isHoliday,
-                    'is_leave' => false
+                    'is_sunday' => $tempDate->isSunday(),
+                    'is_holiday'=> $isHoliday,
+                    'is_leave'  => false
                 ]);
-            } else {
-                // Fetch all attendance records for this date
-                $attendanceRecords = Attendance::whereRaw("TRUNC(at_date) = TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
-                                            ->where('emp_code', $emp_code)
-                                            ->whereNull('att_stat')
-                                            ->get();
-                //  Fetch the record for the date available in the database
-                if ($attendanceRecords->isNotEmpty()) {
-                    $leave = null;
-                    // Determine if multiple records exist
-                    foreach ($attendanceRecords as $record) {
 
-                        /* -------------------------
-                        Base date & shift times
-                        -------------------------- */
-                        $workDate = Carbon::parse($dateString);
+                $tempDate->addDay();
+                continue;
+            }
 
-                        if($emp_category->catg_code == 2 && $workDate->isFriday()){
-                            $totalMins = 300;
-                            $startTimeCarbon = $workDate->copy()
-                                ->setTimeFromTimeString('08:00:00');
-                            $endTimeCarbon = $workDate->copy()
-                                ->setTimeFromTimeString('13:00:00');    
-                        } else if($emp_category->catg_code == 1 && $emp_category->loca_code == 2 && $workDate->isFriday()){
-                            $totalMins = 390;
-                            $startTimeCarbon = $workDate->copy()
-                                ->setTimeFromTimeString('08:00:00');
-                            $endTimeCarbon = $workDate->copy()
-                                ->setTimeFromTimeString('14:30:00');
-                        } else {
-                        $startTimeCarbon = $workDate->copy()
-                            ->setTimeFromTimeString($emp_category->st_time);
+            /* ===============================
+            FETCH ATTENDANCE
+            ================================ */
+            $attendanceRecords = Attendance::whereRaw(
+                    "TRUNC(at_date) = TO_DATE(?, 'YYYY-MM-DD')", [$dateString]
+                )
+                ->where('emp_code', $emp_code)
+                ->whereNull('att_stat')
+                ->orderBy('timein')
+                ->get();
 
-                        $endTimeCarbon = $workDate->copy()
-                            ->setTimeFromTimeString($emp_category->end_time);
-                        }
+            /* ===============================
+            LEAVE DETECTION
+            ================================ */
+            $isLeave = false;
+            $leaveType = null;
+            $leaveStart = null;
+            $leaveEnd   = null;
+            $leaveMins  = 0;
+            $isFullDayLeave = false;
 
-                        /* -------------------------
-                        Leave related variables
-                        -------------------------- */
-                        $leaveStart = null;
-                        $leaveEnd   = null;
-                        $isFullDayLeave = false;
+            if (ifLeaveExists($emp_code, $dateString)) {
 
-                        if (ifLeaveExists($emp_code, $dateString)) {
+                $leave = Leave::whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
+                    ->whereRaw("TRUNC(to_date)   >= TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
+                    ->where('emp_code', $emp_code)
+                    ->whereNot('status', 9)
+                    ->first();
 
-                            $leave = Leave::whereRaw(
-                                    "TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')",
-                                    [$dateString]
-                                )
-                                ->whereRaw(
-                                    "TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')",
-                                    [$dateString]
-                                )
-                                ->where('emp_code', $emp_code)
-                                ->whereNot('status', 9)
-                                ->first();
+                if ($leave) {
+                    $isLeave = true;
+                    $leaveType = leaveDescription(
+                        $leave->leave_code,
+                        $leave->from_date,
+                        $leave->to_date
+                    );
 
-                            if ($leave) {
+                    $from = Carbon::parse($leave->from_date);
+                    $to   = Carbon::parse($leave->to_date);
 
-                                $leaveFrom = Carbon::parse($leave->from_date);
-                                $leaveTo   = Carbon::parse($leave->to_date);
+                    if ($from->format('H:i:s') === '00:00:00' &&
+                        $to->format('H:i:s')   === '00:00:00') {
 
-                                // FULL DAY LEAVE
-                                if (
-                                    $leaveFrom->format('H:i:s') === '00:00:00' &&
-                                    $leaveTo->format('H:i:s') === '00:00:00'
-                                ) {
-                                    $isFullDayLeave = true;
-                                }
-                                // HALF / SHORT LEAVE
-                                else {
-                                    $leaveStart = $leaveFrom;
-                                    $leaveEnd   = $leaveTo;
-                                }
-                            }
-                        }
+                        $isFullDayLeave = true;
 
-                        /* -------------------------
-                        Attendance times
-                        -------------------------- */
-                        $timein  = $record->timein;
-                        $timeout = $record->timeout;
-
-                        $minsWorked += minutesWorked($timein, $timeout);
-
-                        $minimumTimeinCarbon  = Carbon::parse($attendanceRecords->min('timein'));
-                        $maximumTimeoutCarbon = Carbon::parse($attendanceRecords->max('timeout'));
-
-                        /* -------------------------
-                        Late minutes
-                        -------------------------- */
-                        $lateMins = 0;
-                        if ($minimumTimeinCarbon->gt($startTimeCarbon)) {
-                            $lateMins = $startTimeCarbon->diffInMinutes($minimumTimeinCarbon);
-                        }
-
-                        /* -------------------------
-                        Early minutes
-                        -------------------------- */
-                        $earlyMins = 0;
-                        if ($maximumTimeoutCarbon->lt($endTimeCarbon)) {
-                            $earlyMins = $maximumTimeoutCarbon->diffInMinutes($endTimeCarbon);
-                        }
-
-                        /* -------------------------
-                        FULL DAY LEAVE OVERRIDE
-                        -------------------------- */
-                        if ($isFullDayLeave) {
-                            $lateMins  = 0;
-                            $earlyMins = 0;
-                        }
-
-                        /* -------------------------
-                        Subtract leave overlap
-                        (Half / Short leave only)
-                        -------------------------- */
-                        if ($leaveStart && !$isFullDayLeave) {
-
-                            // Late overlap
-                            if ($lateMins > 0) {
-                                $lateStart = $startTimeCarbon;
-                                $lateEnd   = $minimumTimeinCarbon;
-
-                                $overlapStart = max($lateStart, $leaveStart);
-                                $overlapEnd   = min($lateEnd, $leaveEnd);
-
-                                if ($overlapStart < $overlapEnd) {
-                                    $lateMins -= $overlapStart->diffInMinutes($overlapEnd);
-                                }
-                            }
-
-                            // Early overlap
-                            if ($earlyMins > 0) {
-                                $earlyStart = $maximumTimeoutCarbon;
-                                $earlyEnd   = $endTimeCarbon;
-
-                                $overlapStart = max($earlyStart, $leaveStart);
-                                $overlapEnd   = min($earlyEnd, $leaveEnd);
-
-                                if ($overlapStart < $overlapEnd) {
-                                    $earlyMins -= $overlapStart->diffInMinutes($overlapEnd);
-                                }
-                            }
-                        }
-
-                        /* -------------------------
-                        Safety clamp
-                        -------------------------- */
-                        $lateMins  = max(0, round($lateMins, 1));
-                        $earlyMins = max(0, round($earlyMins, 1));
-
-                        /* -------------------------
-                        Output
-                        -------------------------- */
-                        $timeLogs[] = [
-                            'timein'        => $timein,
-                            'timeout'       => $timeout,
-                            'late_minutes'  => $lateMins,
-                            'early_minutes' => $earlyMins
-                        ];
+                    } else {
+                        $leaveStart = $from;
+                        $leaveEnd   = $to;
+                        $leaveMins  = $from->diffInMinutes($to);
                     }
-
-                    $leaveType = leaveDescription($leaveType, $leave ? $leave->from_date : null, $leave ? $leave->to_date : null);
-                    
-                    $leaveRemark = null;
-                    
-                    if (!$isLeave) {
-                        if ($minsWorked >= ($totalMins / 2) && $minsWorked < $totalMins - 120) {
-                            $leaveRemark = 'Half Day Eligible';
-                        } elseif ($minsWorked < ($totalMins / 2)) {
-                            $leaveRemark = 'Full Day Eligible';
-                        }
-                    }
-                     
-                    $allDates->push([
-                        'at_date' => $dateString,
-                        'timein' => $timein,
-                        'timeout' => $timeout,
-                        'time_logs' => $timeLogs ?? [],
-                        'is_sunday' => false,
-                        'is_holiday' => $isHoliday,
-                        'is_leave' => $isLeave,
-                        'leave_type' => $isLeave ? $leaveType : null,
-                        'worked_minutes' => $minsWorked,
-                        'short_duty_status' => $leaveRemark
-                    ]);
-                    
-                } else {
-                    if (ifLeaveExists($emp_code, $dateString)) {
-                        $isLeave = true;
-                        $leave = Leave::whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
-                            ->whereRaw("TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
-                            ->where('emp_code', $emp_code)
-                            ->first();
-                        $leaveType = $leave->leave_code;
-                        $leaveType = leaveDescription($leaveType, $leave ? $leave->from_date : null, $leave ? $leave->to_date : null);   
-                    }
-                    // Manually create a placeholder record for non-leave days
-                    $allDates->push([
-                        'at_date' => $dateString,
-                        'timein' => null,
-                        'timeout' => null,
-                        'time_logs' => [],
-                        'is_sunday' => false,
-                        'is_holiday' => $isHoliday,
-                        'is_leave' => $isLeave ? true : false,
-                        'leave_type' => $isLeave ? $leaveType : null,
-                    ]);
                 }
             }
+
+            /* ===============================
+            NO ATTENDANCE RECORDS
+            ================================ */
+            if ($attendanceRecords->isEmpty()) {
+
+                $allDates->push([
+                    'at_date'   => $dateString,
+                    'time_logs' => [],
+                    'is_sunday' => false,
+                    'is_holiday'=> $isHoliday,
+                    'is_leave'  => $isLeave,
+                    'leave_type'=> $isLeave ? $leaveType : null
+                ]);
+
+                $tempDate->addDay();
+                continue;
+            }
+
+            /* ===============================
+            SHIFT TIMES (DAY LEVEL)
+            ================================ */
+            $workDate = Carbon::parse($dateString);
+
+            $startTimeCarbon = $workDate->copy()->setTimeFromTimeString($emp_category->st_time);
+            $endTimeCarbon   = $workDate->copy()->setTimeFromTimeString($emp_category->end_time);
+
+            if ($emp_category->twh != 12) {
+
+                if ($emp_category->catg_code == 2 && $workDate->isFriday()) {
+                    $totalMins = 300;
+                    $startTimeCarbon->setTime(8,0);
+                    $endTimeCarbon->setTime(13,0);
+
+                } elseif ($emp_category->catg_code == 1 &&
+                        $emp_category->loca_code == 2 &&
+                        $workDate->isFriday()) {
+
+                    $totalMins = 390;
+                    $startTimeCarbon->setTime(8,0);
+                    $endTimeCarbon->setTime(14,30);
+                }
+            }
+
+            /* ===============================
+            BUILD TIME LOGS
+            ================================ */
+            $minsWorked = 0;
+            $timeLogs   = [];
+
+            foreach ($attendanceRecords as $record) {
+
+                $worked = minutesWorked($record->timein, $record->timeout);
+                $minsWorked += $worked;
+
+                $timeLogs[] = [
+                    'timein'          => $record->timein,
+                    'timeout'         => $record->timeout,
+                    'worked_minutes' => $worked
+                ];
+            }
+
+            /* ===============================
+            LATE / EARLY CALCULATION
+            ================================ */
+            $lateMins  = 0;
+            $earlyMins = 0;
+
+            if (!$isFullDayLeave) {
+
+                $minIn  = Carbon::parse($attendanceRecords->min('timein'));
+                if($attendanceRecords->whereNull('timeout')->isNotEmpty()) {
+                    $maxOut = null;
+                } else {
+                    $maxOut = Carbon::parse($attendanceRecords->max('timeout'));
+                }
+
+                if ($emp_category->twh == 12) {
+
+                    $required = $totalMins;
+
+                    if ($leaveMins > 0) {
+                        $required = max(0, $totalMins - $leaveMins);
+                    }
+
+                    $lateMins = max(0, $required - $minsWorked);
+
+                } else {
+
+                    if ($minIn->gt($startTimeCarbon)) {
+                        $lateMins = $startTimeCarbon->diffInMinutes($minIn);
+                    }
+
+                    if($maxOut == null) {
+                        $earlyMins = null;
+                    }
+                    else if ($maxOut->lt($endTimeCarbon)) {
+                        $earlyMins = $maxOut->diffInMinutes($endTimeCarbon);
+                    }
+
+                    if ($leaveStart) {
+
+                        if ($lateMins > 0) {
+                            $overlapStart = max($startTimeCarbon, $leaveStart);
+                            $overlapEnd   = min($minIn, $leaveEnd);
+
+                            if ($overlapStart < $overlapEnd) {
+                                $lateMins -= $overlapStart->diffInMinutes($overlapEnd);
+                            }
+                        }
+
+                        if ($earlyMins > 0) {
+                            $overlapStart = max($maxOut, $leaveStart);
+                            $overlapEnd   = min($endTimeCarbon, $leaveEnd);
+
+                            if ($overlapStart < $overlapEnd) {
+                                $earlyMins -= $overlapStart->diffInMinutes($overlapEnd);
+                            }
+                        }
+                    }
+                }
+            }
+
+            $lateMins  = max(0, round($lateMins, 1));
+            $earlyMins = max(0, round($earlyMins, 1));
+
+            /* ===============================
+            SHORT DUTY STATUS
+            ================================ */
+            $leaveRemark = null;
+
+            if (!$isLeave) {
+                if ($minsWorked >= ($totalMins / 2) && $minsWorked < $totalMins - 120) {
+                    $leaveRemark = 'Half Day Eligible';
+                } elseif ($minsWorked < ($totalMins / 2)) {
+                    $leaveRemark = 'Full Day Eligible';
+                }
+            }
+
+            /* ===============================
+            FINAL PUSH
+            ================================ */
+            $allDates->push([
+                'at_date'           => $dateString,
+                'time_logs'         => $timeLogs,
+                'worked_minutes'    => $minsWorked,
+                'late_minutes'      => $lateMins,
+                'early_minutes'     => $earlyMins,
+                'is_sunday'         => false,
+                'is_holiday'        => $isHoliday,
+                'is_leave'          => $isLeave,
+                'leave_type'        => $isLeave ? $leaveType : null,
+                'short_duty_status' => $leaveRemark
+            ]);
+
             $tempDate->addDay();
         }
 
-        $allDates = $allDates->sortByDesc('at_date')->values();
+        $attendance = $allDates->sortByDesc('at_date')->values();
+
         $employee = Employee::where('emp_code', $emp_code)->first();
 
         $leaves = Leave::where('emp_code', $emp_code)
             ->whereNot('status', 9)
-            ->where('from_date',  '>=' , $start_date)
+            ->where('from_date', '>=', $start_date)
             ->where('to_date', '<=', $end_date)
-            ->get(); 
+            ->get();
 
         return view('attendance', [
-            'attendance' => $allDates,
-            // 'emp_code' => $emp_code,
-            'leaves' => $leaves,
-            'emp_name' => $employee ? ucfirst($employee->name) : 'Unknown Employee'
+            'attendance' => $attendance,
+            'leaves'     => $leaves,
+            'emp_name'   => $employee ? ucfirst($employee->name) : 'Unknown Employee'
         ]);
     }
+
 }
 
 function leaveDescription($leaveCode, $fromDate = null, $toDate = null)
@@ -345,7 +347,7 @@ function minutesWorked($timein, $timeout) {
     if ($timein && $timeout) {
         $in = Carbon::parse($timein);
         $out = Carbon::parse($timeout);
-        $workedMinutes = round($in->diffInMinutes($out));
+        $workedMinutes = round($in->diffInMinutes($out), 1);
         return $workedMinutes;
     }
     return 0;

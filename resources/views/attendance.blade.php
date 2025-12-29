@@ -2,6 +2,9 @@
 
 @php
   use Carbon\Carbon;
+  $today = Carbon::today()->toDateString();
+  $isTimeIn = false;
+  // dd($attendance);
 @endphp
 
 @push('styles')
@@ -47,9 +50,6 @@ td {
   font-size: 14px;
   vertical-align: middle;
 }
-{{-- .remaining-negative {
-  color: #f44336 !important;
-} --}}
 @media (max-width: 768px) {
   .portfolio-details .portfolio-info {
     padding: 0 15px;
@@ -108,96 +108,138 @@ td {
             </thead>
             <tbody>
               @foreach ($attendance as $record)
-                <tr>
+              <tr>
+                  {{-- Date --}}
                   <td>{{ Carbon::parse($record['at_date'])->format('j M') }}</td>
-                  <td>
-                    @if ($record['is_sunday'] || $record['is_holiday'])
-                      <span class="badge badge-info">{{$record['is_holiday'] ? 'Holiday' : 'Sunday'}}</span>
-                    @else
-                      @if(!empty($record['time_logs']))
-                        {{-- Loop through each time log and display them --}}
-                        @foreach ($record['time_logs'] as $logs)
-                          @if ($logs['timein'] && $logs['timeout'])
-                            {{ Carbon::parse($logs['timein'])->format('H:i') . " / " . Carbon::parse($logs['timeout'])->format('H:i') }} <br>
-                            @php
-                             $lateMins = $logs['late_minutes'] ?? 0;
-                             $earlyMins = $logs['early_minutes'] ?? 0;
-                            @endphp 
-                          @elseif ($logs['timein'] && !$logs['timeout'])
-                            {{ Carbon::parse($logs['timein'])->format('H:i') . " / --:--" }} <br>
-                          @else
-                            <span class="badge badge-danger">Not timed in</span>
-                          @endif
-                        @endforeach
-                      @else
-                        <span class="badge badge-danger">Not timed in</span>
-                      @endif    
-                    @endif
-                  </td>
-                  <td>
-                    @if($record['timein'] && $record['timeout'])
-                      @foreach ($record['time_logs'] as $logs)
-                        @if ($lateMins >= 10)
-                          {{ $lateMins }} mins 
-                        @endif
-                        <br>
-                        @break
-                      @endforeach
-                    @endif  
-                  </td>
-                  <td>
-                    @if($record['timein'] && $record['timeout'])
-                      @foreach ($record['time_logs'] as $logs)
-                        {{-- @if ($earlyMins > 0) --}}
-                          {{ $earlyMins }} mins
-                        {{-- @endif --}}
-                        <br>
-                        @break
-                      @endforeach
-                    @endif
-                  </td>
-                  <td>
-                    @php 
-                      $leaveFound = false; 
-                      foreach ($leaves as $leave) {
-                        if ($record['at_date'] >= date('Y-m-d', strtotime($leave->from_date)) && $record['at_date'] <= date('Y-m-d', strtotime($leave->to_date))){
-                        $leaveFound = true;
-                          break;
-                        }
-                      }    
-                    @endphp
-                    @if ($record['is_sunday'] || $record['is_holiday'])
-                      <span class="badge badge-info">{{$record['is_holiday'] ? 'Holiday' : 'Sunday'}}</span>
-                    @else
-                      @if ($record['timein'] && $record['timeout'])
-                        @if ($record['short_duty_status'] ?? false)
-                          @if($leaveFound)
-                            <span class="badge badge-success">Leave already applied</span>
-                          @else 
-                          <span class="badge badge-warning">{{$record['short_duty_status']}}</span>
-                          @endif
-                        @else
-                          <span class="badge badge-success">{{$record['is_leave'] ? $record['leave_type'] : 'Present' }}</span>
-                        @endif
-                      @elseif ($record['timein'] && !$record['timeout'])
-                        @if ($record['is_leave'])
-                          <span class="badge badge-success">{{$record['leave_type']}}</span>
-                          
-                        @endif
-                        <span class="badge badge-success">Present</span>           
-                      @else
 
-                        @if ($leaveFound)
-                          <span class="badge badge-success">{{$record['leave_type']}}</span>
-                        @else
-                          <span class="badge badge-danger">Absent</span>
-                        @endif
+                  {{-- Time In / Out --}}
+                  <td>
+                      @if ($record['is_sunday'] || $record['is_holiday'])
+                          <span class="badge badge-info">
+                              {{ $record['is_holiday'] ? 'Holiday' : 'Sunday' }}
+                          </span>
+                      @else
+                          @if (!empty($record['time_logs']))
+                              @foreach ($record['time_logs'] as $log)
+                                  @if ($log['timein'] && $log['timeout'])
+                                      {{ Carbon::parse($log['timein'])->format('H:i') }}
+                                      /
+                                      {{ Carbon::parse($log['timeout'])->format('H:i') }}
+                                      <br>
+                                  @elseif ($log['timein'])
+                                      {{ Carbon::parse($log['timein'])->format('H:i') }} / --:--
+                                      <br>
+                                      @php
+                                        $isTimeIn = true;
+                                      @endphp
+                                  @endif
+                              @endforeach
+                          @else
+                              <span class="badge badge-danger">Not timed in</span>
+                          @endif
                       @endif
-                    @endif
                   </td>
-                </tr>
+
+                  {{-- Late Minutes (DAY LEVEL) --}}
+                  <td>
+                      @if (
+                          !$record['is_sunday']
+                          && !$record['is_holiday']
+                          // && $record['at_date'] !== $today
+                      )
+                          @if (($record['late_minutes'] ?? 0) >= 10)
+                              {{ $record['late_minutes'] }} mins
+                          @else
+                              —
+                          @endif
+                      @else
+                          —
+                      @endif
+                  </td>
+
+                  {{-- Early Minutes (DAY LEVEL) --}}
+                  <td>
+                      @if (
+                          !$record['is_sunday']
+                          && !$record['is_holiday']
+                          // && $record['at_date'] !== $today
+                      )
+                          @if (($record['early_minutes'] ?? 0) > 0)
+                              {{ $record['early_minutes'] }} mins
+                          @else
+                              —
+                          @endif
+                      @else
+                          —
+                      @endif
+                  </td>
+
+
+                  {{-- Status --}}
+                  <td>
+                      @php
+                          $isToday = ($record['at_date'] === $today);
+                      @endphp
+
+                      {{-- Sunday / Holiday --}}
+                      @if ($record['is_sunday'] || $record['is_holiday'])
+                          <span class="badge badge-info">
+                              {{ $record['is_holiday'] ? 'Holiday' : 'Sunday' }}
+                          </span>
+
+                      {{-- TODAY → FORCE PRESENT --}}
+                      @elseif ($isToday)
+                          @if($isTimeIn)
+                          <span class="badge badge-success">
+                            Present
+                          </span>
+                          @else
+                          <span class="badge badge-danger">
+                            Absent
+                          </span>
+                          @endif
+
+                      {{-- Normal days --}}
+                      @else
+                          @php
+                              $leaveFound = false;
+                              foreach ($leaves as $leave) {
+                                  if (
+                                      $record['at_date'] >= date('Y-m-d', strtotime($leave->from_date)) &&
+                                      $record['at_date'] <= date('Y-m-d', strtotime($leave->to_date))
+                                  ) {
+                                      $leaveFound = true;
+                                      break;
+                                  }
+                              }
+                          @endphp
+
+                          @if (!empty($record['time_logs']))
+                              @if ($record['short_duty_status'] ?? false)
+                                  @if ($leaveFound)
+                                      <span class="badge badge-success">Leave already applied</span>
+                                  @else
+                                      <span class="badge badge-warning">
+                                          {{ $record['short_duty_status'] }}
+                                      </span>
+                                  @endif
+                              @else
+                                  <span class="badge badge-success">
+                                      {{ $record['is_leave'] ? $record['leave_type'] : 'Present' }}
+                                  </span>
+                              @endif
+                          @else
+                              @if ($leaveFound)
+                                  <span class="badge badge-success">{{ $record['leave_type'] }}</span>
+                              @else
+                                  <span class="badge badge-danger">Absent</span>
+                              @endif
+                          @endif
+                      @endif
+                  </td>
+              </tr>
               @endforeach
-            </tbody>
+              </tbody>
           </table>
         </div>
       </div>
