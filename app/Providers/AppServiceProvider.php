@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Log;
@@ -31,9 +32,15 @@ class AppServiceProvider extends ServiceProvider
             return new PlainTextUserProvider($config['model']);
         });
 
-        View::composer('layouts.app', function ($view) {
-            $emp_code = Auth::user()->emp_code;
-            $view->with('emp_code', $emp_code);
+        View::composer(['layouts.app', 'jobs.layouts.app'], function ($view) {
+            if(!Auth::check()){
+                return;
+            }
+            $user = Cache::remember('user_'.Auth::id(), 60, function() {
+                return Auth::user()->only(['emp_code', 'name']);
+            });
+            $emp_code = $user['emp_code'];
+            $view->with(['emp_code' => $emp_code, 'user_name' => $user['name']]);
         });
         
     }
