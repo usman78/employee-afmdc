@@ -106,7 +106,7 @@ td {
   <div class="row">
     <div class="col-12">
       <div class="portfolio-details mt-5 mb-5">
-        <div class="portfolio-info aos-init aos-animate pt-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="portfolio-info pt-4">
           <h3>Subordinate Leave Approvals</h3>
           <ul>
             <li class="mt-5">
@@ -196,7 +196,7 @@ td {
       @if ($hrApprovals && $hrApprovals->isNotEmpty())
       <div class="col-12">
         <div class="portfolio-details mt-5 mb-5">
-          <div class="portfolio-info aos-init aos-animate pt-4" data-aos="fade-up" data-aos-delay="200">
+          <div class="portfolio-info pt-4">
             <h3 class="d-flex justify-content-between align-items-center">
               HR Leave Approvals
               <button id="approveAllBtn" class="btn btn-success btn-sm">Approve All</button>
@@ -270,7 +270,7 @@ td {
       @else
         <div class="col-12">
           <div class="portfolio-details mt-5 mb-5">
-            <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+            <div class="portfolio-info">
               <h3>HR Leave Approvals</h3>
               <table class="table mt-5 mb-5">
                 <tbody>

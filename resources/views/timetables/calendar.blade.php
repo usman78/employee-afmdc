@@ -4,7 +4,7 @@
         <div class="row mt-5">
             <div class="col-md-12 d-block mx-auto">  
                 <div class="portfolio-details">
-                    <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+                    <div class="portfolio-info">
                         <h3>Time Table</h3>
                         <p>Here you can view the time table for the current month.</p>
                         <div class="row">

@@ -34,12 +34,12 @@
             <section id="stats" class="stats section">
 
                 <!-- Section Title -->
-                <div class="container section-title aos-init aos-animate" data-aos="fade-up">
+                <div class="container section-title">
                     <h2>Applications Summary</h2>
                     <p>Summary of all the job applications receieved through the online job portal of AFMDC.</p>
                 </div><!-- End Section Title -->
 
-                <div class="container aos-init aos-animate" data-aos="fade-up" data-aos-delay="100">
+                <div class="container">
 
                     <div class="row gy-4">
 

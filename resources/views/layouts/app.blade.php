@@ -1,302 +1,485 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <title>AFMDC Employee Portal</title>
-  <meta name="csrf-token" content="{{ csrf_token() }}">
-  <meta content="AFMDC Employee Portal" name="description">
-  <meta content="AFMDC, Employee Portal, Employee Management" name="keywords">
+    <head>
+        <meta charset="utf-8">
+        <meta content="width=device-width, initial-scale=1.0" name="viewport">
+        <title>AFMDC Employee Portal</title>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta content="AFMDC Employee Portal" name="description">
+        <meta content="AFMDC, Employee Portal, Employee Management" name="keywords">
 
-  <!-- Favicons -->
-  <link href="{{asset("/img/AFMDC-Logo.png")}}" rel="icon">
+        <!-- Favicons -->
+        <link href="{{asset("/img/AFMDC-Logo.png")}}" rel="icon">
 
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com" rel="preconnect">
-  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+        <!-- Fonts -->
+        <link href="https://fonts.googleapis.com" rel="preconnect">
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 
-  <!-- Vendor CSS Files -->
-  <link href="{{asset('vendor/bootstrap/css/bootstrap.min.css')}}" rel="stylesheet">
-  <link href="{{asset('vendor/bootstrap-icons/bootstrap-icons.css')}}" rel="stylesheet">
-  <link href="{{asset('vendor/aos/aos.css')}}" rel="stylesheet">
-  <link href="{{asset('vendor/swiper/swiper-bundle.min.css')}}" rel="stylesheet">
-  <link href="{{asset('vendor/glightbox/css/glightbox.min.css')}}" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <!-- Vendor CSS Files -->
+        <link href="{{asset('vendor/bootstrap/css/bootstrap.min.css')}}" rel="stylesheet">
+        <link href="{{asset('vendor/bootstrap-icons/bootstrap-icons.css')}}" rel="stylesheet">
+        {{-- <link href="{{asset('vendor/aos/aos.css')}}" rel="stylesheet"> --}}
+        {{-- <link href="{{asset('vendor/swiper/swiper-bundle.min.css')}}" rel="stylesheet"> --}}
+        {{-- <link href="{{asset('vendor/glightbox/css/glightbox.min.css')}}" rel="stylesheet"> --}}
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link href="{{asset('css/main.css')}}" rel="stylesheet">
+        @stack('cdn-styles')
+            <!-- Main CSS File -->
+            
+            <style>
+                .btn-primary {
+                --bs-btn-bg: #2196f3;
+                }
+                .navmenu .dropdown.d-xl-none {
+                display: inline-block;
+                }
+                .header .header-social-links .dropdown {
+                display: inline-block;
+                }
+                .header .header-social-links .dropdown a.btn.dropdown-toggle {
+                border: none;
+                } 
+                .navmenu a.dropdown-toggle {
+                padding: 10px 0;
+                }
+                .navmenu .dropdown .btn.dropdown-toggle {
+                border: none;
+                }
+                .navmenu .dropdown .dropdown-toggle::after {
+                display: none;
+                }
+                span.position-absolute.top-0.start-100.translate-middle.badge.rounded-pill.bg-danger
+                {
+                font-size: x-small;
+                    transform: translate(-175%, -20%) !important;
+                }
 
-  <!-- Date Range Picker -->
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.18/index.global.min.js"></script>
-  @stack('cdn-styles')
-  <!-- Main CSS File -->
-  <link href="{{asset('css/main.css')}}" rel="stylesheet">
-  
-  <style>
-    .btn-primary {
-      --bs-btn-bg: #2196f3;
-    }
-    .navmenu .dropdown.d-xl-none {
-      display: inline-block;
-    }
-    .header .header-social-links .dropdown {
-      display: inline-block;
-    }
-    .header .header-social-links .dropdown a.btn.dropdown-toggle {
-      border: none;
-    } 
-    .navmenu a.dropdown-toggle {
-      padding: 10px 0;
-    }
-    .navmenu .dropdown .btn.dropdown-toggle {
-      border: none;
-    }
-    .navmenu .dropdown .dropdown-toggle::after {
-      display: none;
-    }
-    span.position-absolute.top-0.start-100.translate-middle.badge.rounded-pill.bg-danger
-    {
-      font-size: x-small;
-          transform: translate(-175%, -20%) !important;
-    }
+                .thick-underline {
+                text-decoration-line: underline;
+                text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
+                text-decoration-color: #973594;
+                text-underline-offset: 4px;
+                color: #973594;
+                font-weight: 600;
+                }
+                .thick-underline:hover {
+                text-decoration-line: underline;
+                text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
+                text-decoration-color: #973594;
+                text-underline-offset: 4px;
+                color: #2196f3;
+                font-weight: 600;
+                }
+                table.table thead tr th {
+                /* color: #2196F3; */
+                }
+                .table thead {
+                    --bs-table-bg: #2196f3;
+                    --bs-table-color: #fff;
+                }
+                .header {
+                background-color: #c0ddff;
+                }
+                .header::after {
+                content: "";
+                position: absolute;
+                height: 3%;
+                padding: 2px 0;
+                width: 100%;
+                background: #9C27B0;
+                left: 50%;
+                top: 0;
+                translate: -50% -50%;
+                z-index: -99999999999;
+                }
+                li.nav-item {
+                margin-bottom: 0;
+                }
+                .header .header-social-links a:hover {
+                color: #973594;
+                }
+                .header .header-social-links a
+                {
+                font-size: 16px;
+                } 
+                .section-title h2:after
+                {
+                background: #973594;
+                }
+                .accordion-body {
+                background-color: aliceblue;
+                }
+                @media (max-width: 768px) {
+                    .table {
+                    display: block;
+                    width: 100%;
+                    overflow-x: auto;
+                    white-space: nowrap;
+                    }
+                    @media (max-width: 1199px) {
+                        .navmenu a:hover, .navmenu .active, .navmenu .active:focus {
+                            color: #973594;
+                        }
+                    }
+                }
+                @media (min-width: 1200px) {
+                    .navmenu li:hover>a, .navmenu .active, .navmenu .active:focus {
+                        color: #973594;
+                    }
+                    .navmenu>ul>li>a:before {
+                    background-color: #973594;
+                    }
+                    .navmenu a:hover:before, .navmenu li:hover>a:before, .navmenu .active:before {
+                    width: 100%;
+                    }
+                    .navmenu a, .navmenu a:focus {
+                    color: #353636;
+                    font-size: 15px;
+                    font-weight: 700;
+                    }
+                }
+            @stack('styles');
+        </style>
+    </head>
 
-    .thick-underline {
-      text-decoration-line: underline;
-      text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
-      text-decoration-color: #973594;
-      text-underline-offset: 4px;
-      color: #973594;
-      font-weight: 600;
-    }
-    .thick-underline:hover {
-      text-decoration-line: underline;
-      text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
-      text-decoration-color: #973594;
-      text-underline-offset: 4px;
-      color: #2196f3;
-      font-weight: 600;
-    }
-    table.table thead tr th {
-      /* color: #2196F3; */
-    }
-    .table thead {
-        --bs-table-bg: #2196f3;
-        --bs-table-color: #fff;
-    }
-    .header {
-      background-color: #c0ddff;
-    }
-    .header::after {
-      content: "";
-      position: absolute;
-      height: 3%;
-      padding: 2px 0;
-      width: 100%;
-      background: #9C27B0;
-      left: 50%;
-      top: 0;
-      translate: -50% -50%;
-      z-index: -99999999999;
-    }
-    li.nav-item {
-      margin-bottom: 0;
-    }
-    .header .header-social-links a:hover {
-      color: #973594;
-    }
-    .header .header-social-links a
-    {
-      font-size: 16px;
-    } 
-    .section-title h2:after
-      {
-      background: #973594;
-    }
-    .accordion-body {
-      background-color: aliceblue;
-    }
-  @media (max-width: 768px) {
-    .table {
-      display: block;
-      width: 100%;
-      overflow-x: auto;
-      white-space: nowrap;
-    }
-    @media (max-width: 1199px) {
-        .navmenu a:hover, .navmenu .active, .navmenu .active:focus {
-            color: #973594;
-        }
-    }
-  }
-  @media (min-width: 1200px) {
-    .navmenu li:hover>a, .navmenu .active, .navmenu .active:focus {
-        color: #973594;
-    }
-    .navmenu>ul>li>a:before {
-      background-color: #973594;
-    }
-    .navmenu a:hover:before, .navmenu li:hover>a:before, .navmenu .active:before {
-      width: 100%;
-    }
-    .navmenu a, .navmenu a:focus {
-      color: #353636;
-      font-size: 15px;
-      font-weight: 700;
-    }
-  }
+<body id="page-top" class="index-page">
+  <div id="wrapper">
+    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
-  @stack('styles');
-  </style>
-</head>
+    {{-- Brand --}}
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ route('home') }}">
+        <div class="sidebar-brand-icon">
+            <img style="width:40px;height:40px;" src="{{ asset('/img/AFMDC-Logo.png') }}" alt="AFMDC Logo">
+        </div>
+        <div class="sidebar-brand-text mx-1">AFMDC e-Portal</div>
+    </a>
 
-<body class="index-page">
+    <hr class="sidebar-divider my-0">
 
-  <header id="header" class="header d-flex align-items-center light-background sticky-top">
-    <div class="container-fluid position-relative d-flex align-items-center justify-content-around">
-      <div class="logo">
-        <a href="/" class="logo d-flex align-items-center me-auto me-xl-0">
-          <img src="{{asset('/img/AFMDC-Logo.png')}}" alt="">
-          <h1 class="sitename">AFMDC E-Portal</h1>
+    {{-- Dashboard --}}
+    <li @class(['nav-item', 'active' => request()->routeIs('home')])>
+        <a class="nav-link" href="{{ route('home') }}">
+            <i class="fas fa-fw fa-tachometer-alt"></i>
+            <span>Dashboard</span>
         </a>
-      </div>
-      <nav id="navmenu" class="navmenu">
-        <ul>
-          <li class="nav-item"><a href="{{route('home')}}" @if (Route::currentRouteName() == 'home') class="active" @endif>Home</a></li>
-          <li class="nav-item"><a id="attendance" href="{{route('attendance', $emp_code)}}" @if(Route::currentRouteName() == 'attendance') class="active" @endif>Attendance</a></li>
-          <li class="nav-item"><a id="leaves" href="{{route('leaves', $emp_code)}}" @if(in_array(Route::currentRouteName(), ['leaves' , 'apply-leave-advance'])) class="active" @endif>Leaves</a></li>
-          @if (Auth::user()->isBoss())
-            <li class="nav-item"><a href="{{route('leave-approvals', $emp_code)}}" @if(Route::currentRouteName() == 'leave-approvals') class="active" @endif>Leave Approvals</a></li>
-          @endif
-          <li class="nav-item"><a id="inventory" href="{{route('inventory', $emp_code)}}" @if(Route::currentRouteName() == 'inventory') class="active" @endif>Store Issue</a></li>
-          @if (Auth::user()->isBoss())
-            <li class="nav-item"><a href="{{route('team', $emp_code)}}" @if(in_array(Route::currentRouteName(), [ 'team', 'attendance-filter'])) class="active" @endif>Team</a></li>
-          @endif
-          <li class="dropdown nav-item"><a href="{{route('tasks')}}" @if(in_array(Route::currentRouteName(), ['tasks', 'meetings', 'sops', 'assigned-tasks'])) class="active" @endif><span>Tasks</span><i class="bi bi-chevron-down toggle-dropdown"></i></a>
-            <ul>
-              <li><a href="{{route('meetings')}}">Meetings</a></li>
-              <li><a href="{{route('assigned-tasks')}}">Assigned Tasks</a></li>
-              <li><a href="{{route('sops')}}">SOPs</a></li>
-              @if(Auth::user()->isAllowedToSeeAdmissions())
-                <li><a href="{{route('admissions')}}">Admissions</a></li>
-              @endif
-            </ul>
-          </li>
-          @if(Auth::user()->isStudentAffairs())
-            <li class="nav-item"><a href="{{route('timetables.index')}}" @if(in_array(Route::currentRouteName(), ['timetables.index','timetables.show', 'timetables.new-timetable', 'timetables.create'])) class="active" @endif>Timetable</a></li>
-          @endif
-          <li class="nav-item"><a href="{{route('service-requests.index')}}" @if(in_array(Route::currentRouteName(), ['service-requests.index', 'service-requests.show', 'service-requests.assign'])) class="active" @endif>Service Requests</a></li>
-          @if (Auth::user()->isHR())
-            <li class="nav-item"><a href="{{route('job-dashboard', $emp_code)}}" target="_blank">Jobs Bank</a></li>
-          @endif
-        </ul>
-        <div class="dropdown d-xl-none">
-          <a class="btn dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fa-solid fa-bell"></i>
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-            <li><a class="dropdown-item" href="#">Action</a></li>
-            <li><a class="dropdown-item" href="#">Another action</a></li>
-            <li><a class="dropdown-item" href="#">Something else here</a></li>
-          </ul>
-        </div>
-        <div class="dropdown d-xl-none">
-          <a class="btn dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fa-solid fa-user"></i>
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-            <li><a class="dropdown-item" href="#">Profile</a></li>
-            <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Log Out</a></li>
-          </ul>
-        </div>
-        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-      </nav>
-      <div class="header-social-links d-none d-xl-block">
-        <div class="dropdown">
-          <a class="btn dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fa-solid fa-bell"></i>
-              @if(auth()->user()->unreadNotifications->count() > 0)
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                  {{ auth()->user()->unreadNotifications->count() }}
-                  <span class="visually-hidden">unread notifications</span>
-                </span>
-              @endif
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-            @if (auth()->user()->unreadNotifications->count() > 0)
-              @foreach (auth()->user()->unreadNotifications as $notification)
-                <li>
-                    <a class="dropdown-item" href="{{ route('notifications.redirect', $notification->id) }}">
-                        {{ $notification->data['message'] }}
-                    </a>
-                </li>
-              @endforeach
-            @else
-              <li><a class="dropdown-item" href="#"><i class="fa-solid fa-bell-slash"></i> No new notifications</a></li>
-            @endif
-          </ul>
-        </div>
-        <div class="dropdown">
-          <a class="btn dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fa-solid fa-user"></i>
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-            <li>
-              <a class="dropdown-item" href="#">
-                <i class="fa-solid fa-user"></i>
-                Profile
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="fa-solid fa-right-from-bracket"></i>
-                Log Out
-              </a>
-            </li>
-          </ul>
-        </div>
-        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-          @csrf
-        </form>
-      </div>
+    </li>
+
+    <hr class="sidebar-divider">
+
+    <div class="sidebar-heading">
+        Employee
     </div>
-  </header>
 
-  <main class="main">
+    {{-- Attendance --}}
+    <li @class(['nav-item', 'active' => request()->routeIs('attendance')])>
+        <a class="nav-link" href="{{ route('attendance', $emp_code) }}">
+            <i class="fas fa-fw fa-calendar-check"></i>
+            <span>Attendance</span>
+        </a>
+    </li>
 
-    <!-- Hero Section -->
-    @yield('content')
+    {{-- Leaves --}}
+    <li @class([
+        'nav-item',
+        'active' => in_array(request()->route()->getName(), ['leaves', 'apply-leave-advance'])
+    ])>
+        <a class="nav-link" href="{{ route('leaves', $emp_code) }}">
+            <i class="fas fa-fw fa-plane-departure"></i>
+            <span>Leaves</span>
+        </a>
+    </li>
 
-  </main>  
+    {{-- Leave Approvals (Boss only) --}}
+    @if(Auth::user()->isBoss())
+        <li @class(['nav-item', 'active' => request()->routeIs('leave-approvals')])>
+            <a class="nav-link" href="{{ route('leave-approvals', $emp_code) }}">
+                <i class="fas fa-fw fa-check-circle"></i>
+                <span>Leave Approvals</span>
+            </a>
+        </li>
+    @endif
+
+    {{-- Store Issue --}}
+    <li @class(['nav-item', 'active' => request()->routeIs('inventory')])>
+        <a class="nav-link" href="{{ route('inventory', $emp_code) }}">
+            <i class="fas fa-fw fa-boxes"></i>
+            <span>Store Issue</span>
+        </a>
+    </li>
+
+    {{-- Team (Boss only) --}}
+    @if(Auth::user()->isBoss())
+        <li @class([
+            'nav-item',
+            'active' => in_array(request()->route()->getName(), ['team', 'attendance-filter'])
+        ])>
+            <a class="nav-link" href="{{ route('team', $emp_code) }}">
+                <i class="fas fa-fw fa-users"></i>
+                <span>Team</span>
+            </a>
+        </li>
+    @endif
+
+    <hr class="sidebar-divider">
+
+    <div class="sidebar-heading">
+        Work
+    </div>
+
+    {{-- Tasks / SOPs / Meetings --}}
+    <li class="nav-item">
+        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTasks">
+            <i class="fas fa-fw fa-tasks"></i>
+            <span>Tasks</span>
+        </a>
+
+        <div id="collapseTasks"
+             class="collapse {{ in_array(request()->route()->getName(), ['tasks','meetings','assigned-tasks','sops','admissions']) ? 'show' : '' }}"
+             data-parent="#accordionSidebar">
+
+            <div class="bg-white py-2 collapse-inner rounded">
+                <a class="collapse-item" href="{{ route('meetings') }}">Meetings</a>
+                <a class="collapse-item" href="{{ route('assigned-tasks') }}">Assigned Tasks</a>
+                <a class="collapse-item" href="{{ route('sops') }}">SOPs</a>
+
+                @if(Auth::user()->isAllowedToSeeAdmissions())
+                    <a class="collapse-item" href="{{ route('admissions') }}">Admissions</a>
+                @endif
+            </div>
+        </div>
+    </li>
+
+    {{-- Timetable --}}
+    @if(Auth::user()->isStudentAffairs())
+        <li @class([
+            'nav-item',
+            'active' => in_array(request()->route()->getName(), [
+                'timetables.index',
+                'timetables.show',
+                'timetables.new-timetable',
+                'timetables.create'
+            ])
+        ])>
+            <a class="nav-link" href="{{ route('timetables.index') }}">
+                <i class="fas fa-fw fa-clock"></i>
+                <span>Timetable</span>
+            </a>
+        </li>
+    @endif
+
+    {{-- Service Requests --}}
+    <li @class([
+        'nav-item',
+        'active' => in_array(request()->route()->getName(), [
+            'service-requests.index',
+            'service-requests.show',
+            'service-requests.assign'
+        ])
+    ])>
+        <a class="nav-link" href="{{ route('service-requests.index') }}">
+            <i class="fas fa-fw fa-tools"></i>
+            <span>Service Requests</span>
+        </a>
+    </li>
+
+    {{-- Jobs Bank --}}
+    @if(Auth::user()->isHR())
+        <li class="nav-item">
+            <a class="nav-link" href="{{ route('job-dashboard', $emp_code) }}" target="_blank">
+                <i class="fas fa-fw fa-briefcase"></i>
+                <span>Jobs Bank</span>
+            </a>
+        </li>
+    @endif
+
+    <hr class="sidebar-divider d-none d-md-block">
+
+    {{-- Sidebar Toggle --}}
+    <div class="text-center d-none d-md-inline">
+        <button class="rounded-circle border-0" id="sidebarToggle"></button>
+    </div>
+
+  </ul>
+
+    <!-- Content Wrapper -->
+    <div id="content-wrapper" class="d-flex flex-column">
+
+        <!-- Main Content -->
+        <div id="content">
+
+            <!-- Topbar -->
+            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                <!-- Sidebar Toggle (Topbar) -->
+                <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                    <i class="fa fa-bars"></i>
+                </button>
+
+                <!-- Topbar Navbar -->
+                <ul class="navbar-nav ml-auto">
+
+                    <!-- Nav Item - Alerts -->
+                    <li class="nav-item dropdown no-arrow mx-1">
+                        <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-bell fa-fw"></i>
+                            <!-- Counter - Alerts -->
+                            {{-- <span class="badge badge-danger badge-counter">3+</span> --}}
+                        </a>
+                        <!-- Dropdown - Alerts -->
+                        <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                            aria-labelledby="alertsDropdown">
+                            <h6 class="dropdown-header">
+                                Alerts Center
+                            </h6>
+                            <a class="dropdown-item d-flex align-items-center" href="#">
+                                <div class="mr-3">
+                                    <div class="icon-circle bg-primary">
+                                        <i class="fas fa-file-alt text-white"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="small text-gray-500">December 12, 2019</div>
+                                    <span class="font-weight-bold">A new monthly report is ready to download!</span>
+                                </div>
+                            </a>
+                            <a class="dropdown-item d-flex align-items-center" href="#">
+                                <div class="mr-3">
+                                    <div class="icon-circle bg-success">
+                                        <i class="fas fa-donate text-white"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="small text-gray-500">December 7, 2019</div>
+                                    $290.29 has been deposited into your account!
+                                </div>
+                            </a>
+                            <a class="dropdown-item d-flex align-items-center" href="#">
+                                <div class="mr-3">
+                                    <div class="icon-circle bg-warning">
+                                        <i class="fas fa-exclamation-triangle text-white"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="small text-gray-500">December 2, 2019</div>
+                                    Spending Alert: We've noticed unusually high spending for your account.
+                                </div>
+                            </a>
+                            <a class="dropdown-item text-center small text-gray-500" href="#">Show All Alerts</a>
+                        </div>
+                    </li>
+
+                    <div class="topbar-divider d-none d-sm-block"></div>
+
+                    <!-- Nav Item - User Information -->
+                    <li class="nav-item dropdown no-arrow">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ capitalizeWords($user_name) }}</span>
+                            <img class="img-profile rounded-circle"
+                                src="{{ asset('pictures') . '/' . getProfilePicName($emp_code) }}">
+                        </a>
+                        <!-- Dropdown - User Information -->
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                            aria-labelledby="userDropdown">
+                            <a class="dropdown-item" href="#">
+                                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Profile
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+                            style="cursor: pointer;" data-toggle="modal" data-target="#logoutModal">
+                                <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Logout
+                            </a>
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                              @csrf
+                            </form>
+                        </div>
+                    </li>
+
+                </ul>
+
+            </nav>
+            <!-- End of Topbar -->
+
+            <!-- Begin Page Content -->
+            <div class="container-fluid">
+                  <main class="main">
+
+                    <!-- Hero Section -->
+                    @yield('content')
+
+                  </main>  
+            </div>
+            <!-- /.container-fluid -->
+
+        </div>
+        <!-- End of Main Content -->
+
+        <!-- Footer -->
+        <footer class="sticky-footer bg-white">
+            <div class="container my-auto">
+                <div class="copyright text-center my-auto">
+                    <span>Copyright &copy; AFMDC 2026</span>
+                </div>
+            </div>
+        </footer>
+        <!-- End of Footer -->
+
+    </div>
+    <!-- End of Content Wrapper -->
+  </div>
+
+
+
 
   <!-- Scroll Top -->
   <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
   <!-- Preloader -->
-  <div id="preloader"></div>
+  {{-- <div id="preloader"></div> --}}
 
   <!-- Vendor JS Files -->
-  <script src="{{asset('vendor/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
-  <script src="{{asset('vendor/php-email-form/validate.js')}}"></script>
-  <script src="{{asset('vendor/aos/aos.js')}}"></script>
-  <script src="{{asset('vendor/waypoints/noframework.waypoints.js')}}"></script>
-  <script src="{{asset('vendor/purecounter/purecounter_vanilla.js')}}"></script>
-  <script src="{{asset('vendor/swiper/swiper-bundle.min.js')}}"></script>
-  <script src="{{asset('vendor/glightbox/js/glightbox.min.js')}}"></script>
-  <script src="{{asset('vendor/imagesloaded/imagesloaded.pkgd.min.js')}}"></script>
-  <script src="{{asset('vendor/isotope-layout/isotope.pkgd.min.js')}}"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  {{-- <script src="{{asset('vendor/bootstrap/js/bootstrap.bundle.min.js')}}"></script> --}}
+  {{-- <script src="{{asset('vendor/php-email-form/validate.js')}}"></script> --}}
+  {{-- <script src="{{asset('vendor/aos/aos.js')}}"></script> --}}
+  {{-- <script src="{{asset('vendor/waypoints/noframework.waypoints.js')}}"></script> --}}
+  {{-- <script src="{{asset('vendor/purecounter/purecounter_vanilla.js')}}"></script> --}}
+  {{-- <script src="{{asset('vendor/swiper/swiper-bundle.min.js')}}"></script> --}}
+  {{-- <script src="{{asset('vendor/glightbox/js/glightbox.min.js')}}"></script> --}}
+  {{-- <script src="{{asset('vendor/imagesloaded/imagesloaded.pkgd.min.js')}}"></script> --}}
+  {{-- <script src="{{asset('vendor/isotope-layout/isotope.pkgd.min.js')}}"></script> --}}
+  {{-- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> --}}
+  <script src="{{asset('js/sweetalert2.all.min.js')}}"></script>
+
+  <!-- SB Admin 2 JS Files -->
+  <script src="{{ asset('sb/vendor/jquery/jquery.min.js') }}"></script>
+  <script src="{{ asset('sb/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+  <!-- Core plugin JavaScript-->
+  <script src="{{ asset('sb/vendor/jquery-easing/jquery.easing.min.js') }}"></script>
+  <!-- Custom scripts for all pages-->
+  <script src="{{ asset('sb/js/sb-admin-2.min.js') }}"></script>
+  <!-- SB Admin 2 JS Files End-->
+  <!-- Date Range Picker -->
+  {{-- <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script> --}}
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 
   <!-- Main JS File -->
-  <script src="{{asset('js/main.js')}}"></script>
+  {{-- <script src="{{asset('js/main.js')}}"></script> --}}
   @stack('cdn-scripts')
   <script>
     $(function () {
       $('[data-toggle="tooltip"]').tooltip()
     })
+    if ($(window).width() < 768) {
+      $('#accordionSidebar').addClass('toggled');
+    }
     @stack('scripts');
   </script>
 

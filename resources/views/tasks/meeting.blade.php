@@ -2,7 +2,7 @@
 @section('content')
     <section id="services" class="services section">
       <!-- Section Title -->
-      <div class="container section-title aos-init aos-animate" data-aos="fade-up">
+      <div class="container section-title">
         <h2>Meetings</h2>
         <p>View your minutes of meetings.</p>
       </div><!-- End Section Title -->

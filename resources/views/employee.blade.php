@@ -1,12 +1,12 @@
 @extends('layouts.app')
 @section('content')
 <section id="about" class="about section">
-    <div class="container section-title" data-aos="fade-up">
+    <div class="container section-title">
       <h2>Employee Record</h2>
       {{-- <p>Necessitatibus eius consequatur ex aliquid fuga eum quidem sint consectetur velit</p> --}}
     </div>
 
-    <div class="container" data-aos="fade-up" data-aos-delay="100">
+    <div class="container">
 
       <div class="row gy-4 justify-content-center">
         <div class="col-lg-4">

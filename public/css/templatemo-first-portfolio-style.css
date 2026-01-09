@@ -1,12 +1,3 @@
-/*
-
-TemplateMo 578 First Portfolio
-
-https://templatemo.com/tm-578-first-portfolio
-
-*/
-
-
 /*---------------------------------------
   CUSTOM PROPERTIES ( VARIABLES )             
 -----------------------------------------*/
@@ -219,7 +210,7 @@ strong {
 /*---------------------------------------
   CUSTOM ICON               
 -----------------------------------------*/
-.navbar-icon {
+/* .navbar-icon {
   background: var(--white-color);
   border-radius: var(--border-radius-large);
   color: var(--dark-color);
@@ -236,7 +227,7 @@ strong {
 
 .form-check-icon {
   color: var(--secondary-color);
-}
+} */
 
 
 /*---------------------------------------
@@ -301,7 +292,7 @@ strong {
 /*---------------------------------------
   NAVIGATION              
 -----------------------------------------*/
-.sticky-wrapper {
+/* .sticky-wrapper {
   position: relative;
   z-index: 222;
   height: auto !important;
@@ -374,9 +365,9 @@ strong {
   position: relative;
   padding-top: 15px;
   padding-bottom: 15px;
-}
+} */
 
-.navbar-nav .nav-link::after {
+/* .navbar-nav .nav-link::after {
   content: "";
   background: transparent;
   position: absolute;
@@ -385,14 +376,14 @@ strong {
   left: 0;
   width: 100%;
   height: 2px;
-}
+} */
 
-.navbar-nav .nav-link.active::after, 
+/* .navbar-nav .nav-link.active::after, 
 .navbar-nav .nav-link:hover::after {
   background: var(--secondary-color);
-}
+} */
 
-.navbar-nav .nav-link.active, 
+/* .navbar-nav .nav-link.active, 
 .navbar-nav .nav-link:hover {
   color: var(--secondary-color);
 }
@@ -461,13 +452,13 @@ strong {
 
 .navbar-toggler .navbar-toggler-icon::after {
   top: 8px;
-}
+} */
 
 
 /*---------------------------------------
   HERO              
 -----------------------------------------*/
-.hero {
+/* .hero {
   background: var(--secondary-color);
   position: relative;
   overflow: hidden;
@@ -535,7 +526,7 @@ strong {
   overflow: hidden;
   height: 100%;
   pointer-events: none;
-}
+} */
 
 
 /*---------------------------------------
@@ -651,7 +642,7 @@ strong {
 }
 
 .services-thumb:hover {
-  border: 2px solid var(--secondary-color);
+  border: 2px solid #4e73df;
   box-shadow: 0 1rem 3rem rgba(0,0,0,.175);
 }
 
@@ -947,7 +938,7 @@ strong {
 /*---------------------------------------
   SOCIAL ICON               
 -----------------------------------------*/
-.social-icon {
+/* .social-icon {
   margin: 0;
   padding: 0;
 }
@@ -976,7 +967,7 @@ strong {
   background: var(--secondary-color);
   border-color: transparent;
   color: var(--white-color);
-}
+} */
 
 
 /*---------------------------------------
@@ -1034,7 +1025,7 @@ strong {
     padding-bottom: 80px;
   }
 
-  .custom-btn,
+  /* .custom-btn,
   .navbar .custom-btn {
     font-size: var(--copyright-text-font-size);
     padding: 8px 16px;
@@ -1076,7 +1067,7 @@ strong {
     color: var(--p-color);
     padding-top: 10px;
     padding-bottom: 10px;
-  }
+  } */
 
   .hero {
     padding-top: 200px;
@@ -1134,12 +1125,12 @@ strong {
   }
 }
 
-@media screen and (max-width: 575px) {
+/* @media screen and (max-width: 575px) {
   .navbar .container {
     margin-right: 12px;
     margin-left: 12px;
   }
-}
+} */
 
 @media screen and (max-width: 480px) {
   h1 {
@@ -1162,7 +1153,7 @@ strong {
     font-size: 20px;
   }
 
-  .custom-btn,
+  /* .custom-btn,
   .navbar .custom-btn {
     font-size: 13px;
     padding: 6px 12px;
@@ -1173,7 +1164,7 @@ strong {
     width: 35.5px;
     height: 35.5px;
     line-height: 35.5px;
-  }
+  } */
 
   .hero-image-wrap {
     width: 300px;

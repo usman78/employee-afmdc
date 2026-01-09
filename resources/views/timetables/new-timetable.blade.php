@@ -9,20 +9,11 @@
         <div class="row mt-5">
             <div class="col-md-12 d-block mx-auto">  
                 <div class="portfolio-details">
-                    <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+                    <div class="portfolio-info">
                         <h3>New Time Table</h3>
                         <p>Here you can create a new time table for the current month.</p>
                         <form method="POST" action="{{ route('timetables.create') }}">
                             @csrf
-                            {{-- @if ($errors->any())
-                                <div class="alert alert-danger">
-                                    <ul class="error-msg">
-                                        @foreach ($errors->all() as $error)
-                                            <li class="error-msg">{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif --}}
                             {{-- Success Message --}}
                             @if(session('success'))
                                 <div class="alert alert-success">

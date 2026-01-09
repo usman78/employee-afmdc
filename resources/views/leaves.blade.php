@@ -20,8 +20,8 @@
 <div class="container">
   <div class="row">
     <div class="col-12">
-      <div class="portfolio-details mt-5">
-        <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+      <div class="portfolio-details">
+        <div class="portfolio-info">
           <h3>Leaves Balance</h3>
           <ul>
             <li class="mt-5">

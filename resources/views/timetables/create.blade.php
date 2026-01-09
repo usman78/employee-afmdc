@@ -71,7 +71,7 @@ th.period-type {
         <div class="row mt-5">
             <div class="col-md-12 d-block mx-auto">  
                 <div class="portfolio-details">
-                    <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+                    <div class="portfolio-info">
                         <h3>New Time Table</h3>
                         <p>You are creating the new timetable for the below period.</p>
                         <div class="row mb-3 g-3 shadow-sm p-4 rounded bg-white">

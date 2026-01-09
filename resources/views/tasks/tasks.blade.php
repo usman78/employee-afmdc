@@ -11,7 +11,7 @@
 @section('content')
   <section id="services" class="services section">
     <!-- Section Title -->
-    <div class="container section-title aos-init aos-animate" data-aos="fade-up">
+    <div class="container section-title">
       <h2>Assigned Tasks</h2>
       <p>View your assigned tasks as discussed in meetings to keep track of completion dates.</p>
     </div><!-- End Section Title -->

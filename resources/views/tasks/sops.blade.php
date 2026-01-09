@@ -2,7 +2,8 @@
 @section('content')
     <section id="services" class="services section">
       <!-- Section Title -->
-      <div class="container section-title aos-init aos-animate" data-aos="fade-up">
+      <div class="container section-title">
+        {{ dd($sops) }}
         <h2>SOP's</h2>
         <p>View the SOPs defined for your role, your department and all other departments.</p>
       </div><!-- End Section Title -->

@@ -31,7 +31,7 @@ td {
 }
 @media (max-width: 768px) {
   .portfolio-details .portfolio-info {
-    padding: 0 15px;
+    padding: 20px;
   }
 }
 {{-- Toggle Switch --}}
@@ -102,7 +102,7 @@ td {
     <div class="row">
       <div class="col-12">
         <div class="portfolio-details mt-5 mb-5">
-          <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+          <div class="portfolio-info">
             <h3>Department Wise Or Employee Specific</h3>
             <ul>
                 <li class="mt-5">
@@ -157,7 +157,7 @@ td {
     <div class="row">
         <div class="col-12">
         <div class="portfolio-details mt-3 mb-5">
-            <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+            <div class="portfolio-info">
             <h3>Team Members</h3>
             <ul>
                 <li class="mt-5">

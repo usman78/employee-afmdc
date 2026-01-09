@@ -93,7 +93,7 @@ strong {
       <div class="col-md-5 d-block mx-auto">
     
         <div class="portfolio-details">
-          <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+          <div class="portfolio-info">
             <h3>Dashboard</h3>
             <ul>
               <li><strong>Today's Time </strong>

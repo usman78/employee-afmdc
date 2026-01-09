@@ -106,7 +106,7 @@ ul.error-msg{
     <div class="row">
       <div class="col-lg-6 justify-content-center mx-auto">
         <div class="portfolio-details mt-5">
-          <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+          <div class="portfolio-info>
             <h3>Unpaid Leave Application</h3>
             <div class="row">
               <form action="{{ route('store-unpaid-leave', $emp_code) }}" 
@@ -212,7 +212,7 @@ ul.error-msg{
       </div>
       <div class="col-lg-4 justify-content-center mx-auto">
         <div class="portfolio-details mt-5">
-          <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+          <div class="portfolio-info">
             <h3>Leave Balance</h3>
             <div class="row">
               <div class="col-12">

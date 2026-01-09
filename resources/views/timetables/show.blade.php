@@ -1,4 +1,7 @@
 @extends('layouts.app')
+@push('cdn-styles')
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
+@endpush
 @push('styles')
     .fc .fc-daygrid-body-natural .fc-daygrid-day-events {
         cursor: pointer;
@@ -49,7 +52,7 @@
         <div class="row my-5">
             <div class="col-md-12 d-block mx-auto">  
                 <div class="portfolio-details">
-                    <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+                    <div class="portfolio-info">
                         <h3>Time Table</h3>
                         <p>Timetable for the current month or selected date range for all programs.</p>
                         <input type="hidden" id="emp_code" value="{{ $empCode }}">
@@ -127,8 +130,9 @@
 
 @endsection
 @push('cdn-scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.18/index.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 @endpush
 @push('scripts')
 
