@@ -130,7 +130,28 @@ class JobController extends Controller
         }
         return view('jobs.jobs', ['jobs' => $jobs]);
     }
+    public function sendShortlistEmail($app_no)
+    {
+        $job = Job::where('app_no', $app_no)->first();
+        if($job) {
+            $name = $job->app_name;
+            if($job->job_id == 9999) {
+                $designation = Designation::find($job->position_id);
+                $job_title = $designation->desg_short;
+            }
+            else {
+                $vacany = Vacancy::find($job->job_id);
+                $job_title = Designation::find($vacany->desg_code)->desg_short;
+            }
+            // dd('job title: ' .  $job_title . ' and name: ' . $name);
+            \Mail::to($job->email)->send(new \App\Mail\JobShortlistMail($name, $job_title));
 
+            return redirect()->back()->with('success', 'Shortlist email sent successfully to ' . $job->email);
+        }
+        else {
+            return redirect()->back()->with('error', 'Application record not found!');
+        }
+    }
     public function debug()
     {
 

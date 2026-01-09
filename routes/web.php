@@ -106,16 +106,17 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
+Route::get('/send-shortlist-email/{app_no}', [JobController::class, 'sendShortlistEmail'])->name('send-shortlist-email');
+
 Route::get('applications/{id}/{fileName}', [App\Http\Controllers\FilesController::class, 'download'])
     ->name('download-file');
 Route::get('admissions/{id}/{fileName}/{fileFormat}', [App\Http\Controllers\FilesController::class, 'downloadAdmissionFile'])->name('download-admission-file');    
-
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/query', [HomeController::class, 'query'])
     ->name('query.get');
 Route::post('/query', [HomeController::class, 'queryDown'])
     ->name('query.post');
+Route::get('/testing', [TaskController::class, 'testing']);    
 
 Route::fallback(function () {
     return response()->view('404', [], 404);
