@@ -8,61 +8,61 @@
 @endphp
 
 @push('styles')
-.stats .stats-item {
-  padding: 0;
-}
-.stats .stats-item span {
-    margin-bottom: 10px;
-    padding-bottom: 0px;
-}
-.portfolio .stats .stats-item.text-center.w-100.h-100 {
-    background: gainsboro !important;
-    border-radius: 10px !important;
-    box-shadow: 6px 7px 5px gray !important;
-}
-.badge-success {
-  background-color: #2196f3;
-}
-.badge-warning {
-  background-color: #ff9800;
-}
-.badge-info {
-  background-color: #4caf50;
-}
-.badge-danger {
-  background-color: #f44336;
-}
-.table {
-  border: 1px solid #ccc;
-} 
-.table>:not(caption)>*>* {
-  padding: .5rem .7rem;
-}
-.leave-link {
-  color: #2196f3;
-  font-size: 14px;
-  margin-left: 15px;
-}
-.leave-link:hover {
-  color: rgb(3 108 191);
-}
-td {
-  font-size: 14px;
-  vertical-align: middle;
-}
-@media (max-width: 768px) {
-  .portfolio-details .portfolio-info {
-    padding: 0 15px;
+  .stats .stats-item {
+    padding: 0;
   }
-}
+  .stats .stats-item span {
+      margin-bottom: 10px;
+      padding-bottom: 0px;
+  }
+  .portfolio .stats .stats-item.text-center.w-100.h-100 {
+      background: gainsboro !important;
+      border-radius: 10px !important;
+      box-shadow: 6px 7px 5px gray !important;
+  }
+  .badge-success {
+    background-color: #2196f3;
+  }
+  .badge-warning {
+    background-color: #ff9800;
+  }
+  .badge-info {
+    background-color: #4caf50;
+  }
+  .badge-danger {
+    background-color: #f44336;
+  }
+  .table {
+    border: 1px solid #ccc;
+  } 
+  .table>:not(caption)>*>* {
+    padding: .5rem .7rem;
+  }
+  .leave-link {
+    color: #2196f3;
+    font-size: 14px;
+    margin-left: 15px;
+  }
+  .leave-link:hover {
+    color: rgb(3 108 191);
+  }
+  td {
+    font-size: 14px;
+    vertical-align: middle;
+  }
+  @media (max-width: 768px) {
+    .portfolio-details .portfolio-info {
+      padding: 0 15px;
+    }
+  }
 @endpush
 
 @section('content')
 <div class="container">
   <div class="row">
     <div class="col-12">
-      <div class="portfolio-details mt-5 mb-5">
-        <div class="portfolio-info aos-init aos-animate pt-4" data-aos="fade-up" data-aos-delay="200">
+      <div class="portfolio-details mb-5">
+        <div class="portfolio-info">
           <h3>Attendance Information</h3>
           <div class="row gy-4 stats">
             <div class="col-md-4">
@@ -111,7 +111,6 @@ td {
               <tr>
                   {{-- Date --}}
                   <td>{{ Carbon::parse($record['at_date'])->format('j M') }}</td>
-
                   {{-- Time In / Out --}}
                   <td>
                       @if ($record['is_sunday'] || $record['is_holiday'])
@@ -139,7 +138,6 @@ td {
                           @endif
                       @endif
                   </td>
-
                   {{-- Late Minutes (DAY LEVEL) --}}
                   <td>
                       @if (
@@ -156,7 +154,6 @@ td {
                           —
                       @endif
                   </td>
-
                   {{-- Early Minutes (DAY LEVEL) --}}
                   <td>
                       @if (
@@ -173,73 +170,25 @@ td {
                           —
                       @endif
                   </td>
-
-
                   {{-- Status --}}
                   <td>
-                      @php
-                          $isToday = ($record['at_date'] === $today);
-                      @endphp
-
-                      {{-- Sunday / Holiday --}}
-                      @if ($record['is_sunday'] || $record['is_holiday'])
-                          <span class="badge badge-info">
-                              {{ $record['is_holiday'] ? 'Holiday' : 'Sunday' }}
-                          </span>
-
-                      {{-- TODAY → FORCE PRESENT --}}
-                      @elseif ($isToday)
-                          @if($isTimeIn)
-                          <span class="badge badge-success">
-                            Present
-                          </span>
-                          @else
-                          <span class="badge badge-danger">
-                            Absent
-                          </span>
-                          @endif
-
-                      {{-- Normal days --}}
-                      @else
-                          @php
-                              $leaveFound = false;
-                              foreach ($leaves as $leave) {
-                                  if (
-                                      $record['at_date'] >= date('Y-m-d', strtotime($leave->from_date)) &&
-                                      $record['at_date'] <= date('Y-m-d', strtotime($leave->to_date))
-                                  ) {
-                                      $leaveFound = true;
-                                      break;
-                                  }
-                              }
-                          @endphp
-
-                          @if (!empty($record['time_logs']))
-                              @if ($record['short_duty_status'] ?? false)
-                                  @if ($leaveFound)
-                                      <span class="badge badge-success">Leave already applied</span>
-                                  @else
-                                      <span class="badge badge-warning">
-                                          {{ $record['short_duty_status'] }}
-                                      </span>
-                                  @endif
-                              @else
-                                  <span class="badge badge-success">
-                                      {{ $record['is_leave'] ? $record['leave_type'] : 'Present' }}
-                                  </span>
-                              @endif
-                          @else
-                              @if ($leaveFound)
-                                  <span class="badge badge-success">{{ $record['leave_type'] }}</span>
-                              @else
-                                  <span class="badge badge-danger">Absent</span>
-                              @endif
-                          @endif
-                      @endif
+                    @if ($record['is_sunday'] || $record['is_holiday'])
+                      <span class="badge badge-info">
+                        {{ $record['is_holiday'] ? 'Holiday' : 'Sunday' }}
+                      </span>
+                    @elseif ($record['leave_type'])
+                      <span class="badge badge-success">{{ $record['leave_type'] }}</span>  
+                    @elseif(empty($record['time_logs']))
+                      <span class="badge badge-danger">Absent</span>
+                    @else                          
+                      <span class="badge badge-success">
+                        Present
+                      </span>
+                    @endif
                   </td>
-              </tr>
+                </tr>
               @endforeach
-              </tbody>
+            </tbody>
           </table>
         </div>
       </div>
@@ -292,12 +241,12 @@ td {
   const totalEl = document.querySelector('.total-mins');
 
   if (lateEl) {
-    lateEl.setAttribute('data-purecounter-end', totals.lateMinutes);
+    lateEl.textContent = totals.lateMinutes;
   }
   if (earlyEl) {
-    earlyEl.setAttribute('data-purecounter-end', totals.earlyMinutes);
+    earlyEl.textContent = totals.earlyMinutes;
   }
   if (totalEl) {
-    totalEl.setAttribute('data-purecounter-end', totals.totalMins);
+    totalEl.textContent = totals.totalMins;
   }
 @endpush
