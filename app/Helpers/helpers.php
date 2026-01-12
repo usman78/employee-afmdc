@@ -244,3 +244,12 @@ function getProfilePicName($emp_code)
     $picName = $emp_code . '.jpg';
     return $picName;
 }
+function minutesWorked($timein, $timeout) {
+    if ($timein && $timeout) {
+        $in = Carbon::parse($timein);
+        $out = Carbon::parse($timeout);
+        $workedMinutes = round($in->diffInMinutes($out), 1);
+        return $workedMinutes;
+    }
+    return 0;
+}

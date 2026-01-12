@@ -40,6 +40,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/approve-leave/{leave_id}', [LeavesController::class, 'approveLeave'])->name('approve-leave');
     Route::post('/approve-all-leaves', [LeavesController::class, 'approveAll'])->name('approve-all-leaves');
     Route::post('/reject-leave/{leave_id}', [LeavesController::class, 'rejectLeave'])->name('reject-leave');
+    Route::get('/leave-report', [LeavesController::class, 'leaveReport'])->name('leave-report');
+    Route::post('/leave-report-data', [LeavesController::class, 'leaveReportData'])->name('leave-report-data');
 
     Route::get('/job-dashboard', [JobController::class, 'summaryDashboard'])->name('job-dashboard');
     Route::get('/open-jobs', [JobController::class, 'openJobs'])->name('open-jobs');
