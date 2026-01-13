@@ -201,7 +201,9 @@
                         class="collapse {{ in_array(request()->route()->getName(), ['attendance-report','leave-report']) ? 'show' : '' }}"
                         data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item" href="{{ route('leave-report') }}">Leave Report</a>
+                            @if (Auth::user()->isHR())
+                                <a class="collapse-item" href="{{ route('leave-report') }}">Leave Report</a>
+                            @endif
                             @if (Auth::user()->isAllowedToSeeAdmissions())
                                 <a class="collapse-item" href="{{ route('admissions') }}">Admissions Report</a>
                             @endif

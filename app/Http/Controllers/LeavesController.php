@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Leave;
-use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\LeaveAuth;
 use App\Models\ApprovedLeave;
 use App\Models\Department;
@@ -905,11 +905,14 @@ class LeavesController extends Controller
         $dept_code = $request->input('department');
         $startDate = Carbon::parse($request->input('start_date'));
         $endDate = Carbon::parse($request->input('end_date'));
+
+        //get department name
+        $department = Department::select('dept_desc')->where('dept_code', $dept_code)->first();
         
         // Get active employees of the department
         $employees = Employee::where('dept_code', $dept_code)
             ->whereNull('quit_stat')
-            ->get(['emp_code', 'name']);
+            ->get(['emp_code', 'name', 'desg_code']);
 
         $report = [];
 
@@ -924,7 +927,7 @@ class LeavesController extends Controller
                                     ->where('to_date', '>=', $endDate);
                         });
                 })
-                ->whereIn('leave_code', [1, 2, 3]) // approved leave types
+                ->whereIn('leave_code', [1, 2, 3, 5]) // approved leave types
                 ->get();
 
             // Initialize counters
@@ -932,6 +935,7 @@ class LeavesController extends Controller
                 'medical' => 0,
                 'annual'  => 0,
                 'casual'  => 0,
+                'without_pay' => 0,
             ];
             foreach ($leaves as $leave) {
 
@@ -945,6 +949,9 @@ class LeavesController extends Controller
                     case 3:
                         $leaveSummary['annual'] += $leave->l_day;
                         break;
+                    case 5:
+                        $leaveSummary['without_pay'] += $leave->l_day;
+                        break;
                 }
             }
             // late and early calculation
@@ -954,289 +961,21 @@ class LeavesController extends Controller
                 $endDate
             );
 
+            // getting employees designation
+            $designation = $employee->designation->desg_short;
+
             $report[] = [
                 'emp_code' => $employee->emp_code,
                 'emp_name' => $employee->name,
+                'designation' => $designation,
                 'leaves'   => $leaveSummary,
                 'late_mins'  => $attendanceTotals['late'],
                 'early_mins' => $attendanceTotals['early'],
             ];
         }
-        
-        return view('leave-report-data', compact('report', 'startDate', 'endDate'));
+
+        return view('leave-report-data', compact('report', 'startDate', 'endDate', 'department', 'dept_code'));
     }
-    // private function calculateLateEarlyMinutes($emp_code, Carbon $startDate, Carbon $endDate)
-    // {
-    //     $emp = Employee::select(
-    //         'catg_code', 'loca_code', 'st_time', 'end_time', 'twh'
-    //     )->where('emp_code', $emp_code)->first();
-
-    //     if (!$emp) {
-    //         return ['late' => 0, 'early' => 0];
-    //     }
-
-    //     // Required minutes
-    //     $totalMins = 480;
-    //     if ($emp->catg_code == 2) {
-    //         $totalMins = 360;
-    //     } elseif ($emp->twh == 12) {
-    //         $totalMins = 720;
-    //     }
-
-    //     $holidays = [
-    //         '2025-03-31','2025-04-01','2025-04-02',
-    //         '2025-05-01','2025-05-07',
-    //         '2025-06-09','2025-06-10','2025-06-11',
-    //         '2025-07-05','2025-08-14',
-    //         '2025-11-09','2025-12-25'
-    //     ];
-
-    //     $totalLate  = 0;
-    //     $totalEarly = 0;
-
-    //     $date = $startDate->copy();
-
-    //     while ($date->lte($endDate)) {
-
-    //         $dateStr = $date->toDateString();
-
-    //         // Skip Sundays & holidays
-    //         if ($date->isSunday() || in_array($dateStr, $holidays)) {
-    //             $date->addDay();
-    //             continue;
-    //         }
-
-    //         $records = Attendance::whereRaw(
-    //                 "TRUNC(at_date) = TO_DATE(?, 'YYYY-MM-DD')", [$dateStr]
-    //             )
-    //             ->where('emp_code', $emp_code)
-    //             ->whereNull('att_stat')
-    //             ->get();
-
-    //         if ($records->isEmpty()) {
-    //             $date->addDay();
-    //             continue;
-    //         }
-
-    //         // Shift times
-    //         $workDate = Carbon::parse($dateStr);
-    //         $startShift = $workDate->copy()->setTimeFromTimeString($emp->st_time);
-    //         $endShift   = $workDate->copy()->setTimeFromTimeString($emp->end_time);
-
-    //         // Friday adjustments
-    //         if ($emp->twh != 12) {
-    //             if ($emp->catg_code == 2 && $workDate->isFriday()) {
-    //                 $totalMins = 300;
-    //                 $startShift->setTime(8,0);
-    //                 $endShift->setTime(13,0);
-    //             }
-    //         }
-
-    //         $minIn  = Carbon::parse($records->min('timein'));
-    //         $maxOut = $records->whereNull('timeout')->isNotEmpty()
-    //                     ? null
-    //                     : Carbon::parse($records->max('timeout'));
-
-    //         $late  = 0;
-    //         $early = 0;
-
-    //         if ($emp->twh == 12) {
-
-    //             $worked = 0;
-    //             foreach ($records as $r) {
-    //                 $worked += minutesWorked($r->timein, $r->timeout);
-    //             }
-
-    //             $late = max(0, $totalMins - $worked);
-
-    //         } else {
-
-    //             if ($minIn->gt($startShift)) {
-    //                 $late = $startShift->diffInMinutes($minIn);
-    //             }
-
-    //             if ($maxOut && $maxOut->lt($endShift)) {
-    //                 $early = $maxOut->diffInMinutes($endShift);
-    //             }
-    //         }
-
-    //         $totalLate  += max(0, $late);
-    //         $totalEarly += max(0, $early);
-
-    //         $date->addDay();
-    //     }
-
-    //     return [
-    //         'late'  => $totalLate,
-    //         'early' => $totalEarly
-    //     ];
-    // }
-    // private function calculateLateEarlyMinutes($emp_code, Carbon $startDate, Carbon $endDate)
-    // {
-    //     $emp = Employee::select(
-    //         'catg_code', 'loca_code', 'st_time', 'end_time', 'twh'
-    //     )->where('emp_code', $emp_code)->first();
-
-    //     if (!$emp) {
-    //         return ['late' => 0, 'early' => 0];
-    //     }
-
-    //     $holidays = [
-    //         '2025-03-31','2025-04-01','2025-04-02',
-    //         '2025-05-01','2025-05-07',
-    //         '2025-06-09','2025-06-10','2025-06-11',
-    //         '2025-07-05','2025-08-14',
-    //         '2025-11-09','2025-12-25'
-    //     ];
-
-    //     $totalLate  = 0;
-    //     $totalEarly = 0;
-
-    //     // my code
-    //         $totalMins = 480;
-
-    //         if ($emp->catg_code == 2) {
-    //             $totalMins = 360;
-    //         } elseif ($emp->twh == 12) {
-    //             $totalMins = 720;
-    //         }
-
-    //     $date = $startDate->copy();
-
-    //     while ($date->lte($endDate)) {
-
-    //         $dateStr = $date->toDateString();
-
-    //         if ($date->isSunday() || in_array($dateStr, $holidays)) {
-    //             $date->addDay();
-    //             continue;
-    //         }
-
-    //         $records = Attendance::whereRaw(
-    //                 "TRUNC(at_date) = TO_DATE(?, 'YYYY-MM-DD')", [$dateStr]
-    //             )
-    //             ->where('emp_code', $emp_code)
-    //             ->whereNull('att_stat')
-    //             ->get();
-
-    //         if ($records->isEmpty()) {
-    //             $date->addDay();
-    //             continue;
-    //         }
-
-    //         /* ===============================
-    //         LEAVE CHECK
-    //         ================================ */
-    //         $isFullDayLeave = false;
-    //         $leaveStart = null;
-    //         $leaveEnd   = null;
-    //         $leaveMins  = 0;
-
-    //         if (ifLeaveExists($emp_code, $dateStr)) {
-
-    //             $leave = Leave::whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$dateStr])
-    //                 ->whereRaw("TRUNC(to_date)   >= TO_DATE(?, 'YYYY-MM-DD')", [$dateStr])
-    //                 ->where('emp_code', $emp_code)
-    //                 ->whereNot('status', 9)
-    //                 ->first();
-
-    //             if ($leave) {
-    //                 $from = Carbon::parse($leave->from_date);
-    //                 $to   = Carbon::parse($leave->to_date);
-
-    //                 if ($from->format('H:i:s') === '00:00:00' &&
-    //                     $to->format('H:i:s')   === '00:00:00') {
-
-    //                     $isFullDayLeave = true;
-
-    //                 } else {
-    //                     $leaveStart = $from;
-    //                     $leaveEnd   = $to;
-    //                     $leaveMins  = $from->diffInMinutes($to);
-    //                 }
-    //             }
-    //         }
-
-    //         if ($isFullDayLeave) {
-    //             $date->addDay();
-    //             continue;
-    //         }
-
-    //         /* ===============================
-    //         SHIFT TIMES
-    //         ================================ */
-    //         $workDate = Carbon::parse($dateStr);
-    //         $startShift = $workDate->copy()->setTimeFromTimeString($emp->st_time);
-    //         $endShift   = $workDate->copy()->setTimeFromTimeString($emp->end_time);
-
-    //         $minIn  = Carbon::parse($records->min('timein'));
-    //         $maxOut = $records->whereNull('timeout')->isNotEmpty()
-    //             ? null
-    //             : Carbon::parse($records->max('timeout'));
-
-    //         $late  = 0;
-    //         $early = 0;
-
-    //         if ($emp->twh == 12) {
-
-    //             $worked = 0;
-    //             foreach ($records as $r) {
-    //                 $worked += minutesWorked($r->timein, $r->timeout);
-    //             }
-
-    //             $required = 720;
-    //             if ($leaveMins > 0) {
-    //                 $required = max(0, $required - $leaveMins);
-    //             }
-
-    //             $late = max(0, $required - $worked);
-
-    //         } else {
-
-    //             if ($minIn->gt($startShift)) {
-    //                 $late = $startShift->diffInMinutes($minIn);
-    //             }
-
-    //             if ($maxOut && $maxOut->lt($endShift)) {
-    //                 $early = $maxOut->diffInMinutes($endShift);
-    //             }
-
-    //             /* ===============================
-    //             LEAVE OVERLAP EXEMPTION
-    //             ================================ */
-    //             if ($leaveStart) {
-
-    //                 if ($late > 0) {
-    //                     $overlapStart = max($startShift, $leaveStart);
-    //                     $overlapEnd   = min($minIn, $leaveEnd);
-
-    //                     if ($overlapStart < $overlapEnd) {
-    //                         $late -= $overlapStart->diffInMinutes($overlapEnd);
-    //                     }
-    //                 }
-
-    //                 if ($early > 0 && $maxOut) {
-    //                     $overlapStart = max($maxOut, $leaveStart);
-    //                     $overlapEnd   = min($endShift, $leaveEnd);
-
-    //                     if ($overlapStart < $overlapEnd) {
-    //                         $early -= $overlapStart->diffInMinutes($overlapEnd);
-    //                     }
-    //                 }
-    //             }
-    //         }
-
-    //         $totalLate  += max(0, $late);
-    //         $totalEarly += max(0, $early);
-
-    //         $date->addDay();
-    //     }
-
-    //     return [
-    //         'late'  => $totalLate,
-    //         'early' => $totalEarly
-    //     ];
-    // }
     private function calculateLateEarlyMinutes($emp_code, Carbon $startDate, Carbon $endDate)
     {
         $emp = Employee::select(
@@ -1433,5 +1172,21 @@ class LeavesController extends Controller
             'late'  => $totalLate,
             'early' => $totalEarly
         ];
+    }
+    public function leaveReportDownload()
+    {
+        $dept_desc = request()->input('dept_desc');
+        $startDate = Carbon::parse(request()->input('start_date'));
+        $endDate = Carbon::parse(request()->input('end_date'));
+        $report = request()->input('report');
+        $now = Carbon::now();
+        $pdf = Pdf::loadView('pdf.leave-report', ['start' => $startDate, 'end' => $endDate, 'dept_desc' => $dept_desc, 'report' => $report]);
+        return $pdf->download("leave_report_{$now}.pdf");
+        // return view('pdf.leave-report', [
+        //     'start' => $startDate,
+        //     'end' => $endDate,
+        //     'dept_desc' => $dept_desc,
+        //     'report' => $report
+        // ]);
     }
 }
