@@ -47,10 +47,6 @@ class FilesController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        // if(!Auth::user()->isHR()){
-        //     abort(403, 'Unauthorized');
-        // }
-
         $filePaths[] = [
             'profile' => 'profile_' . $id . '.' . $fileFormat,
             'cnic_front' => 'cnic_front_' . $id . '.' . $fileFormat,
