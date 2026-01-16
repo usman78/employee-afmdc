@@ -146,7 +146,7 @@
                           // && $record['at_date'] !== $today
                       )
                           @if (($record['late_minutes'] ?? 0) >= 10)
-                              {{ $record['late_minutes'] }} mins
+                              {{ intval($record['late_minutes'] ?? 0) }} mins
                           @else
                               —
                           @endif
@@ -162,7 +162,7 @@
                           // && $record['at_date'] !== $today
                       )
                           @if (($record['early_minutes'] ?? 0) > 0)
-                              {{ $record['early_minutes'] }} mins
+                              {{ round($record['early_minutes']) }} mins
                           @else
                               —
                           @endif
