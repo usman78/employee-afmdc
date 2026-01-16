@@ -404,7 +404,9 @@
             <!-- End of Content Wrapper -->
         </div>
         <!-- Scroll Top -->
-        <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+        <a class="scroll-to-top rounded" href="#page-top">
+            <i class="fas fa-angle-up"></i>
+        </a>
         <script src="{{asset('js/sweetalert2.all.min.js')}}"></script>
         <!-- SB Admin 2 JS Files -->
         <script src="{{ asset('sb/vendor/jquery/jquery.min.js') }}"></script>
