@@ -38,7 +38,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reject-leave/{leave_id}', [LeavesController::class, 'rejectLeave'])->name('reject-leave');
     Route::get('/leave-report', [LeavesController::class, 'leaveReport'])->name('leave-report');
     Route::post('/leave-report-data', [LeavesController::class, 'leaveReportData'])->name('leave-report-data');
-    Route::get('/leave-report-download/{start_date}/{end_date}/{dept_code?}', [LeavesController::class, 'leaveReportDownload'])->name('leave.report.download');
+    Route::post('/leave-report-download/{start_date}/{end_date}/{dept_code?}', [LeavesController::class, 'leaveReportDownload'])->name('leave.report.download');
 
     Route::get('/job-dashboard', [JobController::class, 'summaryDashboard'])->name('job-dashboard');
     Route::get('/open-jobs', [JobController::class, 'openJobs'])->name('open-jobs');

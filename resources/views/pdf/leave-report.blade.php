@@ -141,7 +141,7 @@
             </table>
         </div>
         <!-- ===== Applicant Details ===== -->
-        <div class="section-title">Department: {{ $dept_desc }}</div>
+        <div class="section-title">Filter By: {{ $dept_desc == null ? $desg_short : $dept_desc }}</div>
         <table>
             <thead>
                 <tr>

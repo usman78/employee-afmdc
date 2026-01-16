@@ -15,6 +15,7 @@ use App\Models\LeaveAuth;
 use App\Models\ApprovedLeave;
 use App\Models\Department;
 use App\Models\Attendance;
+use App\Models\Designation;
 
 class LeavesController extends Controller
 {
@@ -896,12 +897,35 @@ class LeavesController extends Controller
     public function leaveReport()
     {
         $departments = Department::whereNotIn('dept_code', [61, 60, 64, 48, 54, 11, 13, 17, 18, 19, 31, 32, 58, 65])->get();
+        $designations = Designation::all();
         return view('leave-report', [
             'departments' => $departments,
+            'designations' => $designations,
         ]);
     }
     public function leaveReportData(Request $request)
     {
+        $filter = $request->input('filter');
+        if (!in_array($filter, ['department', 'designation'])) {
+            return redirect()->back()->with('error', 'Invalid filter selected.');
+        }
+        if ($filter == 'designation') {
+            $desg_code = $request->input('designation');
+            $startDate = Carbon::parse($request->input('start_date'));
+            $endDate = Carbon::parse($request->input('end_date'));
+
+            //get designation name
+            $desigName = Designation::select('desg_short')->where('desg_code', $desg_code)->first();
+            $department = null;
+            $dept_code = null;
+            
+            // Get active employees of the designation
+            $employees = Employee::where('desg_code', $desg_code)
+                ->whereNull('quit_stat')
+                ->get(['emp_code', 'name', 'dept_code', 'desg_code']);
+        } else {
+            
+        $desigName = null; 
         $dept_code = $request->input('department');
         $startDate = Carbon::parse($request->input('start_date'));
         $endDate = Carbon::parse($request->input('end_date'));
@@ -913,7 +937,7 @@ class LeavesController extends Controller
         $employees = Employee::where('dept_code', $dept_code)
             ->whereNull('quit_stat')
             ->get(['emp_code', 'name', 'desg_code']);
-
+        }    
         $report = [];
 
         foreach ($employees as $employee) {
@@ -974,7 +998,7 @@ class LeavesController extends Controller
             ];
         }
 
-        return view('leave-report-data', compact('report', 'startDate', 'endDate', 'department', 'dept_code'));
+        return view('leave-report-data', compact('report', 'startDate', 'endDate', 'department', 'dept_code', 'desigName'));
     }
     private function calculateLateEarlyMinutes($emp_code, Carbon $startDate, Carbon $endDate)
     {
@@ -1146,24 +1170,26 @@ class LeavesController extends Controller
                         $overlapStart = max($startShift, $leaveStart);
                         $overlapEnd   = min($minIn, $leaveEnd);
 
-                        if ($overlapStart < $overlapEnd) {
-                            $late -= $overlapStart->diffInMinutes($overlapEnd);
-                        }
+                        // if ($overlapStart < $overlapEnd) {
+                        //     $late -= $overlapStart->diffInMinutes($overlapEnd);
+                        // }
+                        $late = 0; // compensation for partial leaves
                     }
 
                     if ($early > 0 && $maxOut) {
                         $overlapStart = max($maxOut, $leaveStart);
                         $overlapEnd   = min($endShift, $leaveEnd);
 
-                        if ($overlapStart < $overlapEnd) {
-                            $early -= $overlapStart->diffInMinutes($overlapEnd);
-                        }
+                        // if ($overlapStart < $overlapEnd) {
+                        //     $early -= $overlapStart->diffInMinutes($overlapEnd);
+                        // }
+                        $early = 0; // compensation for partial leaves
                     }
                 }
             }
 
-            $totalLate  += max(0, round($late, 1));
-            $totalEarly += max(0, round($early, 1));
+            $totalLate  += max(0, intval($late));
+            $totalEarly += max(0, round($early));
 
             $date->addDay();
         }
@@ -1173,18 +1199,17 @@ class LeavesController extends Controller
             'early' => $totalEarly
         ];
     }
-    public function leaveReportDownload()
+    public function leaveReportDownload($start_date, $end_date)
     {
         $dept_desc = request()->input('dept_desc');
-        $startDate = Carbon::parse(request()->input('start_date'));
-        $endDate = Carbon::parse(request()->input('end_date'));
         $report = request()->input('report');
+        $desgShort = request()->input('desg_short');
         $now = Carbon::now();
-        $pdf = Pdf::loadView('pdf.leave-report', ['start' => $startDate, 'end' => $endDate, 'dept_desc' => $dept_desc, 'report' => $report]);
+        $pdf = Pdf::loadView('pdf.leave-report', ['start' => dateFormat($start_date), 'end' => dateFormat($end_date), 'dept_desc' => $dept_desc, 'report' => $report, 'desg_short' => $desgShort]);
         return $pdf->download("leave_report_{$now}.pdf");
         // return view('pdf.leave-report', [
-        //     'start' => $startDate,
-        //     'end' => $endDate,
+        //     'start' => $start_date,
+        //     'end' => $end_date,
         //     'dept_desc' => $dept_desc,
         //     'report' => $report
         // ]);

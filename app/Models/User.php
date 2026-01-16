@@ -71,7 +71,7 @@ class User extends Authenticatable
     }
     public function isHR()
     {
-        return in_array($this->desg_code, ['971', '991', '44', '996']);
+        return in_array($this->desg_code, ['971', '991', '44', '996', '786', '95']);
     }
     public function isAllowedToSeeAdmissions()
     {
