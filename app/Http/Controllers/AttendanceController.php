@@ -231,26 +231,28 @@ class AttendanceController extends Controller
                             $overlapStart = max($startTimeCarbon, $leaveStart);
                             $overlapEnd   = min($minIn, $leaveEnd);
 
-                            if ($overlapStart < $overlapEnd) {
-                                $lateMins -= $overlapStart->diffInMinutes($overlapEnd);
-                            }
+                            // if ($overlapStart < $overlapEnd) {
+                            //     $lateMins -= $overlapStart->diffInMinutes($overlapEnd);
+                            // }
+                            $lateMins = 0; // compensation for partial leave
                         }
 
                         if ($earlyMins > 0) {
                             $overlapStart = max($maxOut, $leaveStart);
                             $overlapEnd   = min($endTimeCarbon, $leaveEnd);
 
-                            if ($overlapStart < $overlapEnd) {
-                                $earlyMins -= $overlapStart->diffInMinutes($overlapEnd);
-                            }
+                            // if ($overlapStart < $overlapEnd) {
+                            //     $earlyMins -= $overlapStart->diffInMinutes($overlapEnd);
+                            // }
+                            $earlyMins = 0; // compensation for partial leave
                         }
                     }
                 }
             }
-
-            $lateMins  = max(0, round($lateMins, 1));
-            $earlyMins = max(0, round($earlyMins, 1));
-
+            // Log::info($dateString.' - Late: '.$lateMins.' Early: '.$earlyMins);
+            $lateMins  = max(0, $lateMins);
+            $earlyMins = max(0, $earlyMins);
+            
             /* ===============================
             SHORT DUTY STATUS
             ================================ */
@@ -347,7 +349,7 @@ function minutesWorked($timein, $timeout) {
     if ($timein && $timeout) {
         $in = Carbon::parse($timein);
         $out = Carbon::parse($timeout);
-        $workedMinutes = round($in->diffInMinutes($out), 1);
+        $workedMinutes = round($in->diffInMinutes($out));
         return $workedMinutes;
     }
     return 0;
