@@ -7,7 +7,7 @@
             <p class="mb-4">Date Range: {{ dateFormat($startDate) }} to {{ dateFormat($endDate) }}</p>
             <div class="card shadow mt-3 mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">{{ $department == null ? capitalizeWords($desigName->desg_short) : capitalizeWords($department->dept_desc) }} </h6>
+                    <h6 class="m-0 font-weight-bold text-primary">{{ $department == null ? $desigName->desg_short : $department->dept_desc }} </h6>
                 </div>
                 <div class="card-body">
                     <form action="{{ route('leave.report.download', [
