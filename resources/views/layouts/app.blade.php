@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
     <head>
         <meta charset="utf-8">
         <meta content="width=device-width, initial-scale=1.0" name="viewport">
@@ -20,9 +19,6 @@
         <!-- Vendor CSS Files -->
         <link href="{{asset('vendor/bootstrap/css/bootstrap.min.css')}}" rel="stylesheet">
         <link href="{{asset('vendor/bootstrap-icons/bootstrap-icons.css')}}" rel="stylesheet">
-        {{-- <link href="{{asset('vendor/aos/aos.css')}}" rel="stylesheet"> --}}
-        {{-- <link href="{{asset('vendor/swiper/swiper-bundle.min.css')}}" rel="stylesheet"> --}}
-        {{-- <link href="{{asset('vendor/glightbox/css/glightbox.min.css')}}" rel="stylesheet"> --}}
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
         <link href="{{asset('css/main.css')}}" rel="stylesheet">
         @stack('cdn-styles')
@@ -30,47 +26,46 @@
             
             <style>
                 .btn-primary {
-                --bs-btn-bg: #2196f3;
+                    --bs-btn-bg: #2196f3;
                 }
                 .navmenu .dropdown.d-xl-none {
-                display: inline-block;
+                    display: inline-block;
                 }
                 .header .header-social-links .dropdown {
-                display: inline-block;
+                    display: inline-block;
                 }
                 .header .header-social-links .dropdown a.btn.dropdown-toggle {
-                border: none;
+                    border: none;
                 } 
                 .navmenu a.dropdown-toggle {
-                padding: 10px 0;
+                    padding: 10px 0;
                 }
                 .navmenu .dropdown .btn.dropdown-toggle {
-                border: none;
+                    border: none;
                 }
                 .navmenu .dropdown .dropdown-toggle::after {
-                display: none;
+                    display: none;
                 }
                 span.position-absolute.top-0.start-100.translate-middle.badge.rounded-pill.bg-danger
                 {
-                font-size: x-small;
+                    font-size: x-small;
                     transform: translate(-175%, -20%) !important;
                 }
-
                 .thick-underline {
-                text-decoration-line: underline;
-                text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
-                text-decoration-color: #973594;
-                text-underline-offset: 4px;
-                color: #973594;
-                font-weight: 600;
+                    text-decoration-line: underline;
+                    text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
+                    text-decoration-color: #973594;
+                    text-underline-offset: 4px;
+                    color: #973594;
+                    font-weight: 600;
                 }
                 .thick-underline:hover {
-                text-decoration-line: underline;
-                text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
-                text-decoration-color: #973594;
-                text-underline-offset: 4px;
-                color: #2196f3;
-                font-weight: 600;
+                    text-decoration-line: underline;
+                    text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
+                    text-decoration-color: #973594;
+                    text-underline-offset: 4px;
+                    color: #2196f3;
+                    font-weight: 600;
                 }
                 table.table thead tr th {
                 /* color: #2196F3; */
@@ -80,36 +75,36 @@
                     --bs-table-color: #fff;
                 }
                 .header {
-                background-color: #c0ddff;
+                    background-color: #c0ddff;
                 }
                 .header::after {
-                content: "";
-                position: absolute;
-                height: 3%;
-                padding: 2px 0;
-                width: 100%;
-                background: #9C27B0;
-                left: 50%;
-                top: 0;
-                translate: -50% -50%;
-                z-index: -99999999999;
+                    content: "";
+                    position: absolute;
+                    height: 3%;
+                    padding: 2px 0;
+                    width: 100%;
+                    background: #9C27B0;
+                    left: 50%;
+                    top: 0;
+                    translate: -50% -50%;
+                    z-index: -99999999999;
                 }
                 li.nav-item {
-                margin-bottom: 0;
+                    margin-bottom: 0;
                 }
                 .header .header-social-links a:hover {
-                color: #973594;
+                    color: #973594;
                 }
                 .header .header-social-links a
                 {
-                font-size: 16px;
+                    font-size: 16px;
                 } 
                 .section-title h2:after
                 {
-                background: #973594;
+                    background: #973594;
                 }
                 .accordion-body {
-                background-color: aliceblue;
+                    background-color: aliceblue;
                 }
                 @media (max-width: 768px) {
                     .table {
@@ -198,16 +193,16 @@
                         <span>Reports</span>
                     </a>
                     <div id="collapseReports"
-                        class="collapse {{ in_array(request()->route()->getName(), ['attendance-report','leave-report']) ? 'show' : '' }}"
+                        class="collapse {{ in_array(request()->route()->getName(), ['attendance-report','leave-report', 'admissions', 'inventory']) ? 'show' : '' }}"
                         data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             @if (Auth::user()->isHR())
-                                <a class="collapse-item" href="{{ route('leave-report') }}">Leave Report</a>
+                                <a class="collapse-item {{ in_array(request()->route()->getName(), ['leave-report']) ? 'active' : '' }}" href="{{ route('leave-report') }}">Leave Report</a>
                             @endif
                             @if (Auth::user()->isAllowedToSeeAdmissions())
-                                <a class="collapse-item" href="{{ route('admissions') }}">Admissions Report</a>
+                                <a class="collapse-item {{ in_array(request()->route()->getName(), ['admissions']) ? 'active' : '' }}" href="{{ route('admissions') }}">Admissions Report</a>
                             @endif
-                            <a class="collapse-item" href="{{ route('inventory', $emp_code) }}">Store Issuance Report</a>
+                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['inventory']) ? 'active' : '' }}" href="{{ route('inventory', $emp_code) }}">Store Issuance Report</a>
                         </div>
                     </div>
                 </li>
@@ -234,12 +229,12 @@
                         <span>Meeting & Tasks</span>
                     </a>
                     <div id="collapseTasks"
-                        class="collapse {{ in_array(request()->route()->getName(), ['tasks','meetings','assigned-tasks','sops','admissions']) ? 'show' : '' }}"
+                        class="collapse {{ in_array(request()->route()->getName(), ['tasks','meetings','assigned-tasks','sops',]) ? 'show' : '' }}"
                         data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item" href="{{ route('meetings') }}">Meetings</a>
-                            <a class="collapse-item" href="{{ route('assigned-tasks') }}">Assigned Tasks</a>
-                            <a class="collapse-item" href="{{ route('sops') }}">SOPs</a>
+                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['meetings']) ? 'active' : '' }}" href="{{ route('meetings') }}">Meetings</a>
+                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['tasks','assigned-tasks']) ? 'active' : '' }}" href="{{ route('assigned-tasks') }}">Assigned Tasks</a>
+                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['sops']) ? 'active' : '' }}" href="{{ route('sops') }}">SOPs</a>
                         </div>
                     </div>
                 </li>
@@ -374,7 +369,7 @@
                                         Logout
                                     </a>
                                     <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                                    @csrf
+                                        @csrf
                                     </form>
                                 </div>
                             </li>
@@ -384,7 +379,7 @@
                     <!-- Begin Page Content -->
                     <div class="container-fluid">
                         <main class="main">
-                            <!-- Hero Section -->
+                            <!-- Main Content Section -->
                             @yield('content')
                         </main>  
                     </div>
