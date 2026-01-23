@@ -42,7 +42,28 @@ class HomeController extends Controller
         }   
         return view('home', compact('employee', 'today', 'employeeStatus'))->with('emp_code', $user);
     }
+    public function changePassword()
+    {
+        return view('change-password');
+    }
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|min:8|confirmed',
+        ]);
 
+        $user = Auth::user();
+
+        if ($request->current_password != $user->u_passwd) {
+            return back()->withErrors(['current_password' => 'Current password is incorrect']);
+        }
+
+        $user->u_passwd = $request->new_password;
+        $user->save();
+
+        return back()->with('success', 'Password updated successfully');
+    }
     public function debug()
     {
         $attendanceRecords = Leave::where('emp_code', '1171')->first();

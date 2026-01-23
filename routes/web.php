@@ -18,6 +18,8 @@ Auth::routes();
 Route::middleware(['auth'])->group(function () {
 
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+    Route::get('/change-password', [HomeController::class, 'changePassword'])->name('change-password');
+    Route::post('/update-password', [HomeController::class, 'updatePassword'])->name('update-password');
 
     Route::get('/attendance/{emp_code}', [AttendanceController::class, 'attendance'])->name('attendance');
     Route::get('/leaves/{emp_code}', [LeavesController::class, 'leaves'])->name('leaves');
