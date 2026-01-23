@@ -27,6 +27,7 @@ class AdmissionController extends Controller
             'domicel' => "domicel_{$id}",
             'matric' => "matric_document_{$id}",
             'fsc' => "fsc_document_{$id}",
+            'mcat_result' => "mcat_result_{$id}",
             'bank_receipt' => "bank_receipt_{$id}",
         ];
         $filesAvailable = [];

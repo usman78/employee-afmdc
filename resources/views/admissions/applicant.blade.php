@@ -18,10 +18,11 @@
     }
 @endpush
 @section('content')
+    {{-- {{ dd($filePaths) }} --}}
     <div class="container">
         <div class="row mt-5">
             <div class="col-lg-6">
-                <div class="services-thumb" style="max-height: 1098px;">
+                <div class="services-thumb">
                     <div class="d-flex flex-wrap align-items-center mb-4 pb-3">
                         <h3 class="mb-0">Admission Application Documents</h3>
                     </div>
@@ -124,6 +125,17 @@
                             <span class="alert alert-warning">Inter Result Card (Not Uploaded)</span>
                         @endif
                     </p> 
+                    
+                    @if($filesAvailable['mcat_result'])
+                        <p class="mb-1" style="display: inline-block;"></p>
+                            <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-admission-file', [
+                            'id' => $profile->adm_applicant_id, 
+                            'fileName' => 'mcat_result', 
+                            'fileFormat' => $filesAvailable[$filePaths['mcat_result']] ?? 'jpg'
+                            ]) }}" target="_blank">MCAT Result</a>  
+                        </p>
+                    @endif
+                    
                     <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
                         <h5 class="mt-2 d-block">Other Documents</h5>
                     </div>
@@ -160,6 +172,10 @@
                         <h5 class="mt-2 d-block">Applicant Name</h5>
                     </div>
                     <p class="mb-1" style="display: inline-block;"> {{ $profile->user->name }}</p>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">Program Applied</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ $profile->program->program_name }}</p>
                     <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
                         <h5 class="mt-2 d-block">Applicant Father Name</h5>
                     </div>
@@ -204,10 +220,6 @@
                         <h5 class="mt-2 d-block">Relation</h5>
                     </div>
                     <p class="mb-1" style="display: inline-block;"> {{ $profile->relation }}</p>
-                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
-                        <h5 class="mt-2 d-block">Program Applied</h5>
-                    </div>
-                    <p class="mb-1" style="display: inline-block;"> {{ $profile->program->program_name }}</p>
                 </div>
             </div>
         </div>

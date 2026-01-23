@@ -56,6 +56,7 @@ class FilesController extends Controller
             'domicel' => 'domicel_' . $id . '.' . $fileFormat,
             'matric' => 'matric_document_' . $id . '.' . $fileFormat,
             'fsc' => 'fsc_document_' . $id . '.' . $fileFormat,
+            'mcat_result' => 'mcat_result_' . $id . '.' . $fileFormat,
             'bank_receipt' => 'bank_receipt_' . $id . '.' . $fileFormat,
         ];
 
