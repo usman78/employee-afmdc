@@ -202,6 +202,9 @@ function getProgramName($programId)
         case 5:
             $programId = "BS Nutrition";
             break;
+        case 6:
+            $programId = "MBBS";
+            break;
         default:
             $programId = "N/A";
             break;
