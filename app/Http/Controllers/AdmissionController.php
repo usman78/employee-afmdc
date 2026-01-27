@@ -59,12 +59,12 @@ class AdmissionController extends Controller
     }
     public function previewAdmission($id) 
     {
-        $profile = Admissions::with('user', 'program')->where('ADM_APPLICANT_ID', $id)->first();
+        $profile = Admissions::with('user', 'program', 'detail')->where('ADM_APPLICANT_ID', $id)->first();
 
         if (!$profile) {
             return redirect()->back()->with('error', 'Applicant not found.');
         }
-
+        
         $pdf = Pdf::loadView('pdf.admission-form', ['profile' => $profile]);
         return $pdf->stream("admission_{$id}.pdf");
         // return view('pdf.admission-form', ['profile' => $profile]);

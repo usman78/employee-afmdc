@@ -82,7 +82,9 @@
                                                     <div class="services-price-overlay"></div>
                                                 </div>
                                             </a>
-                                            <a href="{{ route('preview-admission', $admission->adm_applicant_id) }}" class="btn btn-small btn-secondary services-price view-button">
+                                            <a href="{{ route('preview-admission', $admission->adm_applicant_id) }}" 
+                                                target="_blank"
+                                                class="btn btn-small btn-secondary services-price view-button">
                                                 <div class="services-price-wrap ms-auto">
                                                     <p class="services-price-text mb-0">Download</p>
                                                     <div class="services-price-overlay"></div>

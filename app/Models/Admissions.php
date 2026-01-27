@@ -26,4 +26,8 @@ class Admissions extends Model
     {
         return $this->gender === 'f' ? 'Female' : 'Male';
     }
+    public function detail()
+    {
+        return $this->hasMany(AdmissionDetail::class, 'adm_applicant_id', 'adm_applicant_id');
+    }
 }
