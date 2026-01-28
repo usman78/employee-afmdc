@@ -3,7 +3,6 @@
     <section id="services" class="services section">
       <!-- Section Title -->
       <div class="container section-title">
-        {{ dd($sops) }}
         <h2>SOP's</h2>
         <p>View the SOPs defined for your role, your department and all other departments.</p>
       </div><!-- End Section Title -->
@@ -17,8 +16,8 @@
                   <h2 class="accordion-header" id="heading{{ $loop->index }}">
                       <button class="accordion-button {{ $loop->first ? '' : 'collapsed' }}" 
                               type="button" 
-                              data-bs-toggle="collapse" 
-                              data-bs-target="#collapse{{ $loop->index }}" 
+                              data-toggle="collapse" 
+                              data-target="#collapse{{ $loop->index }}" 
                               aria-expanded="{{ $loop->first ? 'true' : 'false' }}" 
                               aria-controls="collapse{{ $loop->index }}">
                               DEPARTMENT OF &nbsp;<strong>{{  $sop_group['department'] }}</strong>&nbsp; SOPs
@@ -28,7 +27,7 @@
                   <div id="collapse{{ $loop->index }}" 
                       class="accordion-collapse collapse {{ $loop->first ? 'show' : '' }}" 
                       aria-labelledby="heading{{ $loop->index }}" 
-                      data-bs-parent="#accordionExample">
+                      data-parent="#accordionExample">
                       <div class="accordion-body">
                         @if ($sop_group['sops']->isEmpty())
                           <p><em>No SOPs available for this department.</em></p>
