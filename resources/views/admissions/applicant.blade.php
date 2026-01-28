@@ -177,6 +177,10 @@
                     </div>
                     <p class="mb-1" style="display: inline-block;"> {{ $profile->program->program_name }}</p>
                     <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
+                        <h5 class="mt-2 d-block">UHS ID</h5>
+                    </div>
+                    <p class="mb-1" style="display: inline-block;"> {{ $profile->uhs_id ?? 'N/A' }}</p>
+                    <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
                         <h5 class="mt-2 d-block">Applicant Father Name</h5>
                     </div>
                     <p class="mb-1" style="display: inline-block;"> {{ $profile->father_name }}</p>
