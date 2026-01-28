@@ -50,6 +50,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/change-status/{app_no}', [JobController::class, 'changeStatus'])->name('change-status');
     Route::get('/shortlisted', [JobController::class, 'shortlisted'])->name('shortlisted');
     Route::get('/designation-jobs/{position}', [JobController::class, 'designationJobs'])->name('designation-jobs');
+    Route::get('/job-search', [JobController::class, 'jobSearch'])->name('jobs-search');
 
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks');
     Route::get('/meetings', [TaskController::class, 'meetings'])->name('meetings');

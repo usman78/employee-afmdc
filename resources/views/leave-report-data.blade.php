@@ -51,8 +51,8 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="text-center text-muted">
-                                                No leave records found for the selected criteria
+                                            <td colspan="8" class="text-center text-muted">
+                                                No employees record found for the selected criteria.
                                             </td>
                                         </tr>
                                     @endforelse

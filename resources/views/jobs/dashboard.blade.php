@@ -27,11 +27,17 @@
         font-weight: 700;
         color: #2196f3;
     }
+    a:hover {
+        text-decoration: none;
+    }
+    .profile-thumb.search-jobs {
+        padding: 15px;
+    }
     @endpush
 
     @section('content')    
         <div class="container">
-            <section id="stats" class="stats section">
+            <section id="stats" class="stats section profile-thumb">
 
                 <!-- Section Title -->
                 <div class="container section-title">
@@ -83,7 +89,83 @@
 
                 </div>
 
-                </section>
+            </section>
+            <div class="row mt-5 mb-5">
+                <div class="col-md-12">
+                    <div class="profile-thumb search-jobs">
+                        <h3 class="text-center mb-4">Search Applications</h3>
+                        <form method="GET" action="{{ route('jobs-search') }}" class="row g-2 mb-4">
+                            <!-- Position -->
+                            <div class="col-md-3">
+                                <select
+                                    name="position"
+                                    class="form-control"
+                                >
+                                    <option value="">Select Position</option>
+                                    @foreach ($open_jobs as $open_job)
+                                        <option
+                                            value="{{ $open_job->desg_short }}"
+                                            {{ request('position') == $open_job->desg_short ? 'selected' : '' }}
+                                        >
+                                            {{ $open_job->desg_short }}
+                                        </option>
+                                        @if($loop->last)
+                                            @foreach ($vacancy_jobs as $vacancy_job)
+                                                <option
+                                                    value="{{ $vacancy_job->job_description }}"
+                                                    {{ request('position') == $vacancy_job->job_description ? 'selected' : '' }}
+                                                >
+                                                    {{ $vacancy_job->job_description }}
+                                                </option>
+                                            @endforeach
+                                        @endif
+                                    @endforeach
+                                </select>
+                            </div>
+                            <!-- City -->
+                            <div class="col-md-3">
+                                <input
+                                    type="text"
+                                    name="city"
+                                    class="form-control"
+                                    placeholder="City"
+                                    value="{{ request('city') }}"
+                                >
+                            </div>
+                            <!-- Salary Min -->
+                            <div class="col-md-2">
+                                <input
+                                    type="number"
+                                    name="salary_min"
+                                    class="form-control"
+                                    placeholder="Min Salary"
+                                    value="{{ request('salary_min') }}"
+                                >
+                            </div>
+                            <!-- Salary Max -->
+                            <div class="col-md-2">
+                                <input
+                                    type="number"
+                                    name="salary_max"
+                                    class="form-control"
+                                    placeholder="Max Salary"
+                                    value="{{ request('salary_max') }}"
+                                >
+                            </div>
+                            <!-- Buttons -->
+                            <div class="col-md-2 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    Search
+                                </button>
+
+                                <a href="{{ route('jobs-search') }}" class="btn btn-outline-secondary w-100">
+                                    Reset
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
             <div class="row mt-5 mb-5">
                 <div class="col-12">
                     

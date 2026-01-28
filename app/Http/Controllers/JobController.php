@@ -152,6 +152,53 @@ class JobController extends Controller
             return redirect()->back()->with('error', 'Application record not found!');
         }
     }
+    public function jobSearch(Request $request)
+    {
+        $query = Job::query();
+
+        if ($request->filled('position')) {
+            $position = str_replace('-', '/', $request->input('position'));
+            $designationIds = Designation::where('desg_short', 'like', '%' . $position . '%')->pluck('desg_code');
+            $vacancyIds = Vacancy::where('job_description', 'like', '%' . $position . '%')->pluck('job_id');
+            $query->where(function($q) use ($designationIds, $vacancyIds) {
+                $q->whereIn('position_id', $designationIds)
+                  ->orWhereIn('job_id', $vacancyIds);
+            });
+        }
+
+        if ($request->filled('city')) {
+            $city = $request->input('city');
+            $query->where('city', 'like', '%' . $city . '%');
+        }
+
+        if ($request->filled('salary_min')) {
+            $query->whereRaw("
+                TO_NUMBER(
+                    REPLACE(
+                        SUBSTR(expt_sal, 1, INSTR(expt_sal, '-') - 1),
+                        ',',
+                        ''
+                    )
+                ) <= ?
+            ", $request->salary_min);
+        }
+
+        if ($request->filled('salary_max')) {
+            $query->whereRaw("
+                TO_NUMBER(
+                    REPLACE(
+                        SUBSTR(expt_sal, INSTR(expt_sal, '-') + 1),
+                        ',',
+                        ''
+                    )
+                ) >= ?
+            ", $request->salary_max);
+        }
+
+        $jobs = $query->get();
+
+        return view('jobs.jobs', ['jobs' => $jobs]);
+    }
     public function debug()
     {
 
