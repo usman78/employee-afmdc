@@ -18,8 +18,8 @@
                   <h2 class="accordion-header" id="heading{{ $loop->index }}">
                       <button class="accordion-button {{ $loop->first ? '' : 'collapsed' }}" 
                               type="button" 
-                              data-bs-toggle="collapse" 
-                              data-bs-target="#collapse{{ $loop->index }}" 
+                              data-toggle="collapse" 
+                              data-target="#collapse{{ $loop->index }}" 
                               aria-expanded="{{ $loop->first ? 'true' : 'false' }}" 
                               aria-controls="collapse{{ $loop->index }}">
                           <strong>{{ $meeting->subject }}</strong> &nbsp; - Dated {{ dateFormat($meeting->meet_date) }}
@@ -28,7 +28,7 @@
                   <div id="collapse{{ $loop->index }}" 
                       class="accordion-collapse collapse {{ $loop->first ? 'show' : '' }}" 
                       aria-labelledby="heading{{ $loop->index }}" 
-                      data-bs-parent="#accordionExample">
+                      data-parent="#accordionExample">
                       <div class="accordion-body">
                           <b>Meeting Type: </b>{{ $meeting->cat }}<br>
                           <b>Meeting Number: </b>{{ $meeting->meet_no }}<br>

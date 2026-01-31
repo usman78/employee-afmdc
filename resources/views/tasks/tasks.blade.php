@@ -20,12 +20,12 @@
       <!-- Nav tabs -->
       <ul class="nav nav-tabs" id="taskTabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="uncompleted-tab" data-bs-toggle="tab" data-bs-target="#uncompleted" type="button" role="tab" aria-controls="uncompleted" aria-selected="true">
+          <button class="nav-link active" id="uncompleted-tab" data-toggle="tab" data-target="#uncompleted" type="button" role="tab" aria-controls="uncompleted" aria-selected="true">
             Uncompleted Tasks
           </button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab" aria-controls="completed" aria-selected="false">
+          <button class="nav-link" id="completed-tab" data-toggle="tab" data-target="#completed" type="button" role="tab" aria-controls="completed" aria-selected="false">
             Completed Tasks
           </button>
         </li>
@@ -46,8 +46,8 @@
                   <h2 class="accordion-header" id="headingUncompleted{{ $loop->index }}">
                     <button class="accordion-button collapsed"
                             type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#collapseUncompleted{{ $loop->index }}"
+                            data-toggle="collapse"
+                            data-target="#collapseUncompleted{{ $loop->index }}"
                             aria-expanded="false"
                             aria-controls="collapseUncompleted{{ $loop->index }}">
                       <strong>{{ Str::words($task->task_desc, 15, '...') }}</strong>
@@ -56,7 +56,7 @@
                   <div id="collapseUncompleted{{ $loop->index }}"
                       class="accordion-collapse collapse"
                       aria-labelledby="headingUncompleted{{ $loop->index }}"
-                      data-bs-parent="#accordionUncompleted">
+                      data-parent="#accordionUncompleted">
                     <div class="accordion-body">
                       <b>Meeting Type:</b> {{ $task->cat }}<br>
                       <b>Meeting Number:</b> {{ $task->meet_no }}<br>
@@ -141,8 +141,8 @@
                   <h2 class="accordion-header" id="headingCompleted{{ $loop->index }}">
                     <button class="accordion-button collapsed"
                             type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#collapseCompleted{{ $loop->index }}"
+                            data-toggle="collapse"
+                            data-target="#collapseCompleted{{ $loop->index }}"
                             aria-expanded="false"
                             aria-controls="collapseCompleted{{ $loop->index }}">
                       <strong>{{ Str::words($task->task_desc, 15, '...') }}</strong>
@@ -151,7 +151,7 @@
                   <div id="collapseCompleted{{ $loop->index }}"
                       class="accordion-collapse collapse"
                       aria-labelledby="headingCompleted{{ $loop->index }}"
-                      data-bs-parent="#accordionCompleted">
+                      data-parent="#accordionCompleted">
                     <div class="accordion-body">
                       <b>Meeting Type:</b> {{ $task->t_cat }}<br>
                       <b>Meeting Number:</b> {{ $task->t_meet_no }}<br>
