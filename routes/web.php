@@ -103,6 +103,14 @@ Route::middleware(['auth'])->group(function () {
 
     });
 
+    Route::prefix('exit-interview')->group(function() {
+        Route::get('/create/{emp_code}', [App\Http\Controllers\ExitInterviewController::class, 'create'])->name('exit-interview.create');
+        Route::post('/store', [App\Http\Controllers\ExitInterviewController::class, 'store'])->name('exit-interview.store');
+        Route::get('/report', [App\Http\Controllers\ExitInterviewController::class, 'report'])->name('exit-interview.report');
+        Route::get('/show/{id}', [App\Http\Controllers\ExitInterviewController::class, 'show'])->name('exit-interview.show');
+        Route::get('/download-pdf/{id}', [App\Http\Controllers\ExitInterviewController::class, 'downloadPDF'])->name('exit-interview.download-pdf');
+    });
+
     Route::get('/hr-dashboard', function () {
         return redirect('http://localhost:5173/');
     });

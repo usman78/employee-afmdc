@@ -186,6 +186,22 @@
                         </a>
                     </li>
                 @endif
+                {{-- Forms --}}
+                <li class="nav-item">
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseForms">
+                        <i class="fas fa-fw fa-file-alt"></i>
+                        <span>Forms</span>
+                    </a>
+                    <div id="collapseForms"
+                        class="collapse {{ in_array(request()->route()->getName(), ['travel-forms','expense-forms','loan-forms']) ? 'show' : '' }}"
+                        data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['exit-interview.create']) ? 'active' : '' }}" href="{{ route('exit-interview.create', $emp_code) }}">Exit Interview Form</a>
+                            {{-- <a class="collapse-item {{ in_array(request()->route()->getName(), ['expense-forms']) ? 'active' : '' }}" href="{{ route('expense-forms', $emp_code) }}">Expense Forms</a> --}}
+                            {{-- <a class="collapse-item {{ in_array(request()->route()->getName(), ['loan-forms']) ? 'active' : '' }}" href="{{ route('loan-forms', $emp_code) }}">Loan Forms</a> --}}
+                        </div>
+                    </div>
+                </li>
                 {{-- Reports --}}
                 <li class="nav-item">
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseReports">
@@ -198,11 +214,13 @@
                         <div class="bg-white py-2 collapse-inner rounded">
                             @if (Auth::user()->isHR())
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['leave-report']) ? 'active' : '' }}" href="{{ route('leave-report') }}">Leave Report</a>
+                                <a class="collapse-item {{ in_array(request()->route()->getName(), ['exit-interview.report']) ? 'active' : '' }}" href="{{ route('exit-interview.report') }}">Exit Interview Reports</a>
                             @endif
                             @if (Auth::user()->isAllowedToSeeAdmissions())
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['admissions']) ? 'active' : '' }}" href="{{ route('admissions') }}">Admissions Report</a>
                             @endif
                             <a class="collapse-item {{ in_array(request()->route()->getName(), ['inventory']) ? 'active' : '' }}" href="{{ route('inventory', $emp_code) }}">Store Issuance Report</a>
+                            
                         </div>
                     </div>
                 </li>

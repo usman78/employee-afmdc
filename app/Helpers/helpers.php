@@ -80,6 +80,36 @@ function hisBoss($emp_code)
     return $boss;    
 }
 
+function employeeName($emp_code)
+{
+    $name = \DB::table('pay_pers')
+        ->where('emp_code', $emp_code)
+        ->value('name');
+
+    return $name;    
+}
+
+function jobPlacement($loca_code)
+{
+    if($loca_code == 1){
+        return 'Aziz Fatimah Medical & Dental College, Faisalabad';
+    } else if ($loca_code == 2){
+        return 'Aziz Fatimah Hospital, Faisalabad';
+    } else {
+        return 'N/A';
+    }    
+}
+
+function designationAtJoining($emp_code)
+{
+    $designation = \DB::table('pis_expr')
+        ->where('emp_code', $emp_code)
+        ->where('rcrd_num', 1)
+        ->value('desig');
+
+    return $designation;    
+}
+
 function getItManagerCode()
 {
     $itManager = \DB::table('pay_pers')

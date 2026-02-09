@@ -105,4 +105,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(Leave::class, 'emp_code', 'emp_code');
     }
+    public function designation()
+    {
+        return $this->hasOne(Designation::class, 'desg_code', 'desg_code');
+    }
+    public function department()
+    {
+        return $this->hasOne(Department::class, 'dept_code', 'dept_code');
+    }
 }
