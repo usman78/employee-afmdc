@@ -187,13 +187,13 @@
                     </li>
                 @endif
                 {{-- Forms --}}
-                <li class="nav-item">
+                <li @class(['nav-item', 'active' => in_array(request()->route()->getName(), ['exit-interview.create'])])>
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseForms">
                         <i class="fas fa-fw fa-file-alt"></i>
                         <span>Forms</span>
                     </a>
                     <div id="collapseForms"
-                        class="collapse {{ in_array(request()->route()->getName(), ['travel-forms','expense-forms','loan-forms']) ? 'show' : '' }}"
+                        class="collapse {{ in_array(request()->route()->getName(), ['exit-interview.create']) ? 'show' : '' }}"
                         data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <a class="collapse-item {{ in_array(request()->route()->getName(), ['exit-interview.create']) ? 'active' : '' }}" href="{{ route('exit-interview.create', $emp_code) }}">Exit Interview Form</a>
@@ -203,7 +203,10 @@
                     </div>
                 </li>
                 {{-- Reports --}}
-                <li class="nav-item">
+                <li @class([
+                    'nav-item',
+                    'active' => in_array(request()->route()->getName(), ['attendance-report','leave-report', 'admissions', 'inventory'])
+                ])>
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseReports">
                         <i class="fas fa-fw fa-chart-line"></i>
                         <span>Reports</span>
