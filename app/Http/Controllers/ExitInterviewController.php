@@ -89,7 +89,7 @@ class ExitInterviewController extends Controller
     public function report()
     {
         // Eager load the User model to display Name/Designation in the report
-        $interviews = ExitInterview::with('user')->latest()->paginate(1);
+        $interviews = ExitInterview::with('user')->latest()->paginate(10);
 
         return view('exit.report', compact('interviews'));
     }

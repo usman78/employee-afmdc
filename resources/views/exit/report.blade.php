@@ -57,7 +57,27 @@
     </table>
 
     <div class="d-flex justify-content-end">
-        {{ $interviews->links() }}
+        <nav aria-label="Exit interview pagination">
+            <ul class="pagination mb-0">
+                <li class="page-item {{ $interviews->onFirstPage() ? 'disabled' : '' }}">
+                    <a class="page-link" href="{{ $interviews->onFirstPage() ? '#' : $interviews->previousPageUrl() }}" tabindex="{{ $interviews->onFirstPage() ? '-1' : '0' }}" aria-disabled="{{ $interviews->onFirstPage() ? 'true' : 'false' }}">
+                        Previous
+                    </a>
+                </li>
+
+                @for ($page = 1; $page <= $interviews->lastPage(); $page++)
+                    <li class="page-item {{ $page === $interviews->currentPage() ? 'active' : '' }}">
+                        <a class="page-link" href="{{ $interviews->url($page) }}">{{ $page }}</a>
+                    </li>
+                @endfor
+
+                <li class="page-item {{ $interviews->hasMorePages() ? '' : 'disabled' }}">
+                    <a class="page-link" href="{{ $interviews->hasMorePages() ? $interviews->nextPageUrl() : '#' }}" tabindex="{{ $interviews->hasMorePages() ? '0' : '-1' }}" aria-disabled="{{ $interviews->hasMorePages() ? 'false' : 'true' }}">
+                        Next
+                    </a>
+                </li>
+            </ul>
+        </nav>
     </div>
 </div>
 @endsection
