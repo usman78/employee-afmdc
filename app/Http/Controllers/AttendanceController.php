@@ -12,6 +12,58 @@ use App\Models\Leave;
 
 class AttendanceController extends Controller
 {
+    private function getRamadanDeductionMinutes($empCategory, Carbon $workDate): int
+    {
+        $ramadanStart = Carbon::create(2026, 2, 19)->startOfDay();
+        $ramadanEnd   = Carbon::create(2026, 3, 20)->endOfDay();
+
+        if (!$workDate->betweenIncluded($ramadanStart, $ramadanEnd)) {
+            return 0;
+        }
+
+        $locaCode = (int) $empCategory->loca_code;
+        $catgCode = (int) $empCategory->catg_code;
+
+        if ($locaCode === 1 && $catgCode === 1) {
+            return 90;
+        }
+
+        if ($locaCode === 1 && $catgCode === 2) {
+            return 60;
+        }
+
+        if ($locaCode === 2 && $catgCode === 1) {
+            return $workDate->isFriday() ? 210 : 60;
+        }
+
+        if ($locaCode === 2 && $catgCode === 2) {
+            return $workDate->isFriday() ? 30 : 0;
+        }
+
+        return 0;
+    }
+
+    private function applyDeductionToLateEarly($lateMins, $earlyMins, int $deductionMins): array
+    {
+        $lateMins  = max(0, (int) $lateMins);
+        $earlyMins = max(0, (int) $earlyMins);
+
+        if ($deductionMins <= 0) {
+            return [$lateMins, $earlyMins];
+        }
+
+        $lateReduction = min($lateMins, $deductionMins);
+        $lateMins -= $lateReduction;
+        $deductionMins -= $lateReduction;
+
+        if ($deductionMins > 0) {
+            $earlyReduction = min($earlyMins, $deductionMins);
+            $earlyMins -= $earlyReduction;
+        }
+
+        return [$lateMins, $earlyMins];
+    }
+
     public function attendance($emp_code)
     {
         $authUser = Auth::user();
@@ -252,6 +304,13 @@ class AttendanceController extends Controller
             // Log::info($dateString.' - Late: '.$lateMins.' Early: '.$earlyMins);
             $lateMins  = max(0, $lateMins);
             $earlyMins = max(0, $earlyMins);
+
+            $ramadanDeductionMins = $this->getRamadanDeductionMinutes($emp_category, $workDate);
+            [$lateMins, $earlyMins] = $this->applyDeductionToLateEarly(
+                $lateMins,
+                $earlyMins,
+                $ramadanDeductionMins
+            );
             
             /* ===============================
             SHORT DUTY STATUS
