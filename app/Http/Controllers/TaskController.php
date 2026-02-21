@@ -34,80 +34,82 @@ class TaskController extends Controller
             ->orderBy('m.meet_date', 'desc')
             ->paginate(5);
 
+        $meetingFilters = $meetings->map(function ($meeting) {
+            return [
+                'meet_no' => $meeting->meet_no,
+                'cat' => $meeting->cat,
+            ];
+        });
+
+        $tasksByMeeting = collect();
+        if ($meetingFilters->isNotEmpty()) {
+            $latestProgress = DB::table('meet.mm_prog_mont as p')
+                ->select(
+                    'p.meet_no',
+                    'p.cat',
+                    'p.task_no',
+                    DB::raw('MAX(p.rprt_date) as max_rprt_date')
+                )
+                ->where('p.resp_prsn', $empCode)
+                ->groupBy('p.meet_no', 'p.cat', 'p.task_no');
+
+            $tasks = DB::table('meet.mm_meet_task as t')
+                ->join('meet.mm_meet_resp as r', function ($join) use ($empCode) {
+                    $join->on('t.meet_no', '=', 'r.meet_no')
+                        ->on('t.task_no', '=', 'r.task_no')
+                        ->on('t.cat', '=', 'r.cat')
+                        ->where('r.resp_prsn', '=', $empCode);
+                })
+                ->leftJoinSub($latestProgress, 'lp', function ($join) {
+                    $join->on('t.meet_no', '=', 'lp.meet_no')
+                        ->on('t.task_no', '=', 'lp.task_no')
+                        ->on('t.cat', '=', 'lp.cat');
+                })
+                ->leftJoin('meet.mm_prog_mont as p', function ($join) use ($empCode) {
+                    $join->on('t.meet_no', '=', 'p.meet_no')
+                        ->on('t.task_no', '=', 'p.task_no')
+                        ->on('t.cat', '=', 'p.cat')
+                        ->on('p.rprt_date', '=', 'lp.max_rprt_date')
+                        ->where('p.resp_prsn', '=', $empCode);
+                })
+                ->where(function ($query) use ($meetingFilters) {
+                    foreach ($meetingFilters as $filter) {
+                        $query->orWhere(function ($innerQuery) use ($filter) {
+                            $innerQuery->where('t.meet_no', $filter['meet_no'])
+                                ->where('t.cat', $filter['cat']);
+                        });
+                    }
+                })
+                ->select(
+                    't.meet_no',
+                    't.cat',
+                    't.task_no',
+                    't.task_desc',
+                    't.targ_date',
+                    'r.comp_code',
+                    'p.prog_desc',
+                    'p.compl_date',
+                    'p.rprt_date',
+                    'p.status'
+                )
+                ->orderBy('t.targ_date', 'asc')
+                ->get();
+
+            $tasksByMeeting = $tasks->groupBy(function ($task) {
+                return $task->meet_no . '|' . $task->cat;
+            });
+        }
+
         return view('tasks.meeting', [
             'meetings' => $meetings,
+            'tasksByMeeting' => $tasksByMeeting,
         ]);
     }
 
 
     public function tasks()
     {
-        $user = auth()->user()->emp_code;
-
-        $uncompletedTasks = DB::table('meet.mm_meet_task as t')
-            ->leftJoin('meet.mm_prog_mont as p', function ($join) {
-                $join->on('t.meet_no', '=', 'p.meet_no')
-                    ->on('t.task_no', '=', 'p.task_no')
-                    ->on('t.cat', '=', 'p.cat');
-            })
-            ->join('meet.mm_meet_resp as r', function ($join) use ($user) {
-                $join->on('t.meet_no', '=', 'r.meet_no')
-                    ->on('t.task_no', '=', 'r.task_no')
-                    ->on('t.cat', '=', 'r.cat')
-                    ->where('r.resp_prsn', '=', $user);
-            })
-            ->where(function ($query) {
-                $query->where('p.status', '=', 0)
-                    ->orWhereNull('p.status');
-            })
-            ->select(
-                't.*',
-                'p.meet_no as p_meet_no',
-                'p.cat as p_cat',
-                'p.task_no as p_task_no',
-                'p.prog_desc',
-                'p.compl_date',
-                'p.rprt_date',
-                'p.status',
-                'r.comp_code'
-            )
-            ->orderBy('t.targ_date', 'desc')
-            ->paginate(5);
-
-        //Get all tasks that are completed
-        $completedTasks = DB::table('meet.mm_meet_task as t')
-            ->join('meet.mm_prog_mont as p', function ($join) {
-                $join->on('t.meet_no', '=', 'p.meet_no')
-                    ->on('t.task_no', '=', 'p.task_no')
-                    ->on('t.cat', '=', 'p.cat');
-            })
-            ->whereExists(function ($query) use ($user) {
-                $query->select(DB::raw(1))
-                    ->from('meet.mm_meet_resp as r')
-                    ->whereColumn('r.meet_no', 't.meet_no')
-                    ->whereColumn('r.task_no', 't.task_no')
-                    ->whereColumn('r.cat', 't.cat')
-                    ->where('r.resp_prsn', $user);
-            })
-            ->where('p.status', 1)
-            ->select(
-                't.meet_no as t_meet_no',
-                't.cat as t_cat',
-                't.task_no as t_task_no',
-                't.task_desc',
-                't.targ_date',
-                'p.prog_desc',
-                'p.compl_date',
-                'p.rprt_date',
-                'p.status'
-            )
-            ->orderBy('t.targ_date', 'desc')
-            ->paginate(5);
-        
-        return view('tasks.tasks', [
-            'uncompletedTasks' => $uncompletedTasks,
-            'completedTasks' => $completedTasks,
-        ]);
+        return redirect()->route('meetings');
     }
     public function updateProgress(Request $request)
     {

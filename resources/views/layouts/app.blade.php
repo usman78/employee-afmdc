@@ -254,7 +254,7 @@
                         data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <a class="collapse-item {{ in_array(request()->route()->getName(), ['meetings']) ? 'active' : '' }}" href="{{ route('meetings') }}">Meetings</a>
-                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['tasks','assigned-tasks']) ? 'active' : '' }}" href="{{ route('assigned-tasks') }}">Assigned Tasks</a>
+                            {{-- <a class="collapse-item {{ in_array(request()->route()->getName(), ['tasks','assigned-tasks']) ? 'active' : '' }}" href="{{ route('assigned-tasks') }}">Assigned Tasks</a> --}}
                             <a class="collapse-item {{ in_array(request()->route()->getName(), ['sops']) ? 'active' : '' }}" href="{{ route('sops') }}">SOPs</a>
                         </div>
                     </div>
