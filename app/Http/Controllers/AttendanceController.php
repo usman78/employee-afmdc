@@ -24,7 +24,7 @@ class AttendanceController extends Controller
         $locaCode = (int) $empCategory->loca_code;
         $catgCode = (int) $empCategory->catg_code;
 
-        if ($locaCode === 1 && $catgCode === 1) {
+        if ($locaCode === 1 && ($catgCode === 1 || $catgCode === 4)) {
             return 90;
         }
 
@@ -41,27 +41,6 @@ class AttendanceController extends Controller
         }
 
         return 0;
-    }
-
-    private function applyDeductionToLateEarly($lateMins, $earlyMins, int $deductionMins): array
-    {
-        $lateMins  = max(0, (int) $lateMins);
-        $earlyMins = max(0, (int) $earlyMins);
-
-        if ($deductionMins <= 0) {
-            return [$lateMins, $earlyMins];
-        }
-
-        $lateReduction = min($lateMins, $deductionMins);
-        $lateMins -= $lateReduction;
-        $deductionMins -= $lateReduction;
-
-        if ($deductionMins > 0) {
-            $earlyReduction = min($earlyMins, $deductionMins);
-            $earlyMins -= $earlyReduction;
-        }
-
-        return [$lateMins, $earlyMins];
     }
 
     public function attendance($emp_code)
@@ -221,6 +200,9 @@ class AttendanceController extends Controller
                 }
             }
 
+            $ramadanDeductionMins = $this->getRamadanDeductionMinutes($emp_category, $workDate);
+            $adjustedEndTimeCarbon = $endTimeCarbon->copy()->subMinutes($ramadanDeductionMins);
+
             /* ===============================
             BUILD TIME LOGS
             ================================ */
@@ -273,8 +255,8 @@ class AttendanceController extends Controller
                     if($maxOut == null) {
                         $earlyMins = null;
                     }
-                    else if ($maxOut->lt($endTimeCarbon)) {
-                        $earlyMins = $maxOut->diffInMinutes($endTimeCarbon);
+                    else if ($maxOut->lt($adjustedEndTimeCarbon)) {
+                        $earlyMins = $maxOut->diffInMinutes($adjustedEndTimeCarbon);
                     }
 
                     if ($leaveStart) {
@@ -291,7 +273,7 @@ class AttendanceController extends Controller
 
                         if ($earlyMins > 0) {
                             $overlapStart = max($maxOut, $leaveStart);
-                            $overlapEnd   = min($endTimeCarbon, $leaveEnd);
+                            $overlapEnd   = min($adjustedEndTimeCarbon, $leaveEnd);
 
                             // if ($overlapStart < $overlapEnd) {
                             //     $earlyMins -= $overlapStart->diffInMinutes($overlapEnd);
@@ -304,13 +286,6 @@ class AttendanceController extends Controller
             // Log::info($dateString.' - Late: '.$lateMins.' Early: '.$earlyMins);
             $lateMins  = max(0, $lateMins);
             $earlyMins = max(0, $earlyMins);
-
-            $ramadanDeductionMins = $this->getRamadanDeductionMinutes($emp_category, $workDate);
-            [$lateMins, $earlyMins] = $this->applyDeductionToLateEarly(
-                $lateMins,
-                $earlyMins,
-                $ramadanDeductionMins
-            );
             
             /* ===============================
             SHORT DUTY STATUS

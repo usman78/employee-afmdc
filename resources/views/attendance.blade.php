@@ -110,7 +110,7 @@
               @foreach ($attendance as $record)
               <tr>
                   {{-- Date --}}
-                  <td>{{ Carbon::parse($record['at_date'])->format('j M') }}</td>
+                  <td>{{ Carbon::parse($record['at_date'])->format('D, j M') }}</td>
                   {{-- Time In / Out --}}
                   <td>
                       @if ($record['is_sunday'] || $record['is_holiday'])
