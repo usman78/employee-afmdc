@@ -430,10 +430,20 @@ ul.error-msg{
       const previewRes = await fetch("{{ route('leave.preview') }}", {
         method: 'POST',
         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        accept: 'application/json',
         body: new FormData(formEl)
       });
+      // Handle session expiration BEFORE parsing JSON
+      if (previewRes.status === 401 || previewRes.status === 419) {
+          await Swal.fire(
+              'Session Expired',
+              'Your session has expired. Please login again.',
+              'warning'
+          );
+          window.location.href = "{{ route('login') }}";
+          return;
+      }
       const preview = await previewRes.json();
-
       if (preview.sandwich === true) {
         const r = await Swal.fire({
           title: 'Heads up!',
@@ -475,19 +485,47 @@ ul.error-msg{
   document.getElementById('leaves-applied').addEventListener('click', function(event) {
     event.preventDefault();
     const url = this.href;
-    // make a post request along with emp_code
-    $.get(url).then(response => {
-      console.log(response);
-      // handle the response as needed
-      if(response.success) {
-        // perhaps redirect to a new page or update the UI
-        Swal.fire({
-          width: 900,
-          draggable: true,
-          title: 'Leaves Applied (current month)',
-          html: response.html,
-        });
-      } else {
+    $.ajax({
+      url: url,
+      type: 'GET',
+      statusCode: {
+        401: function() {
+          Swal.fire({
+            title: 'Session Expired',
+            text: 'Your session has expired. Please login again.',
+            icon: 'warning'
+          }).then(() => {
+            window.location.href = "{{ route('login') }}";
+          });
+        },
+        419: function() {
+          Swal.fire({
+            title: 'Session Expired',
+            text: 'Your session has expired. Please login again.',
+            icon: 'warning'
+          }).then(() => {
+            window.location.href = "{{ route('login') }}";
+          });
+        }
+      },
+      success: function(response) {
+        console.log(response);
+        if(response.success) {
+          Swal.fire({
+            width: 900,
+            draggable: true,
+            title: 'Leaves Applied (current month)',
+            html: response.html,
+          });
+        } else {
+          Swal.fire({
+            title: 'Error',
+            text: 'Could not fetch leaves applied.',
+            icon: 'error'
+          });
+        }
+      },
+      error: function() {
         Swal.fire({
           title: 'Error',
           text: 'Could not fetch leaves applied.',

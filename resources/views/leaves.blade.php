@@ -85,53 +85,111 @@
     event.preventDefault(); // Prevent the default link behavior
     // send ajax request to check if any leave available
     const url = this.href; // Get the URL from the link's href attribute
-    $.get(url).then(response => {
-      console.log(response);
-      if (response.has_no_leaves) {
-          console.log("he has no leaves");     // <-- no need for response.data
-        if (response.has_no_short_leave) {
-          console.log("he has short leaves");  
+    $.ajax({
+      url: url,
+      type: 'GET',
+      statusCode: {
+        401: function() {
           Swal.fire({
-            title: 'Unpaid Leave or Short Leave',
-            text: 'You have no leaves available. You can apply for Short Leave or Unpaid Leave only.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Apply Short Leave',
-            cancelButtonText: 'Unpaid Leave'
-          }).then((result) => {
-            if (result.isConfirmed) {
-              // send a flag to disable buttons except short leave                                                                                                                      
-              window.location.href = "{{ route('apply-leave-advance', ['emp_code' => $leaves->emp_code, 'shortLeaveOnly' => true])}}";
-            } else {
-              window.location.href = "{{ route('apply-unpaid-leave', ['emp_code' => $leaves->emp_code]) }}";
-            }
+            title: 'Session Expired',
+            text: 'Your session has expired. Please login again.',
+            icon: 'warning'
+          }).then(() => {
+            window.location.href = "{{ route('login') }}";
           });
-        } else {
-          window.location.href = "{{ route('apply-unpaid-leave', ['emp_code' => $leaves->emp_code]) }}";
+        },
+        419: function() {
+          Swal.fire({
+            title: 'Session Expired',
+            text: 'Your session has expired. Please login again.',
+            icon: 'warning'
+          }).then(() => {
+            window.location.href = "{{ route('login') }}";
+          });
         }
-      } else {
-        window.location.href = "{{ route('apply-leave-advance', ['emp_code' => $leaves->emp_code, 'shortLeaveOnly' => false]) }}";
+      },
+      success: function(response) {
+        console.log(response);
+        if (response.has_no_leaves) {
+            console.log("he has no leaves");     // <-- no need for response.data
+          if (response.has_no_short_leave) {
+            console.log("he has short leaves");  
+            Swal.fire({
+              title: 'Unpaid Leave or Short Leave',
+              text: 'You have no leaves available. You can apply for Short Leave or Unpaid Leave only.',
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonText: 'Apply Short Leave',
+              cancelButtonText: 'Unpaid Leave'
+            }).then((result) => {
+              if (result.isConfirmed) {
+                // send a flag to disable buttons except short leave                                                                                                                      
+                window.location.href = "{{ route('apply-leave-advance', ['emp_code' => $leaves->emp_code, 'shortLeaveOnly' => true])}}";
+              } else {
+                window.location.href = "{{ route('apply-unpaid-leave', ['emp_code' => $leaves->emp_code]) }}";
+              }
+            });
+          } else {
+            window.location.href = "{{ route('apply-unpaid-leave', ['emp_code' => $leaves->emp_code]) }}";
+          }
+        } else {
+          window.location.href = "{{ route('apply-leave-advance', ['emp_code' => $leaves->emp_code, 'shortLeaveOnly' => false]) }}";
+        }
+      },
+      error: function() {
+        Swal.fire({
+          title: 'Error',
+          text: 'Could not process your request.',
+          icon: 'error'
+        });
       }
-
     });
   });  
 
   document.getElementById('leaves-applied').addEventListener('click', function(event) {
     event.preventDefault();
     const url = this.href;
-    // make a post request along with emp_code
-    $.get(url).then(response => {
-      console.log(response);
-      // handle the response as needed
-      if(response.success) {
-        // perhaps redirect to a new page or update the UI
-        Swal.fire({
-          width: 900,
-          draggable: true,
-          title: 'Leaves Applied (current month)',
-          html: response.html,
-        });
-      } else {
+    $.ajax({
+      url: url,
+      type: 'GET',
+      statusCode: {
+        401: function() {
+          Swal.fire({
+            title: 'Session Expired',
+            text: 'Your session has expired. Please login again.',
+            icon: 'warning'
+          }).then(() => {
+            window.location.href = "{{ route('login') }}";
+          });
+        },
+        419: function() {
+          Swal.fire({
+            title: 'Session Expired',
+            text: 'Your session has expired. Please login again.',
+            icon: 'warning'
+          }).then(() => {
+            window.location.href = "{{ route('login') }}";
+          });
+        }
+      },
+      success: function(response) {
+        console.log(response);
+        if(response.success) {
+          Swal.fire({
+            width: 900,
+            draggable: true,
+            title: 'Leaves Applied (current month)',
+            html: response.html,
+          });
+        } else {
+          Swal.fire({
+            title: 'Error',
+            text: 'Could not fetch leaves applied.',
+            icon: 'error'
+          });
+        }
+      },
+      error: function() {
         Swal.fire({
           title: 'Error',
           text: 'Could not fetch leaves applied.',
