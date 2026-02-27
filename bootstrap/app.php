@@ -21,28 +21,29 @@ return Application::configure(basePath: dirname(__DIR__))
 
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        // Handle CSRF token mismatch using HttpException
-        // $exceptions->render(function (HttpException $e, Request $request) {
-        //     if ($e->getMessage() === 'CSRF token mismatch.') {
-        //         return redirect()->route('login')->with('error', 'Your session has expired. Please log in again.');
-        //     }
-        //     return null;
-        // });
+        // Handle CSRF token mismatch
         $exceptions->render(function (
-            TokenMismatchException $e,
+            HttpException $e,
             $request
         ) {
+            // Check if it's an AJAX request
+            $acceptHeader = $request->header('Accept') ?? '';
+            $isAjax = $request->wantsJson() || 
+                      $request->header('X-Requested-With') === 'XMLHttpRequest' ||
+                      strpos($acceptHeader, 'application/json') !== false;
 
-            if ($request->expectsJson()) {
+            if ($isAjax) {
                 return response()->json([
                     'message' => 'Session expired.'
                 ], 419);
             }
 
+            // For regular form submissions, redirect to login with message
             return redirect()->route('login')
                 ->with('error', 'Your session has expired. Please login again.');
         });
 
+        // Handle authentication exceptions (401)
         $exceptions->render(function (
             \Illuminate\Auth\AuthenticationException $e,
             $request

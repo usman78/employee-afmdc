@@ -328,6 +328,26 @@ $(".approve-leave").change(function () {
                   _token: "{{ csrf_token() }}",
                   status: status,
               },
+              statusCode: {
+                  401: function() {
+                      Swal.fire({
+                          title: 'Session Expired',
+                          text: 'Your session has expired. Please login again.',
+                          icon: 'warning'
+                      }).then(() => {
+                          window.location.href = "{{ route('login') }}";
+                      });
+                  },
+                  419: function() {
+                      Swal.fire({
+                          title: 'Session Expired',
+                          text: 'Your session has expired. Please login again.',
+                          icon: 'warning'
+                      }).then(() => {
+                          window.location.href = "{{ route('login') }}";
+                      });
+                  }
+              },
               success: function (response) {
                   if (response.success) {
                       Swal.fire({
@@ -363,6 +383,26 @@ $(".approve-leave").change(function () {
               data: {
                   _token: "{{ csrf_token() }}",
                   status: status,
+              },
+              statusCode: {
+                  401: function() {
+                      Swal.fire({
+                          title: 'Session Expired',
+                          text: 'Your session has expired. Please login again.',
+                          icon: 'warning'
+                      }).then(() => {
+                          window.location.href = "{{ route('login') }}";
+                      });
+                  },
+                  419: function() {
+                      Swal.fire({
+                          title: 'Session Expired',
+                          text: 'Your session has expired. Please login again.',
+                          icon: 'warning'
+                      }).then(() => {
+                          window.location.href = "{{ route('login') }}";
+                      });
+                  }
               },
               success: function (response) {
                   if (response.success) {
@@ -424,6 +464,26 @@ $("#approveAllBtn").click(function () {
                 data: {
                     _token: "{{ csrf_token() }}",
                     leave_ids: leaveIds
+                },
+                statusCode: {
+                    401: function() {
+                        Swal.fire({
+                            title: 'Session Expired',
+                            text: 'Your session has expired. Please login again.',
+                            icon: 'warning'
+                        }).then(() => {
+                            window.location.href = "{{ route('login') }}";
+                        });
+                    },
+                    419: function() {
+                        Swal.fire({
+                            title: 'Session Expired',
+                            text: 'Your session has expired. Please login again.',
+                            icon: 'warning'
+                        }).then(() => {
+                            window.location.href = "{{ route('login') }}";
+                        });
+                    }
                 },
                 success: function (response) {
                     if (response.success) {
