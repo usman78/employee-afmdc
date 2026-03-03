@@ -42,23 +42,89 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($leaves as $leave)
+                @php
+                  $leaveTypes = [
+                    1 => 'Casual Leave',
+                    2 => 'Medical Leave',
+                    3 => 'Annual Leave',
+                    4 => 'Compensatory Leave',
+                    // 5 => 'Leave Without Pay',
+                    // 12 => 'Outdoor Duty (OD)',
+                  ];
+
+                  $pendingLeaveKeys = [
+                    1 => 'casual_leave',
+                    2 => 'medical_leave',
+                    3 => 'annual_leave',
+                    4 => 'compensatory_leave',
+                    // 12 => 'od_leave',
+                  ];
+
+                  $leavesByCode = $leaves->keyBy('leav_code');
+                @endphp
+
+                @foreach ($leaveTypes as $leaveCode => $leaveType)
+                    @php
+                      $leave = $leavesByCode->get($leaveCode);
+                      $balance = 0;
+                      if ($leave) {
+                        $balance = $leave->leav_open + $leave->leav_credit - $leave->leav_taken - $leave->leave_encashed;
+                        // $balance = $leaveCode == 12
+                          // ? $leave->leav_taken
+                          // : ($leave->leav_open + $leave->leav_credit - $leave->leav_taken - $leave->leave_encashed);
+                      }
+                      $pendingKey = $pendingLeaveKeys[$leaveCode] ?? null;
+                    @endphp
                     <tr>
-                        <td>{{ $leave->leave_type }}</td>
-                        <td style="color: #2196F3"><strong>{{ $leave->leav_open + $leave->leav_credit - $leave->leav_taken - $leave->leave_encashed }}</strong></td>
+                        <td>{{ $leaveType }}</td>
+                        <td style="color: #2196F3"><strong>{{ $balance }}</strong></td>
                         <td>
-                          @if ($leave->leav_code == 1)
-                            {{ $pendingLeaves['casual_leave'] ?? 0 }}
-                          @elseif ($leave->leav_code == 2) 
-                            {{ $pendingLeaves['medical_leave'] ?? 0 }}
-                          @elseif ($leave->leav_code == 3)   
-                            {{ $pendingLeaves['annual_leave'] ?? 0 }}
-                          @endif
+                          {{ $pendingKey ? ($pendingLeaves[$pendingKey] ?? 0) : 0 }}
                         </td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
+
+        <h3>Leaves Taken in Current Year</h3>
+        <p class="mb-2">
+          {{ \Carbon\Carbon::parse($yearlyLeaveSummary['from'])->format('j M Y') }}
+          to
+          {{ \Carbon\Carbon::parse($yearlyLeaveSummary['to'])->format('j M Y') }}
+        </p>
+        <table class="table mt-2 mb-5">
+          <thead>
+            <tr>
+              <th>Leave Type</th>
+              <th>Leaves Taken</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Outdoor Duty (OD)</td>
+              <td style="color: #2196F3"><strong>{{ $yearlyLeaveSummary['od'] }}</strong></td>
+            </tr>
+            <tr>
+              <td>Leave Without Pay</td>
+              <td style="color: #2196F3"><strong>{{ $yearlyLeaveSummary['without_pay'] }}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+        {{-- show total od leaves taken up until now --}}
+        {{-- @php
+          $totalOdLeaves = 0;
+          foreach ($leaves as $leave) {
+            if ($leave->leav_code == 12) {
+              $totalOdLeaves = $leave->leav_taken;
+              break;
+            }
+          }
+        @endphp --}}
+        {{-- <div class="row mt-3">
+          <div class="col-12">
+            <p class="text-center"><strong>Total Outdoor Duty (OD) Leaves Taken until now: {{ $totalOdLeaves }}</strong></p>
+          </div>
+        </div> --}}
           <div class="row mt-5">
             <div class="col-12 d-flex justify-content-around gap-2" style="text-align: center;">
               <a class="btn btn-primary" id="leaves-applied" href="{{route('leaves-applied', $leaves->emp_code)}}">

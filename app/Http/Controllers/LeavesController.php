@@ -29,7 +29,7 @@ class LeavesController extends Controller
 
         // Get leaves balance for the user
         $leaves = LeavesBalance::where('emp_code', $emp_code)
-            ->whereIn('leav_code', [1, 2, 3])
+            ->whereIn('leav_code', [1, 2, 3, 4, 5, 12])
             ->get();
         $leaves->emp_code = $emp_code;
 
@@ -44,6 +44,15 @@ class LeavesController extends Controller
                 case 3:
                     $leave->leave_type = 'Annual Leave';
                     break;
+                case 4:
+                    $leave->leave_type = 'Compensatory Leave';
+                    break;
+                // case 5:
+                //     $leave->leave_type = 'Leave Without Pay';
+                //     break;
+                // case 12:
+                //     $leave->leave_type = 'Outdoor Duty (OD)';
+                //     break;
                 default:
                     $leave->leave_type = 'Unknown Leave Type';
             }
@@ -51,10 +60,30 @@ class LeavesController extends Controller
 
         $pendingLeaves = $this->checkPendingLeaves($emp_code);
 
+        $yearStart = Carbon::now()->startOfYear()->toDateString();
+        $today = Carbon::today()->toDateString();
+
+        $yearlyLeavesTaken = Attendance::selectRaw('att_stat, COUNT(*) as total')
+            ->where('emp_code', $emp_code)
+            ->whereIn('att_stat', [5, 12])
+            ->whereRaw(
+                "TRUNC(at_date) BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD')",
+                [$yearStart, $today]
+            )
+            ->groupBy('att_stat')
+            ->pluck('total', 'att_stat');
+
+        $yearlyLeaveSummary = [
+            'without_pay' => (int) ($yearlyLeavesTaken->get(5, 0)),
+            'od' => (int) ($yearlyLeavesTaken->get(12, 0)),
+            'from' => $yearStart,
+            'to' => $today,
+        ];
+
         // Get employee details
         $employee = Employee::where('emp_code', $emp_code)->first();
         $leaves->emp_name = capitalizeWords($employee->name);
-        return view('leaves', compact('leaves', 'pendingLeaves'))->with('emp_code', $emp_code);
+        return view('leaves', compact('leaves', 'pendingLeaves', 'yearlyLeaveSummary'))->with('emp_code', $emp_code);
     }
 
     public function empType($emp_code)
@@ -325,6 +354,7 @@ class LeavesController extends Controller
             $leave->moddate = now();
             $leave->remark = $request->input('reason');
             $leave->emp_code = $emp_code;
+            $leave->day_half = 0;
             $leave->leave_date = Carbon::today();
 
             $check = $this->checkConsecutiveLeave($emp_code, 
@@ -383,6 +413,7 @@ class LeavesController extends Controller
             $leave->terminal_id = 'online';
             $leave->moddate = now();
             $leave->remark = $request->input('reason');
+            $leave->day_half = $request->input('leave_interval');
             $check = $this->checkConsecutiveLeave($emp_code, 
                 $request->input('leave_type'), 
                 $request->input('single_leave_date'), 
@@ -659,6 +690,7 @@ class LeavesController extends Controller
         $leave = Leave::where('emp_code', $emp_code)
         ->whereIn('leave_code', [1, 2])  // restricted leave codes
         ->where('leave_code', '!=', $leave_code) // different leave type
+        ->whereNot('l_day', 0.5) // exclude half day leaves
         ->where(function ($query) use ($yesterday, $tomorrow) {
             $query->whereDate('to_date', $yesterday) // ends right before new leave
                   ->orWhereDate('from_date', $tomorrow); // starts right after new leave
@@ -951,7 +983,7 @@ class LeavesController extends Controller
                                     ->where('to_date', '>=', $endDate);
                         });
                 })
-                ->whereIn('leave_code', [1, 2, 3, 5]) // approved leave types
+                ->whereIn('leave_code', [1, 2, 3, 5, 12]) // approved leave types
                 ->get();
 
             // Initialize counters
@@ -960,6 +992,7 @@ class LeavesController extends Controller
                 'annual'  => 0,
                 'casual'  => 0,
                 'without_pay' => 0,
+                'outdoor_duty' => 0,
             ];
             foreach ($leaves as $leave) {
 
@@ -976,6 +1009,9 @@ class LeavesController extends Controller
                     case 5:
                         $leaveSummary['without_pay'] += $leave->l_day;
                         break;
+                    case 12:
+                        $leaveSummary['outdoor_duty'] += $leave->l_day;
+                        break;    
                 }
             }
             // late and early calculation
@@ -1015,7 +1051,8 @@ class LeavesController extends Controller
             '2025-05-01','2025-05-07',
             '2025-06-09','2025-06-10','2025-06-11',
             '2025-07-05','2025-08-14',
-            '2025-11-09','2025-12-25'
+            '2025-11-09','2025-12-25', 
+            '2026-02-05', '2026-02-06', '2026-02-07'
         ];
 
         $totalLate  = 0;
@@ -1159,9 +1196,12 @@ class LeavesController extends Controller
                         $late = $diff;             // full late minutes
                     }
                 }
-
-                if ($maxOut && $maxOut->lt($endShift)) {
-                    $early = $maxOut->diffInMinutes($endShift);
+                $minsDeduction = getRamadanDeductionMinutes($emp, $date);
+                if ($minsDeduction >= 0) {
+                    $reducedEndShift = $endShift->copy()->subMinutes($minsDeduction);
+                }
+                if ($maxOut && $maxOut->lt($reducedEndShift ?? $endShift)) {
+                    $early = $maxOut->diffInMinutes($reducedEndShift ?? $endShift);
                 }
 
                 if ($leaveStart) {

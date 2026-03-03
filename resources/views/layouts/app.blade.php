@@ -212,10 +212,11 @@
                         <span>Reports</span>
                     </a>
                     <div id="collapseReports"
-                        class="collapse {{ in_array(request()->route()->getName(), ['attendance-report','leave-report', 'admissions', 'inventory']) ? 'show' : '' }}"
+                        class="collapse {{ in_array(request()->route()->getName(), ['attendance-report', 'attendance-report-data','leave-report', 'admissions', 'inventory']) ? 'show' : '' }}"
                         data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             @if (Auth::user()->isHR())
+                                <a class="collapse-item {{ in_array(request()->route()->getName(), ['attendance-report', 'attendance-report-data']) ? 'active' : '' }}" href="{{ route('attendance-report') }}">Attendance Report</a>
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['leave-report']) ? 'active' : '' }}" href="{{ route('leave-report') }}">Leave Report</a>
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['exit-interview.report']) ? 'active' : '' }}" href="{{ route('exit-interview.report') }}">Exit Interview Reports</a>
                             @endif

@@ -146,13 +146,14 @@
             <thead>
                 <tr>
                     <th style="width: 6%">Code</th>
-                    <th style="width: 18%">Name</th>
+                    <th style="width: 16%">Name</th>
                     <th style="width: 8%">Casual</th>
                     <th style="width: 8%">Medical</th>
                     <th style="width: 8%">Annual</th>
-                    <th style="width: 10%">W/O Pay</th>
-                    <th style="width: 10%">Late (Min)</th>
-                    <th style="width: 10%">Early (Min)</th>
+                    <th style="width: 9%">W/O Pay</th>
+                    <th style="width: 5%">OD</th>
+                    <th style="width: 9%">Late (Min)</th>
+                    <th style="width: 9%">Early (Min)</th>
                 </tr>
             </thead>
             <tbody>
@@ -169,12 +170,13 @@
                         <td>{{ $row['leaves']['medical'] }}</td>
                         <td>{{ $row['leaves']['annual'] }}</td>
                         <td>{{ $row['leaves']['without_pay'] }}</td>
+                        <td>{{ $row['leaves']['outdoor_duty'] }}</td>
                         <td>{{ number_format($row['late_mins'], 1) }}</td>
                         <td>{{ number_format($row['early_mins'], 1) }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" style="text-align:center;color:#777;">
+                        <td colspan="9" style="text-align:center;color:#777;">
                             No leave records found for the selected criteria
                         </td>
                     </tr>

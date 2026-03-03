@@ -28,6 +28,7 @@
                                         <th>Medical Leaves</th>
                                         <th>Annual Leaves</th>
                                         <th>W/O Pay Leaves</th>
+                                        <th>Outdoor Duty (OD)</th>
                                         <th>Late Minutes</th>
                                         <th>Early Minutes</th>
                                     </tr>
@@ -46,6 +47,7 @@
                                             <td class="text-center">{{ $row['leaves']['medical'] }}</td>
                                             <td class="text-center">{{ $row['leaves']['annual'] }}</td>
                                             <td class="text-center">{{ $row['leaves']['without_pay'] }}</td>
+                                            <td class="text-center">{{ $row['leaves']['outdoor_duty'] }}</td>
                                             <td class="text-center">{{ $row['late_mins'] }}</td>
                                             <td class="text-center">{{ $row['early_mins'] }}</td>
                                         </tr>
