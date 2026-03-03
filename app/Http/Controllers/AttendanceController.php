@@ -6,9 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Carbon\Carbon; 
 use App\Models\Leave;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AttendanceController extends Controller
 {
@@ -50,9 +50,92 @@ class AttendanceController extends Controller
             return redirect()->route('home');
         }
 
+        return view('attendance', $this->buildAttendanceData($emp_code));
+    }
+
+    public function attendanceReport()
+    {
+        return view('attendance-report');
+    }
+
+    public function attendanceReportData(Request $request)
+    {
+        $request->validate([
+            'emp_code' => 'required'
+        ]);
+
+        $empCode = trim($request->input('emp_code'));
+        $employee = Employee::where('emp_code', $empCode)->first();
+
+        if (!$employee) {
+            return redirect()->route('attendance-report')
+                ->withInput()
+                ->with('error', 'Employee code not found.');
+        }
+
+        return view('attendance-report', array_merge(
+            $this->buildAttendanceData($empCode),
+            ['searched_emp_code' => $empCode]
+        ));
+    }
+
+    public function attendanceReportDownload($emp_code)
+    {
+        $employee = Employee::where('emp_code', $emp_code)->first();
+
+        if (!$employee) {
+            return redirect()->route('attendance-report')
+                ->with('error', 'Employee code not found.');
+        }
+
+        $reportData = $this->buildAttendanceData($emp_code);
+        $attendance = $reportData['attendance'] ?? collect();
+
+        $lateMinutes = $attendance->sum(function ($record) {
+            $late = intval($record['late_minutes'] ?? 0);
+            return $late >= 10 ? $late : 0;
+        });
+
+        $earlyMinutes = $attendance->sum(function ($record) {
+            return max(0, intval(round($record['early_minutes'] ?? 0)));
+        });
+
+        $lateDays = $attendance->filter(function ($record) {
+            return intval($record['late_minutes'] ?? 0) >= 10;
+        })->count();
+
+        $periodStart = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $periodEnd   = Carbon::today()->format('Y-m-d');
+
+        $pdf = Pdf::loadView('pdf.attendance-report', [
+            'attendance' => $attendance,
+            'emp_name' => $reportData['emp_name'] ?? ucfirst($employee->name),
+            'emp_code' => $emp_code,
+            'late_minutes' => $lateMinutes,
+            'early_minutes' => $earlyMinutes,
+            'total_minutes' => $lateMinutes + $earlyMinutes,
+            'late_days' => $lateDays,
+            'period_start' => $periodStart,
+            'period_end' => $periodEnd,
+        ]);
+
+        $now = Carbon::now()->format('Ymd_His');
+        return $pdf->download("attendance_report_{$emp_code}_{$now}.pdf");
+    }
+
+    private function buildAttendanceData($emp_code)
+    {
         $emp_category = Employee::select(
             'catg_code', 'loca_code', 'st_time', 'end_time', 'twh'
         )->where('emp_code', $emp_code)->first();
+
+        if (!$emp_category) {
+            return [
+                'attendance' => collect(),
+                'leaves' => collect(),
+                'emp_name' => 'Unknown Employee'
+            ];
+        }
 
         /* -------------------------
         Required minutes
@@ -73,7 +156,7 @@ class AttendanceController extends Controller
             '2025-05-01','2025-05-07',
             '2025-06-09','2025-06-10','2025-06-11',
             '2025-07-05','2025-08-14',
-            '2025-11-09','2025-12-25', 
+            '2025-11-09','2025-12-25',
             '2026-02-05', '2026-02-06', '2026-02-07'
         ];
 
@@ -84,15 +167,10 @@ class AttendanceController extends Controller
         $tempDate = $start_date->copy();
 
         while ($tempDate->lte($end_date)) {
-
             $dateString = $tempDate->toDateString();
             $isHoliday  = in_array($dateString, $holidays);
 
-            /* ===============================
-            SUNDAY / HOLIDAY
-            ================================ */
             if ($tempDate->isSunday() || $isHoliday) {
-
                 $allDates->push([
                     'at_date'   => $dateString,
                     'time_logs' => [],
@@ -105,9 +183,6 @@ class AttendanceController extends Controller
                 continue;
             }
 
-            /* ===============================
-            FETCH ATTENDANCE
-            ================================ */
             $attendanceRecords = Attendance::whereRaw(
                     "TRUNC(at_date) = TO_DATE(?, 'YYYY-MM-DD')", [$dateString]
                 )
@@ -116,9 +191,6 @@ class AttendanceController extends Controller
                 ->orderBy('timein')
                 ->get();
 
-            /* ===============================
-            LEAVE DETECTION
-            ================================ */
             $isLeave = false;
             $leaveType = null;
             $leaveStart = null;
@@ -127,7 +199,6 @@ class AttendanceController extends Controller
             $isFullDayLeave = false;
 
             if (ifLeaveExists($emp_code, $dateString)) {
-
                 $leave = Leave::whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
                     ->whereRaw("TRUNC(to_date)   >= TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
                     ->where('emp_code', $emp_code)
@@ -147,9 +218,7 @@ class AttendanceController extends Controller
 
                     if ($from->format('H:i:s') === '00:00:00' &&
                         $to->format('H:i:s')   === '00:00:00') {
-
                         $isFullDayLeave = true;
-
                     } else {
                         $leaveStart = $from;
                         $leaveEnd   = $to;
@@ -158,11 +227,7 @@ class AttendanceController extends Controller
                 }
             }
 
-            /* ===============================
-            NO ATTENDANCE RECORDS
-            ================================ */
             if ($attendanceRecords->isEmpty()) {
-
                 $allDates->push([
                     'at_date'   => $dateString,
                     'time_logs' => [],
@@ -176,69 +241,53 @@ class AttendanceController extends Controller
                 continue;
             }
 
-            /* ===============================
-            SHIFT TIMES (DAY LEVEL)
-            ================================ */
             $workDate = Carbon::parse($dateString);
-
             $startTimeCarbon = $workDate->copy()->setTimeFromTimeString($emp_category->st_time);
             $endTimeCarbon   = $workDate->copy()->setTimeFromTimeString($emp_category->end_time);
 
             if ($emp_category->twh != 12) {
-
                 if ($emp_category->catg_code == 2 && $workDate->isFriday()) {
                     $totalMins = 300;
-                    $startTimeCarbon->setTime(8,0);
-                    $endTimeCarbon->setTime(13,0);
-
+                    $startTimeCarbon->setTime(8, 0);
+                    $endTimeCarbon->setTime(13, 0);
                 } elseif ($emp_category->catg_code == 1 &&
                         $emp_category->loca_code == 2 &&
                         $workDate->isFriday()) {
-
                     $totalMins = 390;
-                    $startTimeCarbon->setTime(8,0);
-                    $endTimeCarbon->setTime(14,30);
+                    $startTimeCarbon->setTime(8, 0);
+                    $endTimeCarbon->setTime(14, 30);
                 }
             }
 
             $ramadanDeductionMins = $this->getRamadanDeductionMinutes($emp_category, $workDate);
             $adjustedEndTimeCarbon = $endTimeCarbon->copy()->subMinutes($ramadanDeductionMins);
 
-            /* ===============================
-            BUILD TIME LOGS
-            ================================ */
             $minsWorked = 0;
             $timeLogs   = [];
 
             foreach ($attendanceRecords as $record) {
-
                 $worked = minutesWorked($record->timein, $record->timeout);
                 $minsWorked += $worked;
 
                 $timeLogs[] = [
                     'timein'          => $record->timein,
                     'timeout'         => $record->timeout,
-                    'worked_minutes' => $worked
+                    'worked_minutes'  => $worked
                 ];
             }
 
-            /* ===============================
-            LATE / EARLY CALCULATION
-            ================================ */
             $lateMins  = 0;
             $earlyMins = 0;
 
             if (!$isFullDayLeave) {
-
                 $minIn  = Carbon::parse($attendanceRecords->min('timein'));
-                if($attendanceRecords->whereNull('timeout')->isNotEmpty()) {
+                if ($attendanceRecords->whereNull('timeout')->isNotEmpty()) {
                     $maxOut = null;
                 } else {
                     $maxOut = Carbon::parse($attendanceRecords->max('timeout'));
                 }
 
                 if ($emp_category->twh == 12) {
-
                     $required = $totalMins;
 
                     if ($leaveMins > 0) {
@@ -246,51 +295,31 @@ class AttendanceController extends Controller
                     }
 
                     $lateMins = max(0, $required - $minsWorked);
-
                 } else {
-
                     if ($minIn->gt($startTimeCarbon)) {
                         $lateMins = $startTimeCarbon->diffInMinutes($minIn);
                     }
 
-                    if($maxOut == null) {
+                    if ($maxOut == null) {
                         $earlyMins = null;
-                    }
-                    else if ($maxOut->lt($adjustedEndTimeCarbon)) {
+                    } elseif ($maxOut->lt($adjustedEndTimeCarbon)) {
                         $earlyMins = $maxOut->diffInMinutes($adjustedEndTimeCarbon);
                     }
 
                     if ($leaveStart) {
-
                         if ($lateMins > 0) {
-                            $overlapStart = max($startTimeCarbon, $leaveStart);
-                            $overlapEnd   = min($minIn, $leaveEnd);
-
-                            // if ($overlapStart < $overlapEnd) {
-                            //     $lateMins -= $overlapStart->diffInMinutes($overlapEnd);
-                            // }
-                            $lateMins = 0; // compensation for partial leave
+                            $lateMins = 0;
                         }
 
                         if ($earlyMins > 0) {
-                            $overlapStart = max($maxOut, $leaveStart);
-                            $overlapEnd   = min($adjustedEndTimeCarbon, $leaveEnd);
-
-                            // if ($overlapStart < $overlapEnd) {
-                            //     $earlyMins -= $overlapStart->diffInMinutes($overlapEnd);
-                            // }
-                            $earlyMins = 0; // compensation for partial leave
+                            $earlyMins = 0;
                         }
                     }
                 }
             }
-            // Log::info($dateString.' - Late: '.$lateMins.' Early: '.$earlyMins);
+
             $lateMins  = max(0, $lateMins);
             $earlyMins = max(0, $earlyMins);
-            
-            /* ===============================
-            SHORT DUTY STATUS
-            ================================ */
             $leaveRemark = null;
 
             if (!$isLeave) {
@@ -301,9 +330,6 @@ class AttendanceController extends Controller
                 }
             }
 
-            /* ===============================
-            FINAL PUSH
-            ================================ */
             $allDates->push([
                 'at_date'           => $dateString,
                 'time_logs'         => $timeLogs,
@@ -321,20 +347,18 @@ class AttendanceController extends Controller
         }
 
         $attendance = $allDates->sortByDesc('at_date')->values();
-
         $employee = Employee::where('emp_code', $emp_code)->first();
-
         $leaves = Leave::where('emp_code', $emp_code)
             ->whereNot('status', 9)
             ->where('from_date', '>=', $start_date)
             ->where('to_date', '<=', $end_date)
             ->get();
 
-        return view('attendance', [
+        return [
             'attendance' => $attendance,
             'leaves'     => $leaves,
             'emp_name'   => $employee ? ucfirst($employee->name) : 'Unknown Employee'
-        ]);
+        ];
     }
 
 }

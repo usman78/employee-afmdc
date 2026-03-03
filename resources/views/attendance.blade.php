@@ -50,6 +50,9 @@
     font-size: 14px;
     vertical-align: middle;
   }
+  .late-row td {
+    background-color: #ffb6b6;
+  }
   @media (max-width: 768px) {
     .portfolio-details .portfolio-info {
       padding: 0 15px;
@@ -65,19 +68,25 @@
         <div class="portfolio-info">
           <h3>Attendance Information</h3>
           <div class="row gy-4 stats">
-            <div class="col-md-4">
+            <div class="col-md-3">
+              <div class="stats-item text-center w-100 h-100">
+                <span data-purecounter-start="0" data-purecounter-end="232" data-purecounter-duration="0" class="purecounter late-days"></span>
+                <p>Late Coming Days</p>
+              </div>
+            </div>
+            <div class="col-md-3">
               <div class="stats-item text-center w-100 h-100">
                 <span data-purecounter-start="0" data-purecounter-end="232" data-purecounter-duration="0" class="purecounter late-mins"></span>
                 <p>Late Coming Mins</p>
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <div class="stats-item text-center w-100 h-100">
                 <span data-purecounter-start="0" data-purecounter-end="521" data-purecounter-duration="0" class="purecounter early-mins"></span>
                 <p>Early Off Mins</p>
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <div class="stats-item text-center w-100 h-100">
                 <span data-purecounter-start="0" data-purecounter-end="521" data-purecounter-duration="0" class="purecounter total-mins"></span>
                 <p>Total Mins Effect</p>
@@ -108,7 +117,7 @@
             </thead>
             <tbody>
               @foreach ($attendance as $record)
-              <tr>
+                <tr class="{{ ($record['late_minutes'] ?? 0) >= 10 ? 'late-row' : '' }}">
                   {{-- Date --}}
                   <td>{{ Carbon::parse($record['at_date'])->format('D, j M') }}</td>
                   {{-- Time In / Out --}}
@@ -202,6 +211,7 @@
   function sumLateAndEarlyMinutes() {
       let totalLate = 0;
       let totalEarly = 0;
+      let totalLateDays = 0;
 
       // Select all table rows except header
       document.querySelectorAll("table tbody tr").forEach(row => {
@@ -215,6 +225,10 @@
               let lateValue = parseInt(lateText);
               if (!isNaN(lateValue)) {
                   totalLate += lateValue;
+              }
+              // Count late days (considering only rows where late minutes are 10 or more)
+              if (lateValue >= 10) {
+                  totalLateDays += 1;
               }
           }
 
@@ -232,16 +246,21 @@
       return {
           lateMinutes: totalLate,
           earlyMinutes: totalEarly,
-          totalMins: total
+          totalMins: total,
+          lateDays: totalLateDays
       };
   }
   const totals = sumLateAndEarlyMinutes();
   const lateEl = document.querySelector('.late-mins');
+  const lateDaysEl = document.querySelector('.late-days');
   const earlyEl = document.querySelector('.early-mins');
   const totalEl = document.querySelector('.total-mins');
 
   if (lateEl) {
     lateEl.textContent = totals.lateMinutes;
+  }
+  if (lateDaysEl) {
+    lateDaysEl.textContent = totals.lateDays;
   }
   if (earlyEl) {
     earlyEl.textContent = totals.earlyMinutes;

@@ -286,3 +286,34 @@ function minutesWorked($timein, $timeout) {
     }
     return 0;
 }
+
+function getRamadanDeductionMinutes($empCategory, Carbon $workDate): int
+{
+    $ramadanStart = Carbon::create(2026, 2, 19)->startOfDay();
+    $ramadanEnd   = Carbon::create(2026, 3, 20)->endOfDay();
+
+    if (!$workDate->betweenIncluded($ramadanStart, $ramadanEnd)) {
+        return 0;
+    }
+
+    $locaCode = (int) $empCategory->loca_code;
+    $catgCode = (int) $empCategory->catg_code;
+
+    if ($locaCode === 1 && ($catgCode === 1 || $catgCode === 4)) {
+        return 90;
+    }
+
+    if ($locaCode === 1 && $catgCode === 2) {
+        return $workDate->isFriday() ? 0 : 60;
+    }
+
+    if ($locaCode === 2 && $catgCode === 1) {
+        return $workDate->isFriday() ? 210 : 60;
+    }
+
+    if ($locaCode === 2 && $catgCode === 2) {
+        return $workDate->isFriday() ? 30 : 0;
+    }
+
+    return 0;
+}
