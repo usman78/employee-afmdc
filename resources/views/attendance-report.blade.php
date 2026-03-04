@@ -77,6 +77,34 @@
                 @enderror
               </div>
               <div class="col-md-3">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input
+                  type="date"
+                  id="start_date"
+                  name="start_date"
+                  class="form-control @error('start_date') is-invalid @enderror"
+                  value="{{ old('start_date', $searched_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString()) }}"
+                  required
+                >
+                @error('start_date')
+                  <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+              </div>
+              <div class="col-md-3">
+                <label for="end_date" class="form-label">End Date</label>
+                <input
+                  type="date"
+                  id="end_date"
+                  name="end_date"
+                  class="form-control @error('end_date') is-invalid @enderror"
+                  value="{{ old('end_date', $searched_end_date ?? \Carbon\Carbon::today()->toDateString()) }}"
+                  required
+                >
+                @error('end_date')
+                  <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+              </div>
+              <div class="col-md-3">
                 <button type="submit" class="btn btn-primary">Get Report</button>
               </div>
             </div>
@@ -88,9 +116,18 @@
 
           @if(isset($attendance))
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <h5 class="mb-0">{{ $emp_name }}</h5>
+              <div>
+                <h5 class="mb-0">{{ $emp_name }}</h5>
+                <small class="text-muted">
+                  {{ \Carbon\Carbon::parse($report_start_date ?? ($searched_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString()))->format('j M Y') }}
+                  to
+                  {{ \Carbon\Carbon::parse($report_end_date ?? ($searched_end_date ?? \Carbon\Carbon::today()->toDateString()))->format('j M Y') }}
+                </small>
+              </div>
               <form action="{{ route('attendance-report-download', ['emp_code' => $searched_emp_code ?? old('emp_code')]) }}" method="POST">
                 @csrf
+                <input type="hidden" name="start_date" value="{{ $report_start_date ?? ($searched_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString()) }}">
+                <input type="hidden" name="end_date" value="{{ $report_end_date ?? ($searched_end_date ?? \Carbon\Carbon::today()->toDateString()) }}">
                 <button type="submit" class="btn btn-primary">
                   <i class="fas fa-download"></i> Download Report as PDF
                 </button>

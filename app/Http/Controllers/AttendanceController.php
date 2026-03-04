@@ -55,16 +55,23 @@ class AttendanceController extends Controller
 
     public function attendanceReport()
     {
-        return view('attendance-report');
+        return view('attendance-report', [
+            'searched_start_date' => Carbon::now()->startOfMonth()->toDateString(),
+            'searched_end_date' => Carbon::today()->toDateString(),
+        ]);
     }
 
     public function attendanceReportData(Request $request)
     {
         $request->validate([
-            'emp_code' => 'required'
+            'emp_code' => 'required',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
         $empCode = trim($request->input('emp_code'));
+        $startDate = Carbon::parse($request->input('start_date'))->toDateString();
+        $endDate = Carbon::parse($request->input('end_date'))->toDateString();
         $employee = Employee::where('emp_code', $empCode)->first();
 
         if (!$employee) {
@@ -74,13 +81,24 @@ class AttendanceController extends Controller
         }
 
         return view('attendance-report', array_merge(
-            $this->buildAttendanceData($empCode),
-            ['searched_emp_code' => $empCode]
+            $this->buildAttendanceData($empCode, $startDate, $endDate),
+            [
+                'searched_emp_code' => $empCode,
+                'searched_start_date' => $startDate,
+                'searched_end_date' => $endDate,
+            ]
         ));
     }
 
-    public function attendanceReportDownload($emp_code)
+    public function attendanceReportDownload(Request $request, $emp_code)
     {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $startDate = Carbon::parse($request->input('start_date'))->toDateString();
+        $endDate = Carbon::parse($request->input('end_date'))->toDateString();
         $employee = Employee::where('emp_code', $emp_code)->first();
 
         if (!$employee) {
@@ -88,7 +106,7 @@ class AttendanceController extends Controller
                 ->with('error', 'Employee code not found.');
         }
 
-        $reportData = $this->buildAttendanceData($emp_code);
+        $reportData = $this->buildAttendanceData($emp_code, $startDate, $endDate);
         $attendance = $reportData['attendance'] ?? collect();
 
         $lateMinutes = $attendance->sum(function ($record) {
@@ -104,8 +122,8 @@ class AttendanceController extends Controller
             return intval($record['late_minutes'] ?? 0) >= 10;
         })->count();
 
-        $periodStart = Carbon::now()->startOfMonth()->format('Y-m-d');
-        $periodEnd   = Carbon::today()->format('Y-m-d');
+        $periodStart = $startDate;
+        $periodEnd   = $endDate;
 
         $pdf = Pdf::loadView('pdf.attendance-report', [
             'attendance' => $attendance,
@@ -123,7 +141,7 @@ class AttendanceController extends Controller
         return $pdf->download("attendance_report_{$emp_code}_{$now}.pdf");
     }
 
-    private function buildAttendanceData($emp_code)
+    private function buildAttendanceData($emp_code, $startDate = null, $endDate = null)
     {
         $emp_category = Employee::select(
             'catg_code', 'loca_code', 'st_time', 'end_time', 'twh'
@@ -160,8 +178,8 @@ class AttendanceController extends Controller
             '2026-02-05', '2026-02-06', '2026-02-07'
         ];
 
-        $start_date = Carbon::now()->startOfMonth();
-        $end_date   = Carbon::today();
+        $start_date = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->startOfMonth();
+        $end_date   = $endDate ? Carbon::parse($endDate)->startOfDay() : Carbon::today();
 
         $allDates = collect();
         $tempDate = $start_date->copy();
@@ -357,7 +375,9 @@ class AttendanceController extends Controller
         return [
             'attendance' => $attendance,
             'leaves'     => $leaves,
-            'emp_name'   => $employee ? ucfirst($employee->name) : 'Unknown Employee'
+            'emp_name'   => $employee ? ucfirst($employee->name) : 'Unknown Employee',
+            'report_start_date' => $start_date->toDateString(),
+            'report_end_date' => $end_date->toDateString(),
         ];
     }
 
