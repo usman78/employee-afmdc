@@ -24,6 +24,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/attendance-report', [AttendanceController::class, 'attendanceReport'])->name('attendance-report');
     Route::post('/attendance-report', [AttendanceController::class, 'attendanceReportData'])->name('attendance-report-data');
     Route::post('/attendance-report-download/{emp_code}', [AttendanceController::class, 'attendanceReportDownload'])->name('attendance-report-download');
+    Route::post('/attendance-report-email/{emp_code}', [AttendanceController::class, 'attendanceReportEmail'])->name('attendance-report-email');
     Route::get('/attendance/{emp_code}', [AttendanceController::class, 'attendance'])->name('attendance');
     Route::get('/leaves/{emp_code}', [LeavesController::class, 'leaves'])->name('leaves');
     Route::get('/apply-leave-advance/{emp_code}/{shortLeaveOnly?}', [LeavesController::class, 'applyLeaveAdvance'])->name('apply-leave-advance');

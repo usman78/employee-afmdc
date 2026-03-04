@@ -113,6 +113,9 @@
           @if(session('error'))
             <div class="alert alert-warning">{{ session('error') }}</div>
           @endif
+          @if(session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+          @endif
 
           @if(isset($attendance))
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -124,14 +127,29 @@
                   {{ \Carbon\Carbon::parse($report_end_date ?? ($searched_end_date ?? \Carbon\Carbon::today()->toDateString()))->format('j M Y') }}
                 </small>
               </div>
-              <form action="{{ route('attendance-report-download', ['emp_code' => $searched_emp_code ?? old('emp_code')]) }}" method="POST">
-                @csrf
-                <input type="hidden" name="start_date" value="{{ $report_start_date ?? ($searched_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString()) }}">
-                <input type="hidden" name="end_date" value="{{ $report_end_date ?? ($searched_end_date ?? \Carbon\Carbon::today()->toDateString()) }}">
-                <button type="submit" class="btn btn-primary">
-                  <i class="fas fa-download"></i> Download Report as PDF
-                </button>
-              </form>
+              <div class="d-flex gap-2">
+                <form action="{{ route('attendance-report-download', ['emp_code' => $searched_emp_code ?? old('emp_code')]) }}" method="POST">
+                  @csrf
+                  <input type="hidden" name="start_date" value="{{ $report_start_date ?? ($searched_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString()) }}">
+                  <input type="hidden" name="end_date" value="{{ $report_end_date ?? ($searched_end_date ?? \Carbon\Carbon::today()->toDateString()) }}">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-download"></i> Download Report as PDF
+                  </button>
+                </form>
+                <form id="email-report-form" action="{{ route('attendance-report-email', ['emp_code' => $searched_emp_code ?? old('emp_code')]) }}" method="POST">
+                  @csrf
+                  <input type="hidden" name="start_date" value="{{ $report_start_date ?? ($searched_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString()) }}">
+                  <input type="hidden" name="end_date" value="{{ $report_end_date ?? ($searched_end_date ?? \Carbon\Carbon::today()->toDateString()) }}">
+                  <button
+                    type="button"
+                    id="email-report-btn"
+                    class="btn btn-success"
+                    data-hod-email="{{ $hod_email ?? '' }}"
+                  >
+                    <i class="fas fa-envelope"></i> Email Report to HOD
+                  </button>
+                </form>
+              </div>
             </div>
 
             <div class="row gy-4 stats">
@@ -291,5 +309,35 @@
     if (lateDaysEl) lateDaysEl.textContent = totals.lateDays;
     if (earlyEl) earlyEl.textContent = totals.earlyMinutes;
     if (totalEl) totalEl.textContent = totals.totalMins;
+  }
+
+  const emailBtn = document.getElementById('email-report-btn');
+  const emailForm = document.getElementById('email-report-form');
+  if (emailBtn && emailForm) {
+    emailBtn.addEventListener('click', async function () {
+      const hodEmail = (this.dataset.hodEmail || '').trim();
+
+      if (!hodEmail) {
+        await Swal.fire({
+          title: 'HOD Email Not Found',
+          text: 'email of the HOD is not in the records.',
+          icon: 'warning'
+        });
+        return;
+      }
+
+      const result = await Swal.fire({
+        title: 'Confirm Email',
+        html: `HOD email found:<br><strong>${hodEmail}</strong><br><br>Do you want to send the report?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Send',
+        cancelButtonText: 'Cancel'
+      });
+
+      if (result.isConfirmed) {
+        emailForm.submit();
+      }
+    });
   }
 @endpush
