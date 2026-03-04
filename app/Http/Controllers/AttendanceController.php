@@ -24,7 +24,7 @@ class AttendanceController extends Controller
         $locaCode = (int) $empCategory->loca_code;
         $catgCode = (int) $empCategory->catg_code;
 
-        if ($locaCode === 1 && ($catgCode === 1 || $catgCode === 4)) {
+        if ($locaCode === 1 && $catgCode !== 2) {
             return 90;
         }
 
@@ -32,7 +32,7 @@ class AttendanceController extends Controller
             return 60;
         }
 
-        if ($locaCode === 2 && $catgCode === 1) {
+        if ($locaCode === 2 && $catgCode !== 2) {
             return $workDate->isFriday() ? 210 : 60;
         }
 
@@ -141,7 +141,7 @@ class AttendanceController extends Controller
         return $pdf->download("attendance_report_{$emp_code}_{$now}.pdf");
     }
 
-    private function buildAttendanceData($emp_code, $startDate = null, $endDate = null)
+    public function buildAttendanceData($emp_code, $startDate = null, $endDate = null)
     {
         $emp_category = Employee::select(
             'catg_code', 'loca_code', 'st_time', 'end_time', 'twh'
@@ -151,7 +151,8 @@ class AttendanceController extends Controller
             return [
                 'attendance' => collect(),
                 'leaves' => collect(),
-                'emp_name' => 'Unknown Employee'
+                'emp_name' => 'Unknown Employee',
+                'emp_code' => $emp_code,
             ];
         }
 
@@ -179,7 +180,8 @@ class AttendanceController extends Controller
         ];
 
         $start_date = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->startOfMonth();
-        $end_date   = $endDate ? Carbon::parse($endDate)->startOfDay() : Carbon::today();
+        $selectedEndDate = $endDate ? Carbon::parse($endDate)->startOfDay() : Carbon::today();
+        $end_date = $selectedEndDate->gt(Carbon::today()) ? Carbon::today() : $selectedEndDate;
 
         $allDates = collect();
         $tempDate = $start_date->copy();
@@ -376,6 +378,7 @@ class AttendanceController extends Controller
             'attendance' => $attendance,
             'leaves'     => $leaves,
             'emp_name'   => $employee ? ucfirst($employee->name) : 'Unknown Employee',
+            'emp_code'   => $employee ? $employee->emp_code : $emp_code,
             'report_start_date' => $start_date->toDateString(),
             'report_end_date' => $end_date->toDateString(),
         ];

@@ -53,6 +53,19 @@
   .late-row td {
     background-color: #ffb6b6;
   }
+  .employee-meta {
+    margin: 8px 0 16px;
+    font-size: 14px;
+    color: #555;
+  }
+  .attendance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
   @media (max-width: 768px) {
     .portfolio-details .portfolio-info {
       padding: 0 15px;
@@ -67,6 +80,26 @@
       <div class="portfolio-details mb-5">
         <div class="portfolio-info">
           <h3>Attendance Information</h3>
+          <div class="attendance-header">
+            <p class="employee-meta mb-0">
+              <strong>Employee:</strong> {{ $emp_name ?? 'Unknown Employee' }}
+              <span class="mx-2">|</span>
+              <strong>Code:</strong> {{ $emp_code ?? 'N/A' }}
+              <span class="mx-2">|</span>
+              <strong>Range:</strong>
+              {{ \Carbon\Carbon::parse($report_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString())->format('j M Y') }}
+              to
+              {{ \Carbon\Carbon::parse($report_end_date ?? \Carbon\Carbon::today()->toDateString())->format('j M Y') }}
+            </p>
+            <form action="{{ route('attendance-report-download', ['emp_code' => $emp_code ?? '']) }}" method="POST">
+              @csrf
+              <input type="hidden" name="start_date" value="{{ $report_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString() }}">
+              <input type="hidden" name="end_date" value="{{ $report_end_date ?? \Carbon\Carbon::today()->toDateString() }}">
+              <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fas fa-download"></i> Download Report as PDF
+              </button>
+            </form>
+          </div>
           <div class="row gy-4 stats">
             <div class="col-md-3">
               <div class="stats-item text-center w-100 h-100">

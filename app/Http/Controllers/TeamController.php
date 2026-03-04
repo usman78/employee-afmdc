@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Http\Controllers\AttendanceController;
 
 class TeamController extends Controller
 {
@@ -35,10 +36,8 @@ class TeamController extends Controller
     public function attendanceFilter($emp_code, $date_range)
     {
         $dates = parseDateToRange($date_range);
-        $fromDate = $dates['fromDate']->startOfDay();
-        $toDate = $dates['toDate'];
-
-        // dd($fromDate);
+        $fromDate = $dates['fromDate']->toDateString();
+        $toDate = $dates['toDate']->toDateString();
 
         // Get the user by emp_code
         $user = User::where('emp_code', $emp_code)
@@ -49,19 +48,10 @@ class TeamController extends Controller
             return back()->with('error', 'Employee not found or has quit.');
         }
 
-        // Get attendance records in date range
-        $attendanceRecords = $user->attendance()
-            ->whereBetween('at_date', [$fromDate, $toDate])
-            ->whereNull('att_stat')
-            ->get();
+        $attendanceController = app(AttendanceController::class);
+        $attendanceData = $attendanceController->buildAttendanceData($emp_code, $fromDate, $toDate);
 
-        // Attach the records for the view
-        $user->attendance_records = $attendanceRecords;
-
-        // Create a collection with just this one user
-        $team = collect([$user]);
-
-        return view('team.team-filter', compact('emp_code', 'team', 'date_range'));
+        return view('attendance', $attendanceData);
     }
     public function dgmTeamFilter(Request $request)
     {
