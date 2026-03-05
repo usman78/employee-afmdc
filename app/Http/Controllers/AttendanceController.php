@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Jobs\SendAttendanceReportToHodJob;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon; 
 use App\Models\Leave;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -174,48 +174,12 @@ class AttendanceController extends Controller
                 ->with('error', 'email of the HOD is not in the records.');
         }
 
-        $reportData = $this->buildAttendanceData($emp_code, $startDate, $endDate);
-        $attendance = $reportData['attendance'] ?? collect();
-
-        $lateMinutes = $attendance->sum(function ($record) {
-            $late = intval($record['late_minutes'] ?? 0);
-            return $late >= 10 ? $late : 0;
-        });
-
-        $earlyMinutes = $attendance->sum(function ($record) {
-            return max(0, intval(round($record['early_minutes'] ?? 0)));
-        });
-
-        $lateDays = $attendance->filter(function ($record) {
-            return intval($record['late_minutes'] ?? 0) >= 10;
-        })->count();
-
-        $pdf = Pdf::loadView('pdf.attendance-report', [
-            'attendance' => $attendance,
-            'emp_name' => $reportData['emp_name'] ?? ucfirst($employee->name),
-            'emp_code' => $emp_code,
-            'late_minutes' => $lateMinutes,
-            'early_minutes' => $earlyMinutes,
-            'total_minutes' => $lateMinutes + $earlyMinutes,
-            'late_days' => $lateDays,
-            'period_start' => $startDate,
-            'period_end' => $endDate,
-        ]);
-
-        $fileName = "attendance_report_{$emp_code}_" . Carbon::now()->format('Ymd_His') . ".pdf";
-
-        Mail::send('emails.attendance-report', [
-            'emp_name' => $reportData['emp_name'],
-            'emp_code' => $emp_code,
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-        ], function ($message) use ($hodEmail, $reportData, $emp_code, $pdf, $fileName) {
-            $message->to($hodEmail)
-                ->subject("Attendance Report - {$reportData['emp_name']} ({$emp_code})")
-                ->attachData($pdf->output(), $fileName, [
-                    'mime' => 'application/pdf',
-                ]);
-        });
+        SendAttendanceReportToHodJob::dispatch(
+            $emp_code,
+            $startDate,
+            $endDate,
+            $hodEmail
+        );
 
         return redirect()->route('attendance-report')
             ->withInput([
@@ -223,7 +187,7 @@ class AttendanceController extends Controller
                 'start_date' => $startDate,
                 'end_date' => $endDate,
             ])
-            ->with('success', "Attendance report emailed to HOD ({$hodEmail}).");
+            ->with('success', "Attendance report queued for HOD ({$hodEmail}).");
     }
 
     public function buildAttendanceData($emp_code, $startDate = null, $endDate = null)
