@@ -12,6 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class SendAttendanceReportToHodJob implements ShouldQueue
 {
@@ -27,6 +28,7 @@ class SendAttendanceReportToHodJob implements ShouldQueue
 
     public function handle(): void
     {
+        Log::info('Starting SendAttendanceReportToHodJob for empCode: ' . $this->empCode);
         $employee = Employee::where('emp_code', $this->empCode)->first();
         if (!$employee) {
             return;
@@ -80,5 +82,6 @@ class SendAttendanceReportToHodJob implements ShouldQueue
                     'mime' => 'application/pdf',
                 ]);
         });
+        Log::info('Completed SendAttendanceReportToHodJob for empCode: ' . $this->empCode);
     }
 }
