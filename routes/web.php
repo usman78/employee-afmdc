@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Roster;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AttendanceController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\ServiceRequestController;
 use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\AdmissionController;
+use App\Http\Controllers\RosterController;
 
 Auth::routes();
 
@@ -21,7 +23,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/change-password', [HomeController::class, 'changePassword'])->name('change-password');
     Route::post('/update-password', [HomeController::class, 'updatePassword'])->name('update-password');
 
+    Route::get('/roster/{empCode}', [RosterController::class, 'index'])->name('roster');
+
     Route::get('/attendance-report', [AttendanceController::class, 'attendanceReport'])->name('attendance-report');
+    Route::post('/attendance-report-department', [AttendanceController::class, 'attendanceReportDepartmentData'])->name('attendance-report-department-data');
+    Route::post('/attendance-report-department-email', [AttendanceController::class, 'attendanceReportDepartmentEmail'])->name('attendance-report-department-email');
+    Route::post('/attendance-report-department-download', [AttendanceController::class, 'attendanceReportDepartmentDownload'])->name('attendance-report-department-download');
     Route::post('/attendance-report', [AttendanceController::class, 'attendanceReportData'])->name('attendance-report-data');
     Route::post('/attendance-report-download/{emp_code}', [AttendanceController::class, 'attendanceReportDownload'])->name('attendance-report-download');
     Route::post('/attendance-report-email/{emp_code}', [AttendanceController::class, 'attendanceReportEmail'])->name('attendance-report-email');
@@ -45,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/leave-report', [LeavesController::class, 'leaveReport'])->name('leave-report');
     Route::post('/leave-report-data', [LeavesController::class, 'leaveReportData'])->name('leave-report-data');
     Route::post('/leave-report-download/{start_date}/{end_date}/{dept_code?}', [LeavesController::class, 'leaveReportDownload'])->name('leave.report.download');
+    Route::get('/leave-report-employee-search', [LeavesController::class, 'leaveReportEmployeeSearch'])->name('leave-report-employee-search');
 
     Route::get('/job-dashboard', [JobController::class, 'summaryDashboard'])->name('job-dashboard');
     Route::get('/open-jobs', [JobController::class, 'openJobs'])->name('open-jobs');

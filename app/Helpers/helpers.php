@@ -31,7 +31,11 @@ if (!function_exists('dateAndTimeFormat')) {
         return date('d-m-Y H:i', strtotime($string));
     }
 }
-
+if (!function_exists('timeFormatFromString')) {
+    function timeFormatFromString($string) {
+        return date('H:i', strtotime($string));
+    }
+}
 function parseDateRange(string $range): array
 {
     list($from, $to) = explode(' - ', $range);

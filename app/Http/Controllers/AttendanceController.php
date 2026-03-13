@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\Department;
 use App\Jobs\SendAttendanceReportToHodJob;
+use App\Jobs\SendDepartmentAttendanceReportJob;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon; 
 use App\Models\Leave;
@@ -56,9 +58,13 @@ class AttendanceController extends Controller
 
     public function attendanceReport()
     {
+        $departments = Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']);
+
         return view('attendance-report', [
+            'departments' => $departments,
             'searched_start_date' => Carbon::now()->startOfMonth()->toDateString(),
             'searched_end_date' => Carbon::today()->toDateString(),
+            'dept_report_date' => Carbon::today()->toDateString(),
         ]);
     }
 
@@ -84,11 +90,206 @@ class AttendanceController extends Controller
         return view('attendance-report', array_merge(
             $this->buildAttendanceData($empCode, $startDate, $endDate),
             [
+                'departments' => Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']),
                 'searched_emp_code' => $empCode,
                 'searched_start_date' => $startDate,
                 'searched_end_date' => $endDate,
+                'dept_report_date' => Carbon::today()->toDateString(),
             ]
         ));
+    }
+
+    public function attendanceReportDepartmentData(Request $request)
+    {
+        $request->validate([
+            'dept_code' => 'required',
+            'dept_report_date' => 'required|date',
+        ]);
+
+        $deptCode = trim($request->input('dept_code'));
+        $reportDate = Carbon::parse($request->input('dept_report_date'))->toDateString();
+        $departmentReport = $this->buildDepartmentAttendanceData($deptCode, $reportDate);
+        if (!$departmentReport) {
+            return redirect()->route('attendance-report')
+                ->withInput()
+                ->with('error', 'Department not found.');
+        }
+
+        return view('attendance-report', array_merge([
+            'departments' => Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']),
+            'searched_start_date' => Carbon::now()->startOfMonth()->toDateString(),
+            'searched_end_date' => Carbon::today()->toDateString(),
+        ], $departmentReport));
+    }
+
+    public function attendanceReportDepartmentEmail(Request $request)
+    {
+        $request->validate([
+            'dept_code' => 'required',
+            'dept_report_date' => 'required|date',
+            'to_emails' => 'required|string',
+            'cc_emails' => 'nullable|string',
+        ]);
+
+        $deptCode = trim($request->input('dept_code'));
+        $reportDate = Carbon::parse($request->input('dept_report_date'))->toDateString();
+        $toEmails = $this->parseEmailList($request->input('to_emails'));
+        $ccEmails = $this->parseEmailList($request->input('cc_emails'));
+
+        $departmentReport = $this->buildDepartmentAttendanceData($deptCode, $reportDate);
+        if (!$departmentReport) {
+            return redirect()->route('attendance-report')
+                ->withInput()
+                ->with('error', 'Department not found.');
+        }
+
+        if (empty($toEmails)) {
+            return redirect()->route('attendance-report')
+                ->withInput()
+                ->with('error', 'At least one To email is required.');
+        }
+
+        $invalidTo = collect($toEmails)->first(function ($email) {
+            return !filter_var($email, FILTER_VALIDATE_EMAIL);
+        });
+        if ($invalidTo) {
+            return redirect()->route('attendance-report')
+                ->withInput()
+                ->with('error', "Invalid To email: {$invalidTo}");
+        }
+
+        $invalidCc = collect($ccEmails)->first(function ($email) {
+            return !filter_var($email, FILTER_VALIDATE_EMAIL);
+        });
+        if ($invalidCc) {
+            return redirect()->route('attendance-report')
+                ->withInput()
+                ->with('error', "Invalid CC email: {$invalidCc}");
+        }
+
+        SendDepartmentAttendanceReportJob::dispatch(
+            $deptCode,
+            $reportDate,
+            $toEmails,
+            $ccEmails
+        );
+
+        $ccMessage = count($ccEmails) > 0 ? (' + ' . count($ccEmails) . ' CC') : '';
+        return redirect()->route('attendance-report')
+            ->withInput([
+                'dept_code' => $deptCode,
+                'dept_report_date' => $reportDate,
+            ])
+            ->with('success', 'Department attendance report queued for ' . count($toEmails) . " recipient(s){$ccMessage}.");
+    }
+
+    public function attendanceReportDepartmentDownload(Request $request)
+    {
+        $request->validate([
+            'dept_code' => 'required',
+            'dept_report_date' => 'required|date',
+        ]);
+
+        $deptCode = trim($request->input('dept_code'));
+        $reportDate = Carbon::parse($request->input('dept_report_date'))->toDateString();
+
+        $departmentReport = $this->buildDepartmentAttendanceData($deptCode, $reportDate);
+        if (!$departmentReport) {
+            return redirect()->route('attendance-report')
+                ->withInput()
+                ->with('error', 'Department not found.');
+        }
+
+        $pdf = Pdf::loadView('pdf.department-attendance-report', [
+            'department_name' => $departmentReport['selected_dept_desc'],
+            'report_date' => $departmentReport['dept_report_date'],
+            'rows' => $departmentReport['departmentAttendanceRows'],
+        ]);
+
+        $fileName = 'department_attendance_' . $deptCode . '_' . Carbon::now()->format('Ymd_His') . '.pdf';
+        return $pdf->stream($fileName);
+    }
+
+    public function buildDepartmentAttendanceData($deptCode, $reportDate): ?array
+    {
+        $department = Department::where('dept_code', $deptCode)->first();
+        if (!$department) {
+            return null;
+        }
+
+        $employees = Employee::where('dept_code', $deptCode)
+            ->whereNull('quit_stat')
+            ->orderBy('name')
+            ->get(['emp_code', 'name', 'st_time']);
+
+        $employeeCodes = $employees->pluck('emp_code')->all();
+        $attendanceByEmp = collect();
+        $leavesByEmp = collect();
+
+        if (!empty($employeeCodes)) {
+            $attendanceByEmp = Attendance::whereRaw(
+                    "TRUNC(at_date) = TO_DATE(?, 'YYYY-MM-DD')",
+                    [$reportDate]
+                )
+                ->whereIn('emp_code', $employeeCodes)
+                ->whereNull('att_stat')
+                ->orderBy('timein')
+                ->get()
+                ->groupBy('emp_code');
+
+            $leavesByEmp = Leave::whereIn('emp_code', $employeeCodes)
+                ->whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$reportDate])
+                ->whereRaw("TRUNC(to_date)   >= TO_DATE(?, 'YYYY-MM-DD')", [$reportDate])
+                ->whereNot('status', 9)
+                ->get()
+                ->groupBy('emp_code');
+        }
+
+        $departmentAttendanceRows = $employees->map(function ($employee) use ($attendanceByEmp, $leavesByEmp, $reportDate) {
+            $records = $attendanceByEmp->get($employee->emp_code, collect());
+            $hasLeave = $leavesByEmp->has($employee->emp_code);
+
+            if ($records->isNotEmpty()) {
+                $minTimeIn = $records->min('timein');
+                $maxTimeOut = $records->max('timeout');
+                $timeStatus = '--';
+                if ($minTimeIn && $employee->st_time) {
+                    $shiftStart = Carbon::parse($reportDate . ' ' . $employee->st_time);
+                    $minIn = Carbon::parse($minTimeIn);
+                    if ($minIn->gt($shiftStart)) {
+                        $lateSeconds = $shiftStart->diffInSeconds($minIn);
+                        $timeStatus = $lateSeconds >= 630 ? 'Late' : 'On-time';
+                    } else {
+                        $timeStatus = 'On-time';
+                    }
+                }
+
+                return [
+                    'emp_code' => $employee->emp_code,
+                    'name' => ucfirst($employee->name),
+                    'time_in' => $minTimeIn ? Carbon::parse($minTimeIn)->format('H:i') : '--:--',
+                    'time_out' => $maxTimeOut ? Carbon::parse($maxTimeOut)->format('H:i') : '--:--',
+                    'status' => 'Present',
+                    'time_status' => $timeStatus,
+                ];
+            }
+
+            return [
+                'emp_code' => $employee->emp_code,
+                'name' => ucfirst($employee->name),
+                'time_in' => '--:--',
+                'time_out' => '--:--',
+                'status' => $hasLeave ? 'Leave' : 'Absent',
+                'time_status' => '--',
+            ];
+        })->values();
+
+        return [
+            'selected_dept_code' => $deptCode,
+            'selected_dept_desc' => $department->dept_desc,
+            'dept_report_date' => $reportDate,
+            'departmentAttendanceRows' => $departmentAttendanceRows,
+        ];
     }
 
     public function attendanceReportDownload(Request $request, $emp_code)
@@ -134,12 +335,13 @@ class AttendanceController extends Controller
             'early_minutes' => $earlyMinutes,
             'total_minutes' => $lateMinutes + $earlyMinutes,
             'late_days' => $lateDays,
+            'leave_counts' => $reportData['leave_counts'] ?? [],
             'period_start' => $periodStart,
             'period_end' => $periodEnd,
         ]);
 
         $now = Carbon::now()->format('Ymd_His');
-        return $pdf->download("attendance_report_{$emp_code}_{$now}.pdf");
+        return $pdf->stream("attendance_report_{$emp_code}_{$now}.pdf");
     }
 
     public function attendanceReportEmail(Request $request, $emp_code)
@@ -147,10 +349,14 @@ class AttendanceController extends Controller
         $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'additional_to_emails' => 'nullable|string',
+            'cc_emails' => 'nullable|string',
         ]);
 
         $startDate = Carbon::parse($request->input('start_date'))->toDateString();
         $endDate = Carbon::parse($request->input('end_date'))->toDateString();
+        $additionalToEmails = $this->parseEmailList($request->input('additional_to_emails'));
+        $ccEmails = $this->parseEmailList($request->input('cc_emails'));
         $employee = Employee::where('emp_code', $emp_code)->first();
 
         if (!$employee) {
@@ -170,16 +376,64 @@ class AttendanceController extends Controller
                     'emp_code' => $emp_code,
                     'start_date' => $startDate,
                     'end_date' => $endDate,
+                    'additional_to_emails' => $request->input('additional_to_emails'),
+                    'cc_emails' => $request->input('cc_emails'),
                 ])
                 ->with('error', 'email of the HOD is not in the records.');
+        }
+
+        \Log::info('Attendance report email request', [
+            'emp_code' => $emp_code,
+            'hod_email' => $hodEmail,
+            'additional_to' => $additionalToEmails,
+            'cc' => $ccEmails,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+
+        $invalidAdditionalTo = collect($additionalToEmails)->first(function ($email) {
+            return !filter_var($email, FILTER_VALIDATE_EMAIL);
+        });
+
+        if ($invalidAdditionalTo) {
+            return redirect()->route('attendance-report')
+                ->withInput([
+                    'emp_code' => $emp_code,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'additional_to_emails' => $request->input('additional_to_emails'),
+                    'cc_emails' => $request->input('cc_emails'),
+                ])
+                ->with('error', "Invalid additional To email: {$invalidAdditionalTo}");
+        }
+
+        $invalidCc = collect($ccEmails)->first(function ($email) {
+            return !filter_var($email, FILTER_VALIDATE_EMAIL);
+        });
+
+        if ($invalidCc) {
+            return redirect()->route('attendance-report')
+                ->withInput([
+                    'emp_code' => $emp_code,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'additional_to_emails' => $request->input('additional_to_emails'),
+                    'cc_emails' => $request->input('cc_emails'),
+                ])
+                ->with('error', "Invalid CC email: {$invalidCc}");
         }
 
         SendAttendanceReportToHodJob::dispatch(
             $emp_code,
             $startDate,
             $endDate,
-            $hodEmail
+            $hodEmail,
+            $additionalToEmails,
+            $ccEmails
         );
+
+        $toMessage = count($additionalToEmails) > 0 ? (' + ' . count($additionalToEmails) . ' additional To') : '';
+        $ccMessage = count($ccEmails) > 0 ? (' + ' . count($ccEmails) . ' CC') : '';
 
         return redirect()->route('attendance-report')
             ->withInput([
@@ -187,7 +441,7 @@ class AttendanceController extends Controller
                 'start_date' => $startDate,
                 'end_date' => $endDate,
             ])
-            ->with('success', "Attendance report queued for HOD ({$hodEmail}).");
+            ->with('success', "Attendance report queued for HOD ({$hodEmail}){$toMessage}{$ccMessage}.");
     }
 
     public function buildAttendanceData($emp_code, $startDate = null, $endDate = null)
@@ -428,15 +682,35 @@ class AttendanceController extends Controller
             ->where('to_date', '<=', $end_date)
             ->get();
 
+        $leaveCounts = [
+            'casual' => $leaves->where('leave_code', 1)->count(),
+            'medical' => $leaves->where('leave_code', 2)->count(),
+            'annual' => $leaves->where('leave_code', 3)->count(),
+            'outdoor_duty' => $leaves->where('leave_code', 12)->count(),
+        ];
+
         return [
             'attendance' => $attendance,
             'leaves'     => $leaves,
+            'leave_counts' => $leaveCounts,
             'emp_name'   => $employee ? ucfirst($employee->name) : 'Unknown Employee',
             'emp_code'   => $employee ? $employee->emp_code : $emp_code,
             'hod_email'  => $hodEmail,
             'report_start_date' => $start_date->toDateString(),
             'report_end_date' => $end_date->toDateString(),
         ];
+    }
+
+    private function parseEmailList(?string $emails): array
+    {
+        if (!$emails) {
+            return [];
+        }
+
+        $emailList = preg_split('/[\s,;]+/', $emails);
+        $emailList = array_filter(array_map('trim', $emailList));
+
+        return array_values(array_unique($emailList));
     }
 
 }

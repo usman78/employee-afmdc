@@ -6,34 +6,35 @@
     <style>
         body {
             font-family: "DejaVu Sans", sans-serif;
-            font-size: 12px;
+            font-size: 10.5px;
             color: #333;
-            line-height: 1.4;
+            line-height: 1.2;
+            margin: 0;
         }
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
         }
         .header-table td {
             border: none;
             text-align: center;
         }
         .logo-img {
-            width: 90px;
+            width: 40px;
             height: auto;
         }
         .title {
-            font-size: 18px;
+            font-size: 15px;
             font-weight: bold;
             text-transform: uppercase;
         }
         .subtitle {
-            font-size: 12px;
+            font-size: 10.5px;
         }
         .meta {
-            margin: 10px 0 12px;
-            font-size: 12px;
+            margin: 6px 0 6px;
+            font-size: 10.5px;
         }
         .summary-table,
         .report-table {
@@ -41,11 +42,12 @@
             border-collapse: collapse;
         }
         .summary-table {
-            margin-bottom: 12px;
+            margin-bottom: 8px;
+            table-layout: fixed;
         }
         th, td {
-            border: 1px solid #ccc;
-            padding: 6px;
+            border: 0;
+            padding: 3px 4px;
             text-align: center;
             vertical-align: middle;
             word-wrap: break-word;
@@ -54,6 +56,17 @@
         th {
             background: #f2f2f2;
             font-weight: bold;
+            border-bottom: 1px solid #ccc;
+        }
+        .summary-table th,
+        .summary-table td {
+            width: 25%;
+        }
+        .summary-table td {
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .report-table td {
+            border-bottom: 1px solid #e6e6e6;
         }
     </style>
 </head>
@@ -91,6 +104,25 @@
                 <td>{{ $late_minutes }}</td>
                 <td>{{ $early_minutes }}</td>
                 <td>{{ $total_minutes }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table class="summary-table">
+        <thead>
+            <tr>
+                <th>Casual Leaves</th>
+                <th>Medical Leaves</th>
+                <th>Annual Leaves</th>
+                <th>Outdoor Duty</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ $leave_counts['casual'] ?? 0 }}</td>
+                <td>{{ $leave_counts['medical'] ?? 0 }}</td>
+                <td>{{ $leave_counts['annual'] ?? 0 }}</td>
+                <td>{{ $leave_counts['outdoor_duty'] ?? 0 }}</td>
             </tr>
         </tbody>
     </table>
