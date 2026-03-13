@@ -45,7 +45,7 @@
                         <select class="form-control" id="filter" name="filter" required>
                             <option value="">Select Filter</option>
                             <option value="department">Department</option>
-                            <option value="designation">Designation</option>
+                            <option value="employee">Employee</option>
                         </select>
                     </div>
                     <div class="col-md-12 form-group mt-3">
@@ -58,12 +58,11 @@
                         </select>
                     </div>
                     <div class="col-md-12 form-group mt-3">
-                        <label for="employee">Employee (Optional)</label>
-                        <select class="form-control" id="designation" name="designation">
-                            <option value="">All Employees</option>
-                            @foreach($designations as $designation)
-                                <option value="{{ $designation->desg_code }}">{{ $designation->desg_short }}</option>
-                            @endforeach
+                        <label for="emp_code">Employee Code</label>
+                        <select class="form-control" id="emp_code" name="emp_code">
+                            @if(old('emp_code'))
+                                <option value="{{ old('emp_code') }}" selected>{{ old('emp_code') }}</option>
+                            @endif
                         </select>
                     </div>
                 <button type="submit" class="btn btn-primary mt-3">Generate Report</button>
@@ -77,31 +76,51 @@
 @endpush
 @push('scripts')
 
-    // script to handle filter by department or designation
+    // script to handle filter by department or employee
     $('#filter').on('change', function() {
         var filter = $(this).val();
         if (filter === 'department') {
-            $('#department').prop('disabled', false);
-            $('#designation').prop('disabled', true);
-        } else if (filter === 'designation') {
-            $('#department').prop('disabled', true);
-            $('#designation').prop('disabled', false);
+            $('#department').prop('disabled', false).closest('.form-group').show();
+            $('#emp_code').prop('disabled', true).closest('.form-group').hide();
+            $('#emp_code').val(null).trigger('change');
+        } else if (filter === 'employee') {
+            $('#department').prop('disabled', true).closest('.form-group').hide();
+            $('#emp_code').prop('disabled', false).closest('.form-group').show();
+            $('#department').val(null).trigger('change');
         } else {
-            $('#department').prop('disabled', false);
-            $('#designation').prop('disabled', false);
+            $('#department').prop('disabled', true).closest('.form-group').hide();
+            $('#emp_code').prop('disabled', true).closest('.form-group').hide();
         }
     });
-    // initialize select2 for department and designation dropdowns
-    $('#designation').select2({
-        placeholder: "Select an employee designation",
-        allowClear: true,
-        width: '100%'
-    });
+    // initialize select2 for department dropdown
     $('#department').select2({
         placeholder: "Select a department",
         allowClear: true,
         width: '100%'
     });
+    // initialize select2 for employee search
+    $('#emp_code').select2({
+        placeholder: "Search by employee code or name",
+        allowClear: true,
+        width: '100%',
+        minimumInputLength: 2,
+        ajax: {
+            url: "{{ route('leave-report-employee-search') }}",
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    q: params.term
+                };
+            },
+            processResults: function (data) {
+                return data;
+            },
+            cache: true
+        }
+    });
+    // ensure initial state respects current filter value
+    $('#filter').trigger('change');
     // initialize date range picker
     $(function () {
         var start = moment().subtract(29, 'days');

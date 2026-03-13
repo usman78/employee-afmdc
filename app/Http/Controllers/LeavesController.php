@@ -935,41 +935,70 @@ class LeavesController extends Controller
             'designations' => $designations,
         ]);
     }
+    public function leaveReportEmployeeSearch(Request $request)
+    {
+        $term = trim($request->input('q', ''));
+        if (strlen($term) < 2) {
+            return response()->json(['results' => []]);
+        }
+
+        $employees = Employee::whereNull('quit_stat')
+            ->where(function ($query) use ($term) {
+                $query->where('emp_code', 'like', '%' . $term . '%')
+                    ->orWhereRaw('UPPER(name) LIKE ?', ['%' . strtoupper($term) . '%']);
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get(['emp_code', 'name']);
+
+        $results = $employees->map(function ($employee) {
+            $name = function_exists('capitalizeWords') ? capitalizeWords($employee->name) : ucfirst(strtolower($employee->name));
+            return [
+                'id' => $employee->emp_code,
+                'text' => $employee->emp_code . ' - ' . $name,
+            ];
+        })->values();
+
+        return response()->json(['results' => $results]);
+    }
     public function leaveReportData(Request $request)
     {
         $filter = $request->input('filter');
-        if (!in_array($filter, ['department', 'designation'])) {
+        if (!in_array($filter, ['department', 'employee'])) {
             return redirect()->back()->with('error', 'Invalid filter selected.');
         }
-        if ($filter == 'designation') {
-            $desg_code = $request->input('designation');
-            $startDate = Carbon::parse($request->input('start_date'));
-            $endDate = Carbon::parse($request->input('end_date'));
-
-            //get designation name
-            $desigName = Designation::select('desg_short')->where('desg_code', $desg_code)->first();
-            $department = null;
-            $dept_code = null;
-            
-            // Get active employees of the designation
-            $employees = Employee::where('desg_code', $desg_code)
-                ->whereNull('quit_stat')
-                ->get(['emp_code', 'name', 'dept_code', 'desg_code']);
-        } else {
-            
-        $desigName = null; 
-        $dept_code = $request->input('department');
         $startDate = Carbon::parse($request->input('start_date'));
         $endDate = Carbon::parse($request->input('end_date'));
 
-        //get department name
-        $department = Department::select('dept_desc')->where('dept_code', $dept_code)->first();
-        
-        // Get active employees of the department
-        $employees = Employee::where('dept_code', $dept_code)
-            ->whereNull('quit_stat')
-            ->get(['emp_code', 'name', 'desg_code']);
-        }    
+        if ($filter == 'employee') {
+            $empCode = trim($request->input('emp_code'));
+            if (!$empCode) {
+                return redirect()->back()->with('error', 'Employee code is required.');
+            }
+
+            $employee = Employee::where('emp_code', $empCode)
+                ->whereNull('quit_stat')
+                ->first(['emp_code', 'name', 'dept_code', 'desg_code']);
+
+            if (!$employee) {
+                return redirect()->back()->with('error', 'Employee code not found.');
+            }
+
+            $desigName = (object) ['desg_short' => 'Employee: ' . $employee->emp_code . ' - ' . $employee->name];
+            $department = null;
+            $dept_code = null;
+            $employees = collect([$employee]);
+        } else {
+            $desigName = null;
+            $dept_code = $request->input('department');
+            //get department name
+            $department = Department::select('dept_desc')->where('dept_code', $dept_code)->first();
+
+            // Get active employees of the department
+            $employees = Employee::where('dept_code', $dept_code)
+                ->whereNull('quit_stat')
+                ->get(['emp_code', 'name', 'desg_code']);
+        }
         $report = [];
 
         foreach ($employees as $employee) {
