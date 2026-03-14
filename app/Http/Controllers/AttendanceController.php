@@ -219,8 +219,9 @@ class AttendanceController extends Controller
 
         $employees = Employee::where('dept_code', $deptCode)
             ->whereNull('quit_stat')
+            ->with('designation')
             ->orderBy('name')
-            ->get(['emp_code', 'name', 'st_time']);
+            ->get(['emp_code', 'name', 'st_time', 'desg_code']);
 
         $employeeCodes = $employees->pluck('emp_code')->all();
         $attendanceByEmp = collect();
@@ -267,6 +268,7 @@ class AttendanceController extends Controller
                 return [
                     'emp_code' => $employee->emp_code,
                     'name' => ucfirst($employee->name),
+                    'designation' => $employee->designation->desg_short ?? '--',
                     'time_in' => $minTimeIn ? Carbon::parse($minTimeIn)->format('H:i') : '--:--',
                     'time_out' => $maxTimeOut ? Carbon::parse($maxTimeOut)->format('H:i') : '--:--',
                     'status' => 'Present',
@@ -277,6 +279,7 @@ class AttendanceController extends Controller
             return [
                 'emp_code' => $employee->emp_code,
                 'name' => ucfirst($employee->name),
+                'designation' => $employee->designation->desg_short ?? '--',
                 'time_in' => '--:--',
                 'time_out' => '--:--',
                 'status' => $hasLeave ? 'Leave' : 'Absent',

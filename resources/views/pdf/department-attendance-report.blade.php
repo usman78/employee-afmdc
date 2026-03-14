@@ -70,6 +70,7 @@
             <tr>
                 <th>Employee Code</th>
                 <th class="left-side">Name</th>
+                <th>Designation</th>
                 <th>Time In</th>
                 <th>Time Out</th>
                 <th>Time Status</th>
@@ -81,6 +82,7 @@
                 <tr>
                     <td>{{ $row['emp_code'] }}</td>
                     <td class="left-side">{{ $row['name'] }}</td>
+                    <td>{{ $row['designation'] }}</td>
                     <td>{{ $row['time_in'] }}</td>
                     <td>{{ $row['time_out'] }}</td>
                     <td>{{ $row['time_status'] }}</td>
@@ -88,7 +90,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6">No employee record found for this department/date.</td>
+                    <td colspan="7">No employee record found for this department/date.</td>
                 </tr>
             @endforelse
         </tbody>

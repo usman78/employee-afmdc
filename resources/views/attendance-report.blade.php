@@ -151,8 +151,9 @@
                   <tr>
                     <th>Employee Code</th>
                     <th>Name</th>
+                    <th>Designation</th>
                     <th>Time In</th>
-                    <th>Time Out</th>
+                    {{-- <th>Time Out</th> --}}
                     <th>Time Status</th>
                     <th>Status</th>
                   </tr>
@@ -162,8 +163,9 @@
                     <tr>
                       <td>{{ $row['emp_code'] }}</td>
                       <td>{{ $row['name'] }}</td>
+                      <td>{{ $row['designation'] }}</td>
                       <td>{{ $row['time_in'] }}</td>
-                      <td>{{ $row['time_out'] }}</td>
+                      {{-- <td>{{ $row['time_out'] }}</td> --}}
                       <td>
                         @if($row['time_status'] === 'Late')
                           <span class="badge badge-danger">Late</span>
