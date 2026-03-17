@@ -62,6 +62,8 @@ class SendAttendanceReportToHodJob implements ShouldQueue
             'attendance' => $attendance,
             'emp_name' => $reportData['emp_name'] ?? ucfirst($employee->name),
             'emp_code' => $this->empCode,
+            'emp_department' => $reportData['emp_department'] ?? '--',
+            'emp_designation' => $reportData['emp_designation'] ?? '--',
             'late_minutes' => $lateMinutes,
             'early_minutes' => $earlyMinutes,
             'total_minutes' => $lateMinutes + $earlyMinutes,

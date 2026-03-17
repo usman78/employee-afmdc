@@ -68,9 +68,10 @@
     <table>
         <thead>
             <tr>
+                <th>Sr#</th>
                 <th>Employee Code</th>
                 <th class="left-side">Name</th>
-                <th>Designation</th>
+                <th class="left-side">Designation</th>
                 <th>Time In</th>
                 <th>Time Out</th>
                 <th>Time Status</th>
@@ -80,9 +81,10 @@
         <tbody>
             @forelse($rows as $row)
                 <tr>
+                    <td>{{ $loop->iteration }}</td>
                     <td>{{ $row['emp_code'] }}</td>
                     <td class="left-side">{{ $row['name'] }}</td>
-                    <td>{{ $row['designation'] }}</td>
+                    <td class="left-side">{{ $row['designation'] }}</td>
                     <td>{{ $row['time_in'] }}</td>
                     <td>{{ $row['time_out'] }}</td>
                     <td>{{ $row['time_status'] }}</td>

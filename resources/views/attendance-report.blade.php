@@ -149,11 +149,12 @@
               <table class="table mt-2 mb-4">
                 <thead>
                   <tr>
+                    <th>Sr#</th>
                     <th>Employee Code</th>
                     <th>Name</th>
                     <th>Designation</th>
                     <th>Time In</th>
-                    {{-- <th>Time Out</th> --}}
+                    <th>Time Out</th>
                     <th>Time Status</th>
                     <th>Status</th>
                   </tr>
@@ -161,11 +162,12 @@
                 <tbody>
                   @forelse($departmentAttendanceRows as $row)
                     <tr>
+                      <td>{{ $loop->iteration }}</td>
                       <td>{{ $row['emp_code'] }}</td>
                       <td>{{ $row['name'] }}</td>
                       <td>{{ $row['designation'] }}</td>
                       <td>{{ $row['time_in'] }}</td>
-                      {{-- <td>{{ $row['time_out'] }}</td> --}}
+                      <td>{{ $row['time_out'] }}</td>
                       <td>
                         @if($row['time_status'] === 'Late')
                           <span class="badge badge-danger">Late</span>
@@ -353,6 +355,7 @@
             <table class="table mt-3 mb-5">
               <thead>
                 <tr>
+                  <th>Sr#</th>
                   <th>Date</th>
                   <th>Time-In/Out</th>
                   <th>Late Mins</th>
@@ -363,6 +366,7 @@
               <tbody>
                 @foreach ($attendance as $record)
                   <tr class="{{ ($record['late_minutes'] ?? 0) >= 10 ? 'late-row' : '' }}">
+                    <td>{{ $loop->iteration }}</td>
                     <td>{{ Carbon::parse($record['at_date'])->format('D, j M') }}</td>
                     <td>
                       @if ($record['is_sunday'] || $record['is_holiday'])

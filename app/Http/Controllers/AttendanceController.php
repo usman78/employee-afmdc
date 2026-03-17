@@ -304,7 +304,9 @@ class AttendanceController extends Controller
 
         $startDate = Carbon::parse($request->input('start_date'))->toDateString();
         $endDate = Carbon::parse($request->input('end_date'))->toDateString();
-        $employee = Employee::where('emp_code', $emp_code)->first();
+        $employee = Employee::with(['department', 'designation'])
+            ->where('emp_code', $emp_code)
+            ->first();
 
         if (!$employee) {
             return redirect()->route('attendance-report')
@@ -334,6 +336,8 @@ class AttendanceController extends Controller
             'attendance' => $attendance,
             'emp_name' => $reportData['emp_name'] ?? ucfirst($employee->name),
             'emp_code' => $emp_code,
+            'emp_department' => $reportData['emp_department'] ?? '--',
+            'emp_designation' => $reportData['emp_designation'] ?? '--',
             'late_minutes' => $lateMinutes,
             'early_minutes' => $earlyMinutes,
             'total_minutes' => $lateMinutes + $earlyMinutes,
@@ -672,7 +676,7 @@ class AttendanceController extends Controller
             $tempDate->addDay();
         }
 
-        $attendance = $allDates->sortByDesc('at_date')->values();
+        $attendance = $allDates->sortBy('at_date')->values();
         $employee = Employee::where('emp_code', $emp_code)->first();
         $hodCode = hisBoss($emp_code);
         $hodEmail = null;
@@ -698,6 +702,8 @@ class AttendanceController extends Controller
             'leave_counts' => $leaveCounts,
             'emp_name'   => $employee ? ucfirst($employee->name) : 'Unknown Employee',
             'emp_code'   => $employee ? $employee->emp_code : $emp_code,
+            'emp_department' => $employee && $employee->department ? $employee->department->dept_desc : '--',
+            'emp_designation' => $employee && $employee->designation ? $employee->designation->desg_short : '--',
             'hod_email'  => $hodEmail,
             'report_start_date' => $start_date->toDateString(),
             'report_end_date' => $end_date->toDateString(),

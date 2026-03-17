@@ -87,6 +87,10 @@
 
     <div class="meta">
         <strong>Employee:</strong> {{ $emp_name }} ({{ $emp_code }})
+        <br>
+        <strong>Department:</strong> {{ $emp_department ?? '--' }}
+        <br>
+        <strong>Designation:</strong> {{ $emp_designation ?? '--' }}
     </div>
 
     <table class="summary-table">
@@ -130,6 +134,7 @@
     <table class="report-table">
         <thead>
             <tr>
+                <th>Sr#</th>
                 <th style="width: 16%;">Date</th>
                 <th style="width: 30%;">Time-In/Out</th>
                 <th style="width: 14%;">Late Mins</th>
@@ -178,6 +183,7 @@
                     }
                 @endphp
                 <tr>
+                    <td>{{ $loop->iteration }}</td>
                     <td>{{ \Carbon\Carbon::parse($record['at_date'])->format('D, j M') }}</td>
                     <td>{{ $timeText }}</td>
                     <td>{{ $lateText }}</td>
