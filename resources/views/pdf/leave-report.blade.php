@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Leave Report Employee Portal AFMDC</title>
+        <title>{{ $report_title ?? 'Availed Leave Report' }} - Employee Portal AFMDC</title>
         <style>
             body {
                 font-family: "DejaVu Sans", sans-serif;
@@ -130,7 +130,7 @@
                 <!-- Title Row -->
                 <tr>
                     <td colspan="3" class="title-cell">
-                        Departmental Leave Report
+                        {{ $report_title ?? 'Availed Leave Report' }}
                     </td>
                 </tr>
                 <tr>
@@ -141,24 +141,34 @@
             </table>
         </div>
         <!-- ===== Applicant Details ===== -->
-        <div class="section-title">Filter By: {{ $dept_desc == null ? $desg_short : $dept_desc }}</div>
+        <div class="section-title">{{ $dept_desc == null ? $employee_dept : $dept_desc }}</div>
         <table>
             <thead>
                 <tr>
-                    <th style="width: 6%">Code</th>
-                    <th style="width: 16%">Name</th>
-                    <th style="width: 8%">Casual</th>
-                    <th style="width: 8%">Medical</th>
-                    <th style="width: 8%">Annual</th>
-                    <th style="width: 9%">W/O Pay</th>
-                    <th style="width: 5%">OD</th>
-                    <th style="width: 9%">Late (Min)</th>
-                    <th style="width: 9%">Early (Min)</th>
+                    <th style="width: 3%" rowspan="2">Sr#</th>
+                    <th style="width: 6%" rowspan="2">Code</th>
+                    <th style="width: 16%" rowspan="2">Name</th>
+                    <th colspan="2">Casual Leave</th>
+                    <th colspan="2">Medical Leave</th>
+                    <th colspan="2">Annual Leave</th>
+                    <th style="width: 9%" rowspan="2">W/O Pay</th>
+                    <th style="width: 5%" rowspan="2">OD</th>
+                    <th style="width: 9%" rowspan="2">Late (Min)</th>
+                    <th style="width: 9%" rowspan="2">Early (Min)</th>
+                </tr>
+                <tr>
+                    <th>Availed</th>
+                    <th>Balance</th>
+                    <th>Availed</th>
+                    <th>Balance</th>
+                    <th>Availed</th>
+                    <th>Balance</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($report as $row)
                     <tr>
+                        <td>{{ $loop->iteration }}</td>
                         <td>{{ $row['emp_code'] }}</td>
                         <td class="name">{{ $row['emp_name'] }}
                             <br>
@@ -167,8 +177,11 @@
                             </span>
                         </td>
                         <td>{{ $row['leaves']['casual'] }}</td>
+                        <td>{{ $row['balances']['casual'] ?? 0 }}</td>
                         <td>{{ $row['leaves']['medical'] }}</td>
+                        <td>{{ $row['balances']['medical'] ?? 0 }}</td>
                         <td>{{ $row['leaves']['annual'] }}</td>
+                        <td>{{ $row['balances']['annual'] ?? 0 }}</td>
                         <td>{{ $row['leaves']['without_pay'] }}</td>
                         <td>{{ $row['leaves']['outdoor_duty'] }}</td>
                         <td>{{ number_format($row['late_mins'], 1) }}</td>
@@ -176,7 +189,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" style="text-align:center;color:#777;">
+                        <td colspan="12" style="text-align:center;color:#777;">
                             No leave records found for the selected criteria
                         </td>
                     </tr>

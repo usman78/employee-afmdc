@@ -27,6 +27,7 @@
     <div class="row">
         <div class="col-md-12">
             <h3>Leave Report</h3>
+            <p class="text-muted mb-2">Report includes availed and current balance for Casual, Medical, and Annual leaves.</p>
             <form method="post" action="{{ route('leave-report-data') }}">
                 @csrf
                 <div class="row">

@@ -3,34 +3,43 @@
 <div class="container">
     <div class="row">
         <div class="col-md-12">
-            <h1 class="h3 mb-2 text-gray-800">Departmental Leave Report </h1>
+            <h1 class="h3 mb-2 text-gray-800">{{ $reportTitle ?? 'Availed Leave Report' }}</h1>
             <p class="mb-4">Date Range: {{ dateFormat($startDate) }} to {{ dateFormat($endDate) }}</p>
             <div class="card shadow mt-3 mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">{{ $department == null ? $desigName->desg_short : $department->dept_desc }} </h6>
+                    <h6 class="m-0 font-weight-bold text-primary">{{ $department == null ? $employee->department->dept_desc : $department->dept_desc }} </h6>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('leave.report.download', [
+                    <form target="_blank" action="{{ route('leave.report.download', [
                             'start_date' => dateFormat($startDate), 
                             'end_date' => dateFormat($endDate), 
                             'dept_desc' => $department == null ? '' : capitalizeWords($department->dept_desc),
                             'desg_short' => $department == null ? capitalizeWords($desigName->desg_short) : '',
-                            'report' => $report
+                            'report' => $report, 
+                            'employee_dept' => $employee?->department?->dept_desc,
                             ]) }}" method="post">
-                            @csrf
+                            @csrf   
                         <div class="table-responsive">
                             <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                                 <thead>
                                     <tr>
-                                        <th>Code</th>
-                                        <th>Name</th>
-                                        <th>Casual Leaves</th>
-                                        <th>Medical Leaves</th>
-                                        <th>Annual Leaves</th>
-                                        <th>W/O Pay Leaves</th>
-                                        <th>Outdoor Duty (OD)</th>
-                                        <th>Late Minutes</th>
-                                        <th>Early Minutes</th>
+                                        <th rowspan="2">Code</th>
+                                        <th rowspan="2">Name</th>
+                                        <th colspan="2">Casual Leave</th>
+                                        <th colspan="2">Medical Leave</th>
+                                        <th colspan="2">Annual Leave</th>
+                                        <th rowspan="2">W/O Pay Leaves</th>
+                                        <th rowspan="2">Outdoor Duty (OD)</th>
+                                        <th rowspan="2">Late Minutes</th>
+                                        <th rowspan="2">Early Minutes</th>
+                                    </tr>
+                                    <tr>
+                                        <th>Availed</th>
+                                        <th>Balance</th>
+                                        <th>Availed</th>
+                                        <th>Balance</th>
+                                        <th>Availed</th>
+                                        <th>Balance</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -44,8 +53,11 @@
                                                 </span>
                                             </td>
                                             <td class="text-center">{{ $row['leaves']['casual'] }}</td>
+                                            <td class="text-center">{{ $row['balances']['casual'] ?? 0 }}</td>
                                             <td class="text-center">{{ $row['leaves']['medical'] }}</td>
+                                            <td class="text-center">{{ $row['balances']['medical'] ?? 0 }}</td>
                                             <td class="text-center">{{ $row['leaves']['annual'] }}</td>
+                                            <td class="text-center">{{ $row['balances']['annual'] ?? 0 }}</td>
                                             <td class="text-center">{{ $row['leaves']['without_pay'] }}</td>
                                             <td class="text-center">{{ $row['leaves']['outdoor_duty'] }}</td>
                                             <td class="text-center">{{ $row['late_mins'] }}</td>
@@ -53,7 +65,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="8" class="text-center text-muted">
+                                            <td colspan="12" class="text-center text-muted">
                                                 No employees record found for the selected criteria.
                                             </td>
                                         </tr>

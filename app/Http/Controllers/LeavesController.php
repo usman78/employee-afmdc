@@ -16,6 +16,7 @@ use App\Models\ApprovedLeave;
 use App\Models\Department;
 use App\Models\Attendance;
 use App\Models\Designation;
+use App\Models\Balance;
 
 class LeavesController extends Controller
 {
@@ -1000,6 +1001,7 @@ class LeavesController extends Controller
                 ->get(['emp_code', 'name', 'desg_code']);
         }
         $report = [];
+        $reportTitle = $department ? 'Department Availed Leave Report' : 'Availed Leave Report';
 
         foreach ($employees as $employee) {
 
@@ -1053,17 +1055,26 @@ class LeavesController extends Controller
             // getting employees designation
             $designation = $employee->designation->desg_short;
 
+            $balances = Balance::where('emp_code', $employee->emp_code)
+                ->whereIn('leav_code', [1, 2, 3])
+                ->pluck('leave_balance', 'leav_code');
+
             $report[] = [
                 'emp_code' => $employee->emp_code,
                 'emp_name' => $employee->name,
                 'designation' => $designation,
                 'leaves'   => $leaveSummary,
+                'balances' => [
+                    'casual' => (float) ($balances[1] ?? 0),
+                    'medical' => (float) ($balances[2] ?? 0),
+                    'annual' => (float) ($balances[3] ?? 0),
+                ],
                 'late_mins'  => $attendanceTotals['late'],
                 'early_mins' => $attendanceTotals['early'],
             ];
         }
 
-        return view('leave-report-data', compact('report', 'startDate', 'endDate', 'department', 'dept_code', 'desigName'));
+        return view('leave-report-data', compact('report', 'startDate', 'endDate', 'department', 'dept_code', 'desigName', 'reportTitle', 'employee'));
     }
     private function calculateLateEarlyMinutes($emp_code, Carbon $startDate, Carbon $endDate)
     {
@@ -1273,9 +1284,19 @@ class LeavesController extends Controller
         $dept_desc = request()->input('dept_desc');
         $report = request()->input('report');
         $desgShort = request()->input('desg_short');
+        $reportTitle = $dept_desc ? 'Department Availed Leave Report' : 'Availed Leave Report';
+        $employeeDept = request()->input('employee_dept');
         $now = Carbon::now();
-        $pdf = Pdf::loadView('pdf.leave-report', ['start' => dateFormat($start_date), 'end' => dateFormat($end_date), 'dept_desc' => $dept_desc, 'report' => $report, 'desg_short' => $desgShort]);
-        return $pdf->download("leave_report_{$now}.pdf");
+        $pdf = Pdf::loadView('pdf.leave-report', [
+            'start' => dateFormat($start_date),
+            'end' => dateFormat($end_date),
+            'dept_desc' => $dept_desc,
+            'report' => $report,
+            'desg_short' => $desgShort,
+            'report_title' => $reportTitle,
+            'employee_dept' => $employeeDept,
+        ]);
+        return $pdf->stream("leave_report_{$now}.pdf");
         // return view('pdf.leave-report', [
         //     'start' => $start_date,
         //     'end' => $end_date,
