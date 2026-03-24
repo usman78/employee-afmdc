@@ -189,7 +189,7 @@
                     </tr>
                   @empty
                     <tr>
-                      <td colspan="6" class="text-center">No employee record found for this department/date.</td>
+                      <td colspan="8" class="text-center">No employee record found for this department/date.</td>
                     </tr>
                   @endforelse
                 </tbody>
@@ -352,7 +352,7 @@
               </div>
             </div>
 
-            <table class="table mt-3 mb-5">
+            <table class="table mt-3 mb-5" id="employee-attendance-table">
               <thead>
                 <tr>
                   <th>Sr#</th>
@@ -442,9 +442,10 @@
     let totalEarly = 0;
     let totalLateDays = 0;
 
-    document.querySelectorAll("table tbody tr").forEach(row => {
-      let lateCell = row.cells[2];
-      let earlyCell = row.cells[3];
+    const rows = document.querySelectorAll("#employee-attendance-table tbody tr");
+    rows.forEach(row => {
+      let lateCell = row.cells[3];
+      let earlyCell = row.cells[4];
 
       if (lateCell) {
         let lateText = lateCell.innerText.trim();
@@ -474,7 +475,7 @@
     };
   }
 
-  if (document.querySelector('table tbody tr')) {
+  if (document.querySelector('#employee-attendance-table tbody tr')) {
     const totals = sumLateAndEarlyMinutes();
     const lateEl = document.querySelector('.late-mins');
     const lateDaysEl = document.querySelector('.late-days');
