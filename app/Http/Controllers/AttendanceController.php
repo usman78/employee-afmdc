@@ -9,6 +9,7 @@ use App\Models\Department;
 use App\Jobs\SendAttendanceReportToHodJob;
 use App\Jobs\SendDepartmentAttendanceReportJob;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon; 
 use App\Models\Leave;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -66,6 +67,102 @@ class AttendanceController extends Controller
             'searched_end_date' => Carbon::today()->toDateString(),
             'dept_report_date' => Carbon::today()->toDateString(),
         ]);
+    }
+
+    public function attendanceLateReport()
+    {
+        return view('attendance-late-report', [
+            'report_date' => Carbon::today()->toDateString(),
+        ]);
+    }
+
+    public function attendanceLateReportData(Request $request)
+    {
+        $request->validate([
+            'report_date' => 'required|date',
+        ]);
+
+        $reportDate = Carbon::parse($request->input('report_date'))->toDateString();
+        $lateReport = $this->buildLateAttendanceReport($reportDate);
+
+        return view('attendance-late-report', [
+            'report_date' => $reportDate,
+            'late_rows' => $lateReport['rows'],
+            'stats_start' => $lateReport['stats_start'],
+            'stats_end' => $lateReport['stats_end'],
+        ]);
+    }
+
+    public function attendanceAbsentReport()
+    {
+        return view('attendance-absent-report', [
+            'report_date' => Carbon::today()->toDateString(),
+            'loca_code' => '1',
+        ]);
+    }
+
+    public function attendanceAbsentReportData(Request $request)
+    {
+        $request->validate([
+            'report_date' => 'required|date',
+            'loca_code' => 'nullable|in:1,2',
+        ]);
+
+        $reportDate = Carbon::parse($request->input('report_date'))->toDateString();
+        $locaCode = $request->input('loca_code', '1');
+        $absentReport = $this->buildAbsentAttendanceReport($reportDate, $locaCode);
+
+        return view('attendance-absent-report', [
+            'report_date' => $reportDate,
+            'absent_rows' => $absentReport['rows'],
+            'stats_start' => $absentReport['stats_start'],
+            'stats_end' => $absentReport['stats_end'],
+            'is_non_working_day' => $absentReport['is_non_working_day'],
+            'loca_code' => (string) $locaCode,
+        ]);
+    }
+
+    public function attendanceAbsentReportDownload(Request $request)
+    {
+        $request->validate([
+            'report_date' => 'required|date',
+            'loca_code' => 'nullable|in:1,2',
+        ]);
+
+        $reportDate = Carbon::parse($request->input('report_date'))->toDateString();
+        $locaCode = $request->input('loca_code', '1');
+        $absentReport = $this->buildAbsentAttendanceReport($reportDate, $locaCode);
+
+        $pdf = Pdf::loadView('pdf.attendance-absent-report', [
+            'report_date' => $reportDate,
+            'stats_start' => $absentReport['stats_start'],
+            'stats_end' => $absentReport['stats_end'],
+            'rows' => $absentReport['rows'],
+            'is_non_working_day' => $absentReport['is_non_working_day'],
+            'loca_code' => (string) $locaCode,
+        ]);
+
+        $fileName = 'absent_attendance_' . Carbon::parse($reportDate)->format('Ymd') . '_' . Carbon::now()->format('Ymd_His') . '.pdf';
+        return $pdf->stream($fileName);
+    }
+    public function attendanceLateReportDownload(Request $request)
+    {
+        $request->validate([
+            'report_date' => 'required|date',
+        ]);
+
+        $reportDate = Carbon::parse($request->input('report_date'))->toDateString();
+        $lateReport = $this->buildLateAttendanceReport($reportDate);
+
+        $pdf = Pdf::loadView('pdf.attendance-late-report', [
+            'report_date' => $reportDate,
+            'stats_start' => $lateReport['stats_start'],
+            'stats_end' => $lateReport['stats_end'],
+            'rows' => $lateReport['rows'],
+        ]);
+
+        $fileName = 'late_attendance_' . Carbon::parse($reportDate)->format('Ymd') . '_' . Carbon::now()->format('Ymd_His') . '.pdf';
+        return $pdf->stream($fileName);
     }
 
     public function attendanceReportData(Request $request)
@@ -486,7 +583,8 @@ class AttendanceController extends Controller
             '2025-06-09','2025-06-10','2025-06-11',
             '2025-07-05','2025-08-14',
             '2025-11-09','2025-12-25',
-            '2026-02-05', '2026-02-06', '2026-02-07'
+            '2026-02-05', '2026-02-06', '2026-02-07',
+            '2026-03-19', '2026-03-20', '2026-03-21', '2026-03-23'
         ];
 
         $start_date = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->startOfMonth();
@@ -707,6 +805,203 @@ class AttendanceController extends Controller
             'hod_email'  => $hodEmail,
             'report_start_date' => $start_date->toDateString(),
             'report_end_date' => $end_date->toDateString(),
+        ];
+    }
+
+    private function buildLateAttendanceReport(string $reportDate): array
+    {
+        $reportCarbon = Carbon::parse($reportDate);
+        $monthStart = $reportCarbon->copy()->startOfMonth()->toDateString();
+        $statsEnd = $reportCarbon->gt(Carbon::today()) ? Carbon::today()->toDateString() : $reportCarbon->toDateString();
+
+        $lateEmpCodes = DB::table('pay_month_att_minutes')
+            ->select('emp_code')
+            ->whereRaw(
+                "dated >= TO_DATE(?, 'YYYY-MM-DD') AND dated < TO_DATE(?, 'YYYY-MM-DD') + 1",
+                [$reportDate, $reportDate]
+            )
+            ->groupBy('emp_code')
+            ->havingRaw('MAX(late_coming) >= 10')
+            ->pluck('emp_code')
+            ->all();
+
+        if (empty($lateEmpCodes)) {
+            return [
+                'rows' => collect(),
+                'stats_start' => $monthStart,
+                'stats_end' => $statsEnd,
+            ];
+        }
+
+        $dailyLate = DB::table('pay_month_att_minutes')
+            ->selectRaw("emp_code, TRUNC(dated) as work_date, MAX(late_coming) as late_min")
+            ->whereRaw(
+                "dated >= TO_DATE(?, 'YYYY-MM-DD') AND dated < TO_DATE(?, 'YYYY-MM-DD') + 1",
+                [$monthStart, $statsEnd]
+            )
+            ->whereIn('emp_code', $lateEmpCodes)
+            ->groupBy('emp_code', DB::raw("TRUNC(dated)"));
+
+        $lateStats = DB::table(DB::raw("({$dailyLate->toSql()}) stats"))
+            ->mergeBindings($dailyLate)
+            ->selectRaw("
+                emp_code,
+                SUM(CASE WHEN late_min >= 10 THEN late_min ELSE 0 END) as total_late_minutes,
+                SUM(CASE WHEN late_min >= 10 THEN 1 ELSE 0 END) as total_late_days
+            ")
+            ->groupBy('emp_code')
+            ->get()
+            ->keyBy('emp_code');
+
+        $timeIns = DB::table('daily_attnd')
+            ->selectRaw('emp_code, MIN(timein) as time_in')
+            ->whereNull('att_stat')
+            ->whereRaw(
+                "at_date >= TO_DATE(?, 'YYYY-MM-DD') AND at_date < TO_DATE(?, 'YYYY-MM-DD') + 1",
+                [$reportDate, $reportDate]
+            )
+            ->whereIn('emp_code', $lateEmpCodes)
+            ->groupBy('emp_code')
+            ->get()
+            ->keyBy('emp_code');
+
+        $employees = Employee::whereIn('emp_code', $lateEmpCodes)
+            ->whereNull('quit_stat')
+            ->with(['designation', 'department'])
+            ->orderBy('name')
+            ->get(['emp_code', 'name', 'desg_code', 'dept_code']);
+
+        $rows = $employees->map(function ($employee) use ($lateStats, $timeIns, $reportDate) {
+            $stats = $lateStats->get($employee->emp_code);
+            $lateMinutes = $stats ? intval($stats->total_late_minutes) : 0;
+            $lateDays = $stats ? intval($stats->total_late_days) : 0;
+            $timeInRaw = $timeIns->get($employee->emp_code)->time_in ?? null;
+            $timeIn = $timeInRaw ? Carbon::parse($timeInRaw)->format('H:i') : '--:--';
+
+            return [
+                'date' => $reportDate,
+                'emp_code' => $employee->emp_code,
+                'name' => function_exists('capitalizeWords') ? capitalizeWords($employee->name) : ucfirst(strtolower($employee->name)),
+                'designation' => $employee->designation->desg_short ?? '--',
+                'department' => $employee->department->dept_desc ?? '--',
+                'time_in' => $timeIn,
+                'total_late_days' => $lateDays,
+                'total_late_minutes' => $lateMinutes,
+            ];
+        });
+
+        return [
+            'rows' => $rows,
+            'stats_start' => $monthStart,
+            'stats_end' => $statsEnd,
+        ];
+    }
+
+    private function buildAbsentAttendanceReport(string $reportDate, string $locaCode = '1'): array
+    {
+        $reportCarbon = Carbon::parse($reportDate);
+        $monthStart = $reportCarbon->copy()->startOfMonth()->toDateString();
+        $statsEnd = $reportCarbon->gt(Carbon::today()) ? Carbon::today()->toDateString() : $reportCarbon->toDateString();
+
+        $holidays = [
+            '2025-03-31','2025-04-01','2025-04-02',
+            '2025-05-01','2025-05-07',
+            '2025-06-09','2025-06-10','2025-06-11',
+            '2025-07-05','2025-08-14',
+            '2025-11-09','2025-12-25',
+            '2026-02-05', '2026-02-06', '2026-02-07',
+            '2026-03-19', '2026-03-20', '2026-03-21', '2026-03-23'
+        ];
+
+        $isNonWorkingDay = $reportCarbon->isSunday() || in_array($reportDate, $holidays, true);
+
+        $leaveEmpCodes = Leave::select('emp_code')
+            ->whereNot('status', 9)
+            ->whereRaw(
+                "from_date < TO_DATE(?, 'YYYY-MM-DD') + 1 AND to_date >= TO_DATE(?, 'YYYY-MM-DD')",
+                [$reportDate, $reportDate]
+            )
+            ->distinct()
+            ->pluck('emp_code')
+            ->all();
+
+        $leaveEmpLookup = array_fill_keys($leaveEmpCodes, true);
+
+        if ($isNonWorkingDay) {
+            $employees = Employee::whereNull('quit_stat')
+                ->where('loca_code', $locaCode)
+                ->whereIn('emp_code', $leaveEmpCodes)
+                ->with(['designation', 'department'])
+                ->orderBy('name')
+                ->get(['emp_code', 'name', 'desg_code', 'dept_code', 'loca_code']);
+        } else {
+            $employees = Employee::whereNull('quit_stat')
+                ->where('loca_code', $locaCode)
+                ->whereNotExists(function ($query) use ($reportDate) {
+                    $query->select(DB::raw(1))
+                        ->from('daily_attnd')
+                        ->whereColumn('daily_attnd.emp_code', 'pay_pers.emp_code')
+                        ->whereNull('att_stat')
+                        ->whereRaw(
+                            "at_date >= TO_DATE(?, 'YYYY-MM-DD') AND at_date < TO_DATE(?, 'YYYY-MM-DD') + 1",
+                            [$reportDate, $reportDate]
+                        );
+                })
+                ->with(['designation', 'department'])
+                ->orderBy('name')
+                ->get(['emp_code', 'name', 'desg_code', 'dept_code', 'loca_code']);
+        }
+
+        if ($employees->isEmpty()) {
+            return [
+                'rows' => collect(),
+                'stats_start' => $monthStart,
+                'stats_end' => $statsEnd,
+                'is_non_working_day' => $isNonWorkingDay,
+            ];
+        }
+
+        $employeeCodes = $employees->pluck('emp_code')->all();
+
+        $leaveTotals = Leave::selectRaw("
+                emp_code,
+                SUM(CASE WHEN leave_code = 1 THEN l_day ELSE 0 END) AS casual,
+                SUM(CASE WHEN leave_code = 2 THEN l_day ELSE 0 END) AS medical,
+                SUM(CASE WHEN leave_code = 3 THEN l_day ELSE 0 END) AS annual,
+                SUM(CASE WHEN leave_code = 12 THEN l_day ELSE 0 END) AS od
+            ")
+            ->whereNot('status', 9)
+            ->whereRaw(
+                "from_date < TO_DATE(?, 'YYYY-MM-DD') + 1 AND to_date >= TO_DATE(?, 'YYYY-MM-DD')",
+                [$statsEnd, $monthStart]
+            )
+            ->whereIn('emp_code', $employeeCodes)
+            ->groupBy('emp_code')
+            ->get()
+            ->keyBy('emp_code');
+
+        $rows = $employees->map(function ($employee) use ($leaveEmpLookup, $leaveTotals, $reportDate) {
+            $totals = $leaveTotals->get($employee->emp_code);
+
+            return [
+                'date' => $reportDate,
+                'emp_code' => $employee->emp_code,
+                'name' => function_exists('capitalizeWords') ? capitalizeWords($employee->name) : ucfirst(strtolower($employee->name)),
+                'designation' => $employee->designation->desg_short ?? '--',
+                'department' => $employee->department->dept_desc ?? '--',
+                'status' => isset($leaveEmpLookup[$employee->emp_code]) ? 'Leave' : 'Absent',
+                'casual' => $totals ? (float) $totals->casual : 0,
+                'medical' => $totals ? (float) $totals->medical : 0,
+                'annual' => $totals ? (float) $totals->annual : 0,
+                'od' => $totals ? (float) $totals->od : 0,
+            ];
+        });
+
+        return [
+            'rows' => $rows,
+            'stats_start' => $monthStart,
+            'stats_end' => $statsEnd,
+            'is_non_working_day' => $isNonWorkingDay,
         ];
     }
 

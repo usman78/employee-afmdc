@@ -26,10 +26,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/roster/{empCode}', [RosterController::class, 'index'])->name('roster');
 
     Route::get('/attendance-report', [AttendanceController::class, 'attendanceReport'])->name('attendance-report');
+    Route::get('/attendance-late-report', [AttendanceController::class, 'attendanceLateReport'])->name('attendance-late-report');
+    Route::get('/attendance-absent-report', [AttendanceController::class, 'attendanceAbsentReport'])->name('attendance-absent-report');
     Route::post('/attendance-report-department', [AttendanceController::class, 'attendanceReportDepartmentData'])->name('attendance-report-department-data');
     Route::post('/attendance-report-department-email', [AttendanceController::class, 'attendanceReportDepartmentEmail'])->name('attendance-report-department-email');
     Route::post('/attendance-report-department-download', [AttendanceController::class, 'attendanceReportDepartmentDownload'])->name('attendance-report-department-download');
     Route::post('/attendance-report', [AttendanceController::class, 'attendanceReportData'])->name('attendance-report-data');
+    Route::post('/attendance-late-report', [AttendanceController::class, 'attendanceLateReportData'])->name('attendance-late-report-data');
+    Route::post('/attendance-absent-report', [AttendanceController::class, 'attendanceAbsentReportData'])->name('attendance-absent-report-data');
+    Route::post('/attendance-late-report-download', [AttendanceController::class, 'attendanceLateReportDownload'])->name('attendance-late-report-download');
+    Route::post('/attendance-absent-report-download', [AttendanceController::class, 'attendanceAbsentReportDownload'])->name('attendance-absent-report-download');
     Route::post('/attendance-report-download/{emp_code}', [AttendanceController::class, 'attendanceReportDownload'])->name('attendance-report-download');
     Route::post('/attendance-report-email/{emp_code}', [AttendanceController::class, 'attendanceReportEmail'])->name('attendance-report-email');
     Route::get('/attendance/{emp_code}', [AttendanceController::class, 'attendance'])->name('attendance');

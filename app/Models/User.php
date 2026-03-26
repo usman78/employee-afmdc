@@ -69,6 +69,10 @@ class User extends Authenticatable
     {
         return $this->hasOne(LeaveAuth::class, 'emp_code_a', 'emp_code');
     }
+    public function isAdmin()
+    {
+        return in_array($this->emp_code, [ '1045', '1171']);
+    }
     public function isHR()
     {
         return in_array($this->desg_code, ['971', '991', '44', '996', '786', '95']);
