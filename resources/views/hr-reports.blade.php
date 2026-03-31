@@ -184,7 +184,7 @@
                     <h6 class="m-0 font-weight-bold text-primary">Please Note</h6>
                 </div>
                 <div class="card-body">
-                    The Present, Absent/Leave and Late Coming numbers include only those who are working in Aziz Fatmiah Medical & Dental College (AFMDC), NOT those who are working in Aziz Fatmiah Hospital (AFH).
+                    The Present, Absent/Leave and Late Coming numbers include only those who are working in Aziz Fatimah Medical & Dental College (AFMDC), NOT those who are working in Aziz Fatimah Hospital (AFH).
                 </div>
             </div>
 
