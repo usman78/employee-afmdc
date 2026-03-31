@@ -10,6 +10,7 @@ use App\Jobs\SendAttendanceReportToHodJob;
 use App\Jobs\SendDepartmentAttendanceReportJob;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon; 
 use App\Models\Leave;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -69,9 +70,88 @@ class AttendanceController extends Controller
         ]);
     }
 
+    public function hrReports()
+    {
+        $today = Carbon::today()->toDateString();
+
+        $totalStrength = Employee::whereNull('quit_stat')->count();
+        $afmdcStrength = Employee::whereNull('quit_stat')->where('loca_code', 1)->count();
+
+        $genderColumn = null;
+        foreach (['gender', 'sex', 'gndr'] as $column) {
+            if (Schema::hasColumn('pay_pers', $column)) {
+                $genderColumn = $column;
+                break;
+            }
+        }
+
+        $maleStrength = 0;
+        $femaleStrength = 0;
+        if ($genderColumn) {
+            $maleStrength = Employee::whereNull('quit_stat')
+                ->whereRaw("UPPER(TRIM({$genderColumn})) IN ('M', 'MALE')")
+                ->count();
+            $femaleStrength = Employee::whereNull('quit_stat')
+                ->whereRaw("UPPER(TRIM({$genderColumn})) IN ('F', 'FEMALE')")
+                ->count();
+        }
+
+        $totalPresent = DB::table('daily_attnd')
+            ->join('pay_pers', 'daily_attnd.emp_code', '=', 'pay_pers.emp_code')
+            ->whereNull('daily_attnd.att_stat')
+            ->whereNull('pay_pers.quit_stat')
+            ->where('pay_pers.loca_code', 1)
+            ->whereRaw(
+                "daily_attnd.at_date >= TO_DATE(?, 'YYYY-MM-DD') AND daily_attnd.at_date < TO_DATE(?, 'YYYY-MM-DD') + 1",
+                [$today, $today]
+            )
+            ->distinct()
+            ->count('daily_attnd.emp_code');
+
+        $lateComing = DB::table('pay_month_att_minutes')
+            ->join('pay_pers', 'pay_month_att_minutes.emp_code', '=', 'pay_pers.emp_code')
+            ->whereNull('pay_pers.quit_stat')
+            ->where('pay_pers.loca_code', 1)
+            ->whereRaw(
+                "pay_month_att_minutes.dated >= TO_DATE(?, 'YYYY-MM-DD') AND pay_month_att_minutes.dated < TO_DATE(?, 'YYYY-MM-DD') + 1",
+                [$today, $today]
+            )
+            ->select('pay_month_att_minutes.emp_code')
+            ->groupBy('pay_month_att_minutes.emp_code')
+            ->havingRaw('MAX(pay_month_att_minutes.late_coming) >= 10')
+            ->get()
+            ->count();
+
+        $absentReport = $this->buildAbsentAttendanceReport($today, '1');
+        $absentLeaveCount = $absentReport['rows']->count();
+
+        $percent = function (int $value, int $total): int {
+            if ($total <= 0) {
+                return 0;
+            }
+            return (int) round(($value / $total) * 100);
+        };
+
+        return view('hr-reports', [
+            'total_strength' => $totalStrength,
+            'male_strength' => $maleStrength,
+            'female_strength' => $femaleStrength,
+            'present_count' => $totalPresent,
+            'late_count' => $lateComing,
+            'absent_leave_count' => $absentLeaveCount,
+            'male_percent' => $percent($maleStrength, $totalStrength),
+            'female_percent' => $percent($femaleStrength, $totalStrength),
+            'present_percent' => $percent($totalPresent, $totalStrength),
+            'late_percent' => $percent($lateComing, $totalStrength),
+            'absent_leave_percent' => $percent($absentLeaveCount, $afmdcStrength),
+        ]);
+    }
+
     public function attendanceLateReport()
     {
+        $departments = Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']);
         return view('attendance-late-report', [
+            'departments' => $departments,
             'report_date' => Carbon::today()->toDateString(),
         ]);
     }
@@ -80,13 +160,17 @@ class AttendanceController extends Controller
     {
         $request->validate([
             'report_date' => 'required|date',
+            'dept_code' => 'nullable',
         ]);
 
         $reportDate = Carbon::parse($request->input('report_date'))->toDateString();
-        $lateReport = $this->buildLateAttendanceReport($reportDate);
+        $deptCode = $request->input('dept_code');
+        $lateReport = $this->buildLateAttendanceReport($reportDate, $deptCode);
 
         return view('attendance-late-report', [
+            'departments' => Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']),
             'report_date' => $reportDate,
+            'dept_code' => $deptCode,
             'late_rows' => $lateReport['rows'],
             'stats_start' => $lateReport['stats_start'],
             'stats_end' => $lateReport['stats_end'],
@@ -95,7 +179,9 @@ class AttendanceController extends Controller
 
     public function attendanceAbsentReport()
     {
+        $departments = Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']);
         return view('attendance-absent-report', [
+            'departments' => $departments,
             'report_date' => Carbon::today()->toDateString(),
             'loca_code' => '1',
         ]);
@@ -106,19 +192,23 @@ class AttendanceController extends Controller
         $request->validate([
             'report_date' => 'required|date',
             'loca_code' => 'nullable|in:1,2',
+            'dept_code' => 'nullable',
         ]);
 
         $reportDate = Carbon::parse($request->input('report_date'))->toDateString();
         $locaCode = $request->input('loca_code', '1');
-        $absentReport = $this->buildAbsentAttendanceReport($reportDate, $locaCode);
+        $deptCode = $request->input('dept_code');
+        $absentReport = $this->buildAbsentAttendanceReport($reportDate, $locaCode, $deptCode);
 
         return view('attendance-absent-report', [
+            'departments' => Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']),
             'report_date' => $reportDate,
             'absent_rows' => $absentReport['rows'],
             'stats_start' => $absentReport['stats_start'],
             'stats_end' => $absentReport['stats_end'],
             'is_non_working_day' => $absentReport['is_non_working_day'],
             'loca_code' => (string) $locaCode,
+            'dept_code' => $deptCode,
         ]);
     }
 
@@ -127,11 +217,13 @@ class AttendanceController extends Controller
         $request->validate([
             'report_date' => 'required|date',
             'loca_code' => 'nullable|in:1,2',
+            'dept_code' => 'nullable',
         ]);
 
         $reportDate = Carbon::parse($request->input('report_date'))->toDateString();
         $locaCode = $request->input('loca_code', '1');
-        $absentReport = $this->buildAbsentAttendanceReport($reportDate, $locaCode);
+        $deptCode = $request->input('dept_code');
+        $absentReport = $this->buildAbsentAttendanceReport($reportDate, $locaCode, $deptCode);
 
         $pdf = Pdf::loadView('pdf.attendance-absent-report', [
             'report_date' => $reportDate,
@@ -140,22 +232,57 @@ class AttendanceController extends Controller
             'rows' => $absentReport['rows'],
             'is_non_working_day' => $absentReport['is_non_working_day'],
             'loca_code' => (string) $locaCode,
+            'dept_code' => $deptCode,
         ]);
 
         $fileName = 'absent_attendance_' . Carbon::parse($reportDate)->format('Ymd') . '_' . Carbon::now()->format('Ymd_His') . '.pdf';
         return $pdf->stream($fileName);
     }
+
+    public function attendancePresentReport()
+    {
+        $departments = Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']);
+
+        return view('attendance-present-report', [
+            'departments' => $departments,
+            'report_date' => Carbon::today()->toDateString(),
+            'dept_code' => null,
+        ]);
+    }
+
+    public function attendancePresentReportData(Request $request)
+    {
+        $request->validate([
+            'report_date' => 'required|date',
+            'dept_code' => 'nullable',
+        ]);
+
+        $reportDate = Carbon::parse($request->input('report_date'))->toDateString();
+        $deptCode = $request->input('dept_code');
+        $departments = Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']);
+        $presentReport = $this->buildPresentAttendanceReport($reportDate, $deptCode);
+
+        return view('attendance-present-report', [
+            'departments' => $departments,
+            'report_date' => $reportDate,
+            'dept_code' => $deptCode,
+            'present_rows' => $presentReport['rows'],
+        ]);
+    }
     public function attendanceLateReportDownload(Request $request)
     {
         $request->validate([
             'report_date' => 'required|date',
+            'dept_code' => 'nullable',
         ]);
 
         $reportDate = Carbon::parse($request->input('report_date'))->toDateString();
-        $lateReport = $this->buildLateAttendanceReport($reportDate);
+        $deptCode = $request->input('dept_code');
+        $lateReport = $this->buildLateAttendanceReport($reportDate, $deptCode);
 
         $pdf = Pdf::loadView('pdf.attendance-late-report', [
             'report_date' => $reportDate,
+            'dept_code' => $deptCode,
             'stats_start' => $lateReport['stats_start'],
             'stats_end' => $lateReport['stats_end'],
             'rows' => $lateReport['rows'],
@@ -808,22 +935,28 @@ class AttendanceController extends Controller
         ];
     }
 
-    private function buildLateAttendanceReport(string $reportDate): array
+    private function buildLateAttendanceReport(string $reportDate, ?string $deptCode = null): array
     {
         $reportCarbon = Carbon::parse($reportDate);
         $monthStart = $reportCarbon->copy()->startOfMonth()->toDateString();
         $statsEnd = $reportCarbon->gt(Carbon::today()) ? Carbon::today()->toDateString() : $reportCarbon->toDateString();
 
-        $lateEmpCodes = DB::table('pay_month_att_minutes')
-            ->select('emp_code')
+        $lateEmpQuery = DB::table('pay_month_att_minutes')
+            ->select('pay_month_att_minutes.emp_code')
+            ->join('pay_pers', 'pay_month_att_minutes.emp_code', '=', 'pay_pers.emp_code')
+            ->whereNull('pay_pers.quit_stat')
             ->whereRaw(
                 "dated >= TO_DATE(?, 'YYYY-MM-DD') AND dated < TO_DATE(?, 'YYYY-MM-DD') + 1",
                 [$reportDate, $reportDate]
             )
-            ->groupBy('emp_code')
-            ->havingRaw('MAX(late_coming) >= 10')
-            ->pluck('emp_code')
-            ->all();
+            ->groupBy('pay_month_att_minutes.emp_code')
+            ->havingRaw('MAX(late_coming) >= 10');
+
+        if ($deptCode) {
+            $lateEmpQuery->where('pay_pers.dept_code', $deptCode);
+        }
+
+        $lateEmpCodes = $lateEmpQuery->pluck('pay_month_att_minutes.emp_code')->all();
 
         if (empty($lateEmpCodes)) {
             return [
@@ -854,19 +987,24 @@ class AttendanceController extends Controller
             ->keyBy('emp_code');
 
         $timeIns = DB::table('daily_attnd')
-            ->selectRaw('emp_code, MIN(timein) as time_in')
-            ->whereNull('att_stat')
+            ->selectRaw('daily_attnd.emp_code, MIN(daily_attnd.timein) as time_in')
+            ->join('pay_pers', 'daily_attnd.emp_code', '=', 'pay_pers.emp_code')
+            ->whereNull('daily_attnd.att_stat')
+            ->whereNull('pay_pers.quit_stat')
             ->whereRaw(
-                "at_date >= TO_DATE(?, 'YYYY-MM-DD') AND at_date < TO_DATE(?, 'YYYY-MM-DD') + 1",
+                "daily_attnd.at_date >= TO_DATE(?, 'YYYY-MM-DD') AND daily_attnd.at_date < TO_DATE(?, 'YYYY-MM-DD') + 1",
                 [$reportDate, $reportDate]
             )
-            ->whereIn('emp_code', $lateEmpCodes)
-            ->groupBy('emp_code')
+            ->whereIn('daily_attnd.emp_code', $lateEmpCodes)
+            ->groupBy('daily_attnd.emp_code')
             ->get()
             ->keyBy('emp_code');
 
         $employees = Employee::whereIn('emp_code', $lateEmpCodes)
             ->whereNull('quit_stat')
+            ->when($deptCode, function ($query) use ($deptCode) {
+                $query->where('dept_code', $deptCode);
+            })
             ->with(['designation', 'department'])
             ->orderBy('name')
             ->get(['emp_code', 'name', 'desg_code', 'dept_code']);
@@ -897,7 +1035,7 @@ class AttendanceController extends Controller
         ];
     }
 
-    private function buildAbsentAttendanceReport(string $reportDate, string $locaCode = '1'): array
+    private function buildAbsentAttendanceReport(string $reportDate, string $locaCode = '1', ?string $deptCode = null): array
     {
         $reportCarbon = Carbon::parse($reportDate);
         $monthStart = $reportCarbon->copy()->startOfMonth()->toDateString();
@@ -930,6 +1068,9 @@ class AttendanceController extends Controller
         if ($isNonWorkingDay) {
             $employees = Employee::whereNull('quit_stat')
                 ->where('loca_code', $locaCode)
+                ->when($deptCode, function ($query) use ($deptCode) {
+                    $query->where('dept_code', $deptCode);
+                })
                 ->whereIn('emp_code', $leaveEmpCodes)
                 ->with(['designation', 'department'])
                 ->orderBy('name')
@@ -937,6 +1078,9 @@ class AttendanceController extends Controller
         } else {
             $employees = Employee::whereNull('quit_stat')
                 ->where('loca_code', $locaCode)
+                ->when($deptCode, function ($query) use ($deptCode) {
+                    $query->where('dept_code', $deptCode);
+                })
                 ->whereNotExists(function ($query) use ($reportDate) {
                     $query->select(DB::raw(1))
                         ->from('daily_attnd')
@@ -1003,6 +1147,61 @@ class AttendanceController extends Controller
             'stats_end' => $statsEnd,
             'is_non_working_day' => $isNonWorkingDay,
         ];
+    }
+
+    private function buildPresentAttendanceReport(string $reportDate, ?string $deptCode = null): array
+    {
+        $presentQuery = DB::table('daily_attnd')
+            ->selectRaw('daily_attnd.emp_code, MIN(timein) as time_in, MAX(timeout) as time_out')
+            ->join('pay_pers', 'daily_attnd.emp_code', '=', 'pay_pers.emp_code')
+            ->whereNull('daily_attnd.att_stat')
+            ->whereNull('pay_pers.quit_stat')
+            ->where('pay_pers.loca_code', 1)
+            ->whereRaw(
+                "daily_attnd.at_date >= TO_DATE(?, 'YYYY-MM-DD') AND daily_attnd.at_date < TO_DATE(?, 'YYYY-MM-DD') + 1",
+                [$reportDate, $reportDate]
+            );
+
+        if ($deptCode) {
+            $presentQuery->where('pay_pers.dept_code', $deptCode);
+        }
+
+        $presentRows = $presentQuery
+            ->groupBy('daily_attnd.emp_code')
+            ->get()
+            ->keyBy('emp_code');
+
+        if ($presentRows->isEmpty()) {
+            return ['rows' => collect()];
+        }
+
+        $employees = Employee::whereIn('emp_code', $presentRows->keys()->all())
+            ->whereNull('quit_stat')
+            ->where('loca_code', 1)
+            ->when($deptCode, function ($query) use ($deptCode) {
+                $query->where('dept_code', $deptCode);
+            })
+            ->with(['designation', 'department'])
+            ->orderBy('name')
+            ->get(['emp_code', 'name', 'desg_code', 'dept_code']);
+
+        $rows = $employees->map(function ($employee) use ($presentRows, $reportDate) {
+            $timeRow = $presentRows->get($employee->emp_code);
+            $timeIn = $timeRow && $timeRow->time_in ? Carbon::parse($timeRow->time_in)->format('H:i') : '--:--';
+            $timeOut = $timeRow && $timeRow->time_out ? Carbon::parse($timeRow->time_out)->format('H:i') : '--:--';
+
+            return [
+                'date' => $reportDate,
+                'emp_code' => $employee->emp_code,
+                'name' => function_exists('capitalizeWords') ? capitalizeWords($employee->name) : ucfirst(strtolower($employee->name)),
+                'designation' => $employee->designation->desg_short ?? '--',
+                'department' => $employee->department->dept_desc ?? '--',
+                'time_in' => $timeIn,
+                'time_out' => $timeOut,
+            ];
+        });
+
+        return ['rows' => $rows];
     }
 
     private function parseEmailList(?string $emails): array

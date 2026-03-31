@@ -197,33 +197,49 @@
                         data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <a class="collapse-item {{ in_array(request()->route()->getName(), ['exit-interview.create']) ? 'active' : '' }}" href="{{ route('exit-interview.create', $emp_code) }}">Exit Interview Form</a>
-                            {{-- <a class="collapse-item {{ in_array(request()->route()->getName(), ['expense-forms']) ? 'active' : '' }}" href="{{ route('expense-forms', $emp_code) }}">Expense Forms</a> --}}
-                            {{-- <a class="collapse-item {{ in_array(request()->route()->getName(), ['loan-forms']) ? 'active' : '' }}" href="{{ route('loan-forms', $emp_code) }}">Loan Forms</a> --}}
                         </div>
                     </div>
                 </li>
                 {{-- Reports --}}
                 <li @class([
                     'nav-item',
-                    'active' => in_array(request()->route()->getName(), ['attendance-report','attendance-late-report','attendance-absent-report','leave-report', 'admissions', 'inventory'])
+                    'active' => in_array(request()->route()->getName(), [
+                        'hr-reports', 
+                        'attendance-report',
+                        'attendance-late-report',
+                        'attendance-absent-report',
+                        'attendance-present-report',
+                        'attendance-report-data',
+                        'attendance-late-report-data',
+                        'attendance-absent-report-data',
+                        'attendance-present-report-data',
+                        'leave-report', 
+                        'leave-report-data',
+                        'admissions', 
+                        'inventory'
+                        ])
                 ])>
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseReports">
                         <i class="fas fa-fw fa-chart-line"></i>
                         <span>Reports</span>
                     </a>
                     <div id="collapseReports"
-                        class="collapse {{ in_array(request()->route()->getName(), ['attendance-report', 'attendance-report-data','attendance-late-report','attendance-late-report-data','attendance-absent-report','attendance-absent-report-data','leave-report', 'admissions', 'inventory']) ? 'show' : '' }}"
+                        class="collapse {{ in_array(request()->route()->getName(), ['attendance-report', 'attendance-report-data','attendance-late-report','attendance-late-report-data','attendance-absent-report','attendance-absent-report-data','attendance-present-report','attendance-present-report-data','leave-report', 'admissions', 'inventory']) ? 'show' : '' }}"
                         data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
-                            {{-- @if(Auth::user()->isAdmin())
-                                <a class="collapse-item {{ in_array(request()->route()->getName(), ['attendance-late-report', 'attendance-late-report-data']) ? 'active' : '' }}" href="{{ route('attendance-late-report') }}">Late Coming Report</a>
-                                <a class="collapse-item {{ in_array(request()->route()->getName(), ['attendance-absent-report', 'attendance-absent-report-data']) ? 'active' : '' }}" href="{{ route('attendance-absent-report') }}">Absent Report</a>
-                            @endif     --}}
                             @if (Auth::user()->isHR())
-                                <a class="collapse-item {{ in_array(request()->route()->getName(), ['attendance-report', 'attendance-report-data']) ? 'active' : '' }}" href="{{ route('attendance-report') }}">Attendance Report</a>
-                                <a class="collapse-item {{ in_array(request()->route()->getName(), ['attendance-late-report', 'attendance-late-report-data']) ? 'active' : '' }}" href="{{ route('attendance-late-report') }}">Late Coming Report</a>
-                                <a class="collapse-item {{ in_array(request()->route()->getName(), ['attendance-absent-report', 'attendance-absent-report-data']) ? 'active' : '' }}" href="{{ route('attendance-absent-report') }}">Absent Report</a>
-                                <a class="collapse-item {{ in_array(request()->route()->getName(), ['leave-report']) ? 'active' : '' }}" href="{{ route('leave-report') }}">Leave Report</a>
+                                <a class="collapse-item {{ in_array(request()->route()->getName(), [
+                                'hr-reports', 
+                                'attendance-report', 
+                                'attendance-late-report', 
+                                'attendance-absent-report',
+                                'leave-report',
+                                'leave-report-data', 
+                                'attendance-report-data',
+                                'attendance-present-report', 
+                                'attendance-late-report-data', 
+                                'attendance-absent-report-data', 
+                                'attendance-present-report-data']) ? 'active' : '' }}" href="{{ route('hr-reports') }}">HR Reports</a>
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['exit-interview.report']) ? 'active' : '' }}" href="{{ route('exit-interview.report') }}">Exit Interview Reports</a>
                             @endif
                             @if (Auth::user()->isAllowedToSeeAdmissions())

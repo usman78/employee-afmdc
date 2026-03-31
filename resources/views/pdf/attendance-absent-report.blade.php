@@ -96,7 +96,7 @@
                 <th rowspan="2" style="width: 14%;">Designation</th>
                 <th rowspan="2" style="width: 16%;">Department</th>
                 <th rowspan="2" style="width: 10%;">Status</th>
-                <th colspan="4" style="width: 37%; text-align: center; border: none;">Monthly</th>
+                <th colspan="4" style="width: 37%; text-align: center; border: none;">Monthly ({{ \Carbon\Carbon::parse($report_date)->format('F') }})</th>
             </tr>
             <tr>
                 <th style="width: 7%;">Casual</th>

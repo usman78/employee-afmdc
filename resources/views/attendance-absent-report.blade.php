@@ -76,6 +76,24 @@
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
               </div>
+              <div class="col-md-4">
+                <label for="dept_code" class="form-label">Department (Optional)</label>
+                <select
+                  id="dept_code"
+                  name="dept_code"
+                  class="form-control @error('dept_code') is-invalid @enderror"
+                >
+                  <option value="">All Departments</option>
+                  @foreach (($departments ?? collect()) as $department)
+                    <option value="{{ $department->dept_code }}" {{ old('dept_code', $dept_code ?? '') == $department->dept_code ? 'selected' : '' }}>
+                      {{ $department->dept_desc }}
+                    </option>
+                  @endforeach
+                </select>
+                @error('dept_code')
+                  <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+              </div>
               <div class="col-md-3">
                 <button type="submit" class="btn btn-primary">Get Absent Report</button>
               </div>
@@ -96,6 +114,7 @@
                     @csrf
                     <input type="hidden" name="report_date" value="{{ $report_date }}">
                     <input type="hidden" name="loca_code" value="{{ $loca_code ?? '1' }}">
+                    <input type="hidden" name="dept_code" value="{{ $dept_code ?? '' }}">
                     <button type="submit" class="btn btn-primary btn-sm">
                       <i class="fas fa-download"></i> Download PDF
                     </button>
@@ -116,7 +135,7 @@
                     <th rowspan="2">Designation</th>
                     <th rowspan="2">Department</th>
                     <th rowspan="2">Status</th>
-                    <th colspan="4" style="text-align: center; border: none;">Monthly</th>
+                    <th colspan="4" style="text-align: center; border: none;">Monthly ({{ Carbon::parse($report_date)->format('F') }})</th>
                   </tr>
                   <tr>
                     <th>Casual</th>
