@@ -1251,20 +1251,20 @@ class LeavesController extends Controller
                         $overlapStart = max($startShift, $leaveStart);
                         $overlapEnd   = min($minIn, $leaveEnd);
 
-                        // if ($overlapStart < $overlapEnd) {
-                        //     $late -= $overlapStart->diffInMinutes($overlapEnd);
-                        // }
-                        $late = 0; // compensation for partial leaves
+                        if ($overlapStart < $overlapEnd) {
+                            $late -= $overlapStart->diffInMinutes($overlapEnd);
+                        }
+                        // $late = 0; // compensation for partial leaves
                     }
 
                     if ($early > 0 && $maxOut) {
                         $overlapStart = max($maxOut, $leaveStart);
                         $overlapEnd   = min($endShift, $leaveEnd);
 
-                        // if ($overlapStart < $overlapEnd) {
-                        //     $early -= $overlapStart->diffInMinutes($overlapEnd);
-                        // }
-                        $early = 0; // compensation for partial leaves
+                        if ($overlapStart < $overlapEnd) {
+                            $early -= $overlapStart->diffInMinutes($overlapEnd);
+                        }
+                        // $early = 0; // compensation for partial leaves
                     }
                 }
             }

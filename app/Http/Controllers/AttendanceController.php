@@ -863,11 +863,21 @@ class AttendanceController extends Controller
 
                     if ($leaveStart) {
                         if ($lateMins > 0) {
-                            $lateMins = 0;
+                            $overlapStart = $startTimeCarbon->gt($leaveStart) ? $startTimeCarbon : $leaveStart;
+                            $overlapEnd = $minIn->lt($leaveEnd) ? $minIn : $leaveEnd;
+
+                            if ($overlapStart->lt($overlapEnd)) {
+                                $lateMins = max(0, $lateMins - $overlapStart->diffInMinutes($overlapEnd));
+                            }
                         }
 
-                        if ($earlyMins > 0) {
-                            $earlyMins = 0;
+                        if ($earlyMins > 0 && $maxOut) {
+                            $overlapStart = $maxOut->gt($leaveStart) ? $maxOut : $leaveStart;
+                            $overlapEnd = $adjustedEndTimeCarbon->lt($leaveEnd) ? $adjustedEndTimeCarbon : $leaveEnd;
+
+                            if ($overlapStart->lt($overlapEnd)) {
+                                $earlyMins = max(0, $earlyMins - $overlapStart->diffInMinutes($overlapEnd));
+                            }
                         }
                     }
                 }
