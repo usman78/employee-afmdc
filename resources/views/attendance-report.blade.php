@@ -62,7 +62,7 @@
   }
   @media (max-width: 768px) {
     .portfolio-details .portfolio-info {
-      padding: 0 15px;
+      padding: 15px 15px;
     }
   }
 @endpush

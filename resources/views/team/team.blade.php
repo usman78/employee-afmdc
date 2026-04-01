@@ -31,7 +31,7 @@ td {
 }
 @media (max-width: 768px) {
   .portfolio-details .portfolio-info {
-    padding: 20px;
+    padding: 15px;
   }
 }
 {{-- Toggle Switch --}}

@@ -36,7 +36,7 @@ td {
 }
 @media (max-width: 768px) {
   .portfolio-details .portfolio-info {
-    padding: 0 15px;
+    padding: 15px 15px;
   }
 }
 {{-- Toggle Switch --}}
@@ -106,7 +106,7 @@ td {
   <div class="row">
     <div class="col-12">
       <div class="portfolio-details mt-5 mb-5">
-        <div class="portfolio-info pt-4">
+        <div class="portfolio-info">
           <h3>Subordinate Leave Approvals</h3>
           <ul>
             <li class="mt-5">
