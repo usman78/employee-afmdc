@@ -68,7 +68,7 @@
   }
   @media (max-width: 768px) {
     .portfolio-details .portfolio-info {
-      padding: 0 15px;
+      padding: 15px 15px;
     }
   }
 @endpush
@@ -91,6 +91,33 @@
               to
               {{ \Carbon\Carbon::parse($report_end_date ?? \Carbon\Carbon::today()->toDateString())->format('j M Y') }}
             </p>
+            <form action="{{ route('attendance', ['emp_code' => $emp_code ?? '']) }}" method="GET" class="d-flex align-items-end flex-wrap gap-2">
+              <div>
+                <label for="start_date" class="form-label mb-1">Start Date</label>
+                <input
+                  type="date"
+                  id="start_date"
+                  name="start_date"
+                  class="form-control form-control-sm"
+                  value="{{ $report_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString() }}"
+                  required
+                >
+              </div>
+              <div>
+                <label for="end_date" class="form-label mb-1">End Date</label>
+                <input
+                  type="date"
+                  id="end_date"
+                  name="end_date"
+                  class="form-control form-control-sm"
+                  value="{{ $report_end_date ?? \Carbon\Carbon::today()->toDateString() }}"
+                  required
+                >
+              </div>
+              <button type="submit" class="btn btn-secondary btn-sm mt-4">
+                Apply Range
+              </button>
+            </form>
             <form action="{{ route('attendance-report-download', ['emp_code' => $emp_code ?? '']) }}" method="POST">
               @csrf
               <input type="hidden" name="start_date" value="{{ $report_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString() }}">
