@@ -95,7 +95,8 @@ class AttendanceController extends Controller
         $today = Carbon::today()->toDateString();
 
         $totalStrength = Employee::whereNull('quit_stat')->count();
-        $afmdcStrength = Employee::whereNull('quit_stat')->where('loca_code', 1)->count();
+        $totalStrengthAfmdc = Employee::whereNull('quit_stat')->where('loca_code', 1)->count();
+        $totalStrengthAfh = Employee::whereNull('quit_stat')->where('loca_code', 2)->count();
 
         $genderColumn = null;
         foreach (['gender', 'sex', 'gndr'] as $column) {
@@ -146,7 +147,8 @@ class AttendanceController extends Controller
         };
 
         return view('hr-reports', [
-            'total_strength' => $totalStrength,
+            'total_strength_afmdc' => $totalStrengthAfmdc,
+            'total_strength_afh' => $totalStrengthAfh,
             'male_strength' => $maleStrength,
             'female_strength' => $femaleStrength,
             'present_count' => $totalPresent,
@@ -156,7 +158,7 @@ class AttendanceController extends Controller
             'female_percent' => $percent($femaleStrength, $totalStrength),
             'present_percent' => $percent($totalPresent, $totalStrength),
             'late_percent' => $percent($lateComing, $totalStrength),
-            'absent_leave_percent' => $percent($absentLeaveCount, $afmdcStrength),
+            'absent_leave_percent' => $percent($absentLeaveCount, $totalStrength),
         ]);
     }
 

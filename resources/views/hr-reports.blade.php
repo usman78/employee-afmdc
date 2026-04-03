@@ -23,7 +23,7 @@
                             <div class="col mr-2">
                                 <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                     Total Strength</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $total_strength ?? 0 }}</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{!!  ($total_strength_afmdc ?? 0) . ' <small>(AFMDC)</small> + ' . ($total_strength_afh ?? 0) . ' <small>(AFH)</small>' !!}</div>
                             </div>
                             <div class="col-auto">
                                 <i class="fas fa-users fa-2x text-gray-300"></i>
