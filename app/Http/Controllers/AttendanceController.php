@@ -48,14 +48,34 @@ class AttendanceController extends Controller
         return 0;
     }
 
-    public function attendance($emp_code)
+    public function attendance(Request $request, $emp_code)
     {
         $authUser = Auth::user();
         if ($authUser->emp_code != $emp_code) {
             return redirect()->route('home');
         }
 
-        return view('attendance', $this->buildAttendanceData($emp_code));
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        if ($startDate || $endDate) {
+            if (!$startDate || !$endDate) {
+                return redirect()
+                    ->route('attendance', ['emp_code' => $emp_code])
+                    ->with('error', 'Both start and end dates are required.');
+            }
+
+            $start = Carbon::parse($startDate);
+            $end = Carbon::parse($endDate);
+
+            if ($end->lt($start)) {
+                return redirect()
+                    ->route('attendance', ['emp_code' => $emp_code])
+                    ->with('error', 'End date must be on or after start date.');
+            }
+        }
+
+        return view('attendance', $this->buildAttendanceData($emp_code, $startDate, $endDate));
     }
 
     public function attendanceReport()
@@ -108,19 +128,12 @@ class AttendanceController extends Controller
             ->distinct()
             ->count('daily_attnd.emp_code');
 
-        $lateComing = DB::table('pay_month_att_minutes')
-            ->join('pay_pers', 'pay_month_att_minutes.emp_code', '=', 'pay_pers.emp_code')
-            ->whereNull('pay_pers.quit_stat')
-            ->where('pay_pers.loca_code', 1)
-            ->whereRaw(
-                "pay_month_att_minutes.dated >= TO_DATE(?, 'YYYY-MM-DD') AND pay_month_att_minutes.dated < TO_DATE(?, 'YYYY-MM-DD') + 1",
-                [$today, $today]
-            )
-            ->select('pay_month_att_minutes.emp_code')
-            ->groupBy('pay_month_att_minutes.emp_code')
-            ->havingRaw('MAX(pay_month_att_minutes.late_coming) >= 10')
-            ->get()
-            ->count();
+        $lateEmployees = Employee::whereNull('quit_stat')
+            ->where('loca_code', 1)
+            ->get(['emp_code', 'catg_code', 'loca_code', 'st_time', 'end_time', 'twh']);
+
+        $lateData = $this->buildLateEmployeesForDate($lateEmployees, Carbon::parse($today));
+        $lateComing = count($lateData['late_minutes']);
 
         $absentReport = $this->buildAbsentAttendanceReport($today, '1');
         $absentLeaveCount = $absentReport['rows']->count();
@@ -925,10 +938,10 @@ class AttendanceController extends Controller
             ->get();
 
         $leaveCounts = [
-            'casual' => $leaves->where('leave_code', 1)->count(),
-            'medical' => $leaves->where('leave_code', 2)->count(),
-            'annual' => $leaves->where('leave_code', 3)->count(),
-            'outdoor_duty' => $leaves->where('leave_code', 12)->count(),
+            'casual' => $leaves->where('leave_code', 1)->sum(fn ($leave) => $leave->l_day ?? $leave->days ?? 0),
+            'medical' => $leaves->where('leave_code', 2)->sum(fn ($leave) => $leave->l_day ?? $leave->days ?? 0),
+            'annual' => $leaves->where('leave_code', 3)->sum(fn ($leave) => $leave->l_day ?? $leave->days ?? 0),
+            'outdoor_duty' => $leaves->where('leave_code', 12)->sum(fn ($leave) => $leave->l_day ?? $leave->days ?? 0),
         ];
 
         return [
@@ -950,23 +963,28 @@ class AttendanceController extends Controller
         $reportCarbon = Carbon::parse($reportDate);
         $monthStart = $reportCarbon->copy()->startOfMonth()->toDateString();
         $statsEnd = $reportCarbon->gt(Carbon::today()) ? Carbon::today()->toDateString() : $reportCarbon->toDateString();
+        $holidays = $this->getHolidayDates();
 
-        $lateEmpQuery = DB::table('pay_month_att_minutes')
-            ->select('pay_month_att_minutes.emp_code')
-            ->join('pay_pers', 'pay_month_att_minutes.emp_code', '=', 'pay_pers.emp_code')
-            ->whereNull('pay_pers.quit_stat')
-            ->whereRaw(
-                "dated >= TO_DATE(?, 'YYYY-MM-DD') AND dated < TO_DATE(?, 'YYYY-MM-DD') + 1",
-                [$reportDate, $reportDate]
-            )
-            ->groupBy('pay_month_att_minutes.emp_code')
-            ->havingRaw('MAX(late_coming) >= 10');
+        $employees = Employee::whereNull('quit_stat')
+            ->when($deptCode, function ($query) use ($deptCode) {
+                $query->where('dept_code', $deptCode);
+            })
+            ->with(['designation', 'department'])
+            ->orderBy('name')
+            ->get(['emp_code', 'name', 'desg_code', 'dept_code', 'catg_code', 'loca_code', 'st_time', 'end_time', 'twh']);
 
-        if ($deptCode) {
-            $lateEmpQuery->where('pay_pers.dept_code', $deptCode);
+        if ($employees->isEmpty()) {
+            return [
+                'rows' => collect(),
+                'stats_start' => $monthStart,
+                'stats_end' => $statsEnd,
+            ];
         }
 
-        $lateEmpCodes = $lateEmpQuery->pluck('pay_month_att_minutes.emp_code')->all();
+        $lateData = $this->buildLateEmployeesForDate($employees, $reportCarbon, $holidays);
+        $lateMinutesByEmp = $lateData['late_minutes'];
+        $attendanceByEmp = $lateData['attendance_by_emp'];
+        $lateEmpCodes = array_keys($lateMinutesByEmp);
 
         if (empty($lateEmpCodes)) {
             return [
@@ -976,54 +994,13 @@ class AttendanceController extends Controller
             ];
         }
 
-        $dailyLate = DB::table('pay_month_att_minutes')
-            ->selectRaw("emp_code, TRUNC(dated) as work_date, MAX(late_coming) as late_min")
-            ->whereRaw(
-                "dated >= TO_DATE(?, 'YYYY-MM-DD') AND dated < TO_DATE(?, 'YYYY-MM-DD') + 1",
-                [$monthStart, $statsEnd]
-            )
-            ->whereIn('emp_code', $lateEmpCodes)
-            ->groupBy('emp_code', DB::raw("TRUNC(dated)"));
+        $employeesByCode = $employees->keyBy('emp_code');
+        $monthlyStats = $this->buildMonthlyLateStats($employeesByCode, $lateEmpCodes, $monthStart, $statsEnd, $holidays);
 
-        $lateStats = DB::table(DB::raw("({$dailyLate->toSql()}) stats"))
-            ->mergeBindings($dailyLate)
-            ->selectRaw("
-                emp_code,
-                SUM(CASE WHEN late_min >= 10 THEN late_min ELSE 0 END) as total_late_minutes,
-                SUM(CASE WHEN late_min >= 10 THEN 1 ELSE 0 END) as total_late_days
-            ")
-            ->groupBy('emp_code')
-            ->get()
-            ->keyBy('emp_code');
-
-        $timeIns = DB::table('daily_attnd')
-            ->selectRaw('daily_attnd.emp_code, MIN(daily_attnd.timein) as time_in')
-            ->join('pay_pers', 'daily_attnd.emp_code', '=', 'pay_pers.emp_code')
-            ->whereNull('daily_attnd.att_stat')
-            ->whereNull('pay_pers.quit_stat')
-            ->whereRaw(
-                "daily_attnd.at_date >= TO_DATE(?, 'YYYY-MM-DD') AND daily_attnd.at_date < TO_DATE(?, 'YYYY-MM-DD') + 1",
-                [$reportDate, $reportDate]
-            )
-            ->whereIn('daily_attnd.emp_code', $lateEmpCodes)
-            ->groupBy('daily_attnd.emp_code')
-            ->get()
-            ->keyBy('emp_code');
-
-        $employees = Employee::whereIn('emp_code', $lateEmpCodes)
-            ->whereNull('quit_stat')
-            ->when($deptCode, function ($query) use ($deptCode) {
-                $query->where('dept_code', $deptCode);
-            })
-            ->with(['designation', 'department'])
-            ->orderBy('name')
-            ->get(['emp_code', 'name', 'desg_code', 'dept_code']);
-
-        $rows = $employees->map(function ($employee) use ($lateStats, $timeIns, $reportDate) {
-            $stats = $lateStats->get($employee->emp_code);
-            $lateMinutes = $stats ? intval($stats->total_late_minutes) : 0;
-            $lateDays = $stats ? intval($stats->total_late_days) : 0;
-            $timeInRaw = $timeIns->get($employee->emp_code)->time_in ?? null;
+        $rows = $employeesByCode->only($lateEmpCodes)->values()->map(function ($employee) use ($monthlyStats, $attendanceByEmp, $reportDate) {
+            $stats = $monthlyStats[$employee->emp_code] ?? ['total_late_minutes' => 0, 'total_late_days' => 0];
+            $records = $attendanceByEmp->get($employee->emp_code, collect());
+            $timeInRaw = $records->min('timein');
             $timeIn = $timeInRaw ? Carbon::parse($timeInRaw)->format('H:i') : '--:--';
 
             return [
@@ -1033,8 +1010,8 @@ class AttendanceController extends Controller
                 'designation' => $employee->designation->desg_short ?? '--',
                 'department' => $employee->department->dept_desc ?? '--',
                 'time_in' => $timeIn,
-                'total_late_days' => $lateDays,
-                'total_late_minutes' => $lateMinutes,
+                'total_late_days' => $stats['total_late_days'],
+                'total_late_minutes' => $stats['total_late_minutes'],
             ];
         });
 
@@ -1045,6 +1022,261 @@ class AttendanceController extends Controller
         ];
     }
 
+    private function getHolidayDates(): array
+    {
+        return [
+            '2025-03-31','2025-04-01','2025-04-02',
+            '2025-05-01','2025-05-07',
+            '2025-06-09','2025-06-10','2025-06-11',
+            '2025-07-05','2025-08-14',
+            '2025-11-09','2025-12-25',
+            '2026-02-05', '2026-02-06', '2026-02-07',
+            '2026-03-19', '2026-03-20', '2026-03-21', '2026-03-23'
+        ];
+    }
+
+    private function buildLateEmployeesForDate($employees, Carbon $date, ?array $holidays = null): array
+    {
+        $holidays = $holidays ?? $this->getHolidayDates();
+        $dateStr = $date->toDateString();
+
+        if ($date->isSunday() || in_array($dateStr, $holidays, true)) {
+            return [
+                'late_minutes' => [],
+                'attendance_by_emp' => collect(),
+            ];
+        }
+
+        $employeeCodes = $employees->pluck('emp_code')->all();
+
+        $attendanceByEmp = Attendance::whereRaw(
+                "TRUNC(at_date) = TO_DATE(?, 'YYYY-MM-DD')",
+                [$dateStr]
+            )
+            ->whereIn('emp_code', $employeeCodes)
+            ->whereNull('att_stat')
+            ->orderBy('timein')
+            ->get()
+            ->groupBy('emp_code');
+
+        $leavesByEmp = Leave::whereIn('emp_code', $employeeCodes)
+            ->whereNot('status', 9)
+            ->whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$dateStr])
+            ->whereRaw("TRUNC(to_date)   >= TO_DATE(?, 'YYYY-MM-DD')", [$dateStr])
+            ->get()
+            ->groupBy('emp_code');
+
+        $lateMinutes = [];
+        foreach ($employees as $emp) {
+            $records = $attendanceByEmp->get($emp->emp_code, collect());
+            if ($records->isEmpty()) {
+                continue;
+            }
+
+            $leave = $leavesByEmp->get($emp->emp_code, collect())->first();
+            $late = $this->calculateLateMinutesForDay($emp, $records, $date, $leave);
+
+            if ($late >= 10) {
+                $lateMinutes[$emp->emp_code] = $late;
+            }
+        }
+
+        return [
+            'late_minutes' => $lateMinutes,
+            'attendance_by_emp' => $attendanceByEmp,
+        ];
+    }
+
+    private function buildMonthlyLateStats($employeesByCode, array $empCodes, string $monthStart, string $statsEnd, array $holidays): array
+    {
+        if (empty($empCodes)) {
+            return [];
+        }
+
+        $attendanceByEmp = Attendance::whereIn('emp_code', $empCodes)
+            ->whereNull('att_stat')
+            ->whereRaw(
+                "at_date >= TO_DATE(?, 'YYYY-MM-DD') AND at_date < TO_DATE(?, 'YYYY-MM-DD') + 1",
+                [$monthStart, $statsEnd]
+            )
+            ->orderBy('timein')
+            ->get()
+            ->groupBy('emp_code');
+
+        $leavesByEmp = Leave::whereIn('emp_code', $empCodes)
+            ->whereNot('status', 9)
+            ->whereRaw(
+                "from_date <= TO_DATE(?, 'YYYY-MM-DD') + 1 AND to_date >= TO_DATE(?, 'YYYY-MM-DD')",
+                [$statsEnd, $monthStart]
+            )
+            ->get()
+            ->groupBy('emp_code');
+
+        $stats = [];
+        $periodStart = Carbon::parse($monthStart);
+        $periodEnd = Carbon::parse($statsEnd);
+
+        foreach ($empCodes as $empCode) {
+            $emp = $employeesByCode->get($empCode);
+            if (!$emp) {
+                continue;
+            }
+
+            $empAttendanceByDate = $attendanceByEmp
+                ->get($empCode, collect())
+                ->groupBy(function ($record) {
+                    return Carbon::parse($record->at_date)->toDateString();
+                });
+
+            $empLeaves = $leavesByEmp->get($empCode, collect());
+            $totalLateMinutes = 0;
+            $totalLateDays = 0;
+
+            $date = $periodStart->copy();
+            while ($date->lte($periodEnd)) {
+                $dateStr = $date->toDateString();
+
+                if ($date->isSunday() || in_array($dateStr, $holidays, true)) {
+                    $date->addDay();
+                    continue;
+                }
+
+                $records = $empAttendanceByDate->get($dateStr, collect());
+                if ($records->isEmpty()) {
+                    $date->addDay();
+                    continue;
+                }
+
+                $leave = $this->findLeaveForDate($empLeaves, $date);
+                $late = $this->calculateLateMinutesForDay($emp, $records, $date, $leave);
+
+                if ($late >= 10) {
+                    $totalLateMinutes += $late;
+                    $totalLateDays += 1;
+                }
+
+                $date->addDay();
+            }
+
+            $stats[$empCode] = [
+                'total_late_minutes' => $totalLateMinutes,
+                'total_late_days' => $totalLateDays,
+            ];
+        }
+
+        return $stats;
+    }
+
+    private function findLeaveForDate($leaves, Carbon $date): ?Leave
+    {
+        foreach ($leaves as $leave) {
+            $from = Carbon::parse($leave->from_date)->startOfDay();
+            $to = Carbon::parse($leave->to_date)->startOfDay();
+
+            if ($from->lte($date) && $to->gte($date)) {
+                return $leave;
+            }
+        }
+
+        return null;
+    }
+
+    private function calculateLateMinutesForDay($emp, $records, Carbon $workDate, ?Leave $leave): int
+    {
+        $isFullDayLeave = false;
+        $leaveStart = null;
+        $leaveEnd = null;
+        $leaveMins = 0;
+
+        if ($leave) {
+            $from = Carbon::parse($leave->from_date);
+            $to   = Carbon::parse($leave->to_date);
+
+            if ($from->format('H:i:s') === '00:00:00' &&
+                $to->format('H:i:s')   === '00:00:00') {
+                $isFullDayLeave = true;
+            } else {
+                $leaveStart = $from;
+                $leaveEnd   = $to;
+
+                // leave minutes (floor)
+                $leaveSeconds = $from->diffInSeconds($to);
+                $leaveMins = intdiv($leaveSeconds, 60);
+            }
+        }
+
+        if ($isFullDayLeave) {
+            return 0;
+        }
+
+        $totalMins = 480;
+        if ($emp->catg_code == 2) {
+            $totalMins = 360;
+        } elseif ($emp->twh == 12) {
+            $totalMins = 720;
+        }
+
+        $startShift = $workDate->copy()->setTimeFromTimeString($emp->st_time);
+        $endShift   = $workDate->copy()->setTimeFromTimeString($emp->end_time);
+
+        if ($emp->twh != 12) {
+            if ($emp->catg_code == 2 && $workDate->isFriday()) {
+                $totalMins = 300;
+                $startShift->setTime(8, 0);
+                $endShift->setTime(13, 0);
+            } elseif ($emp->catg_code == 1 &&
+                $emp->loca_code == 2 &&
+                $workDate->isFriday()) {
+
+                $totalMins = 390;
+                $startShift->setTime(8, 0);
+                $endShift->setTime(14, 30);
+            }
+        }
+
+        $minsWorked = 0;
+        foreach ($records as $record) {
+            $minsWorked += minutesWorked($record->timein, $record->timeout);
+        }
+
+        $minIn = Carbon::parse($records->min('timein'));
+        $late = 0;
+
+        if ($emp->twh == 12) {
+            $required = $totalMins;
+
+            if ($leaveMins > 0) {
+                $required = max(0, $totalMins - $leaveMins);
+            }
+
+            $late = max(0, $required - $minsWorked);
+
+        } else {
+            if ($minIn->gt($startShift)) {
+
+                // FIX: calculate exact seconds, then floor minutes
+                $lateSeconds = $startShift->diffInSeconds($minIn);
+                $late = intdiv($lateSeconds, 60);
+            }
+
+            if ($leaveStart && $late > 0) {
+
+                $overlapStart = $startShift->gt($leaveStart) ? $startShift : $leaveStart;
+                $overlapEnd   = $minIn->lt($leaveEnd) ? $minIn : $leaveEnd;
+
+                if ($overlapStart->lt($overlapEnd)) {
+
+                    // FIX: overlap also using seconds
+                    $overlapSeconds = $overlapStart->diffInSeconds($overlapEnd);
+                    $overlapMinutes = intdiv($overlapSeconds, 60);
+
+                    $late = max(0, $late - $overlapMinutes);
+                }
+            }
+        }
+
+        return max(0, (int) $late);
+    }
     private function buildAbsentAttendanceReport(string $reportDate, string $locaCode = '1', ?string $deptCode = null): array
     {
         $reportCarbon = Carbon::parse($reportDate);
