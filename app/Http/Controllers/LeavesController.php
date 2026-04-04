@@ -833,13 +833,65 @@ class LeavesController extends Controller
     {
         // Ensure logged-in user matches the requested employee code
         $authUser = Auth::user();
-        if ($authUser->emp_code != $request->emp_code) {
-            return response()->json(['success' => false, 'html' => '<p>You have been logged out. Please login again!</p>']);
+        $requestedEmpCode = trim($request->input('emp_code', $emp_code));
+        if ($authUser->emp_code != $requestedEmpCode) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not authorized to view this report.'
+            ]);
         }
-        $leaves = Leave::where('emp_code', $emp_code)
-            ->where(function ($query) {
-                $query->where('from_date', '<=', Carbon::now()->endOfMonth())
-                    ->where('to_date', '>=', Carbon::now()->startOfMonth());  
+
+        return response()->json(
+            $this->buildLeavesAppliedReport($requestedEmpCode, $request->input('month'))
+        );
+    }
+
+    public function leavesAppliedHr(Request $request)
+    {
+        $empCode = trim((string) $request->input('emp_code', ''));
+        if (!$empCode) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Employee code is required.'
+            ]);
+        }
+
+        return response()->json(
+            $this->buildLeavesAppliedReport($empCode, $request->input('month'))
+        );
+    }
+
+    private function buildLeavesAppliedReport(string $empCode, ?string $month = null): array
+    {
+        $employee = Employee::where('emp_code', $empCode)->first();
+        if (!$employee) {
+            return [
+                'success' => false,
+                'message' => 'Employee code not found.'
+            ];
+        }
+
+        $deptName = $employee->department->dept_desc ?? '--';
+        $desgName = $employee->designation->desg_short ?? '--';
+        $subtitle = $deptName . ' | ' . $desgName;
+
+        $month = trim((string) $month);
+        try {
+            $monthDate = $month ? Carbon::createFromFormat('Y-m', $month) : Carbon::now();
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Invalid month format. Please use YYYY-MM.'
+            ];
+        }
+
+        $startOfMonth = $monthDate->copy()->startOfMonth();
+        $endOfMonth = $monthDate->copy()->endOfMonth();
+
+        $leaves = Leave::where('emp_code', $empCode)
+            ->where(function ($query) use ($startOfMonth, $endOfMonth) {
+                $query->where('from_date', '<=', $endOfMonth)
+                    ->where('to_date', '>=', $startOfMonth);  
             })
             ->orderBy('leave_date', 'desc')
             ->get();
@@ -922,10 +974,22 @@ class LeavesController extends Controller
             </table>
         ";
                 
+        $title = 'Leaves Applied (' . $monthDate->format('M Y') . ')';
+
         if ($leaves->isEmpty()) {
-            return response()->json(['success' => true, 'html' => '<p>No leaves applied in the current month.</p>']);
+            return [
+                'success' => true,
+                'title' => $title,
+                'subtitle' => $subtitle,
+                'html' => '<p>No leaves applied in the selected month.</p>'
+            ];
         }
-        return response()->json(['success' => true, 'html' => $html]);
+        return [
+            'success' => true,
+            'title' => $title,
+            'subtitle' => $subtitle,
+            'html' => $html
+        ];
     }
     public function leaveReport()
     {

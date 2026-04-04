@@ -218,6 +218,12 @@
                     Leave Report
                     </a>
                 </div>
+
+                <div class="col-md-6 col-lg-2">
+                    <a href="{{ route('hr-leaves-applied') }}" class="btn btn-primary w-100 text-nowrap" id="hr-leaves-applied">
+                    Leaves Status
+                    </a>
+                </div>
             </div>
         </div>
       </div>
@@ -225,3 +231,150 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+  function printLeavesReport(title, subtitle, tableHtml) {
+    const printWindow = window.open('', 'leaves-report');
+    if (!printWindow) {
+      return;
+    }
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${title}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 16px; color: #111; }
+            h2 { margin: 0 0 4px; }
+            .subtitle { margin: 0 0 12px; color: #555; font-size: 12px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+            th { background: #f5f5f5; }
+            .badge { padding: 2px 6px; border-radius: 4px; color: #fff; font-size: 12px; }
+            .bg-warning { background: #ff9800; }
+            .bg-info { background: #2196f3; }
+            .bg-primary { background: #0d6efd; }
+            .bg-success { background: #4caf50; }
+            .bg-danger { background: #f44336; }
+            .bg-secondary { background: #6c757d; }
+          </style>
+        </head>
+        <body>
+          <h2>${title}</h2>
+          <div class="subtitle">${subtitle || ''}</div>
+          ${tableHtml}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  }
+
+  document.getElementById('hr-leaves-applied').addEventListener('click', async function(event) {
+    event.preventDefault();
+    const url = this.href;
+    const now = new Date();
+    const monthDefault = now.toISOString().slice(0, 7);
+
+    const { value: formValues } = await Swal.fire({
+      title: 'Leaves Applied Report',
+      html: `
+        <div class="text-start">
+          <label for="swal-emp-code" class="form-label">Employee Code</label>
+          <input id="swal-emp-code" class="form-control" placeholder="e.g. 12345">
+        </div>
+        <div class="text-start mt-2">
+          <label for="swal-month" class="form-label">Month</label>
+          <input id="swal-month" type="month" class="form-control" value="${monthDefault}">
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'View Report',
+      preConfirm: () => {
+        const empCode = document.getElementById('swal-emp-code').value.trim();
+        const month = document.getElementById('swal-month').value;
+        if (!empCode) {
+          Swal.showValidationMessage('Employee code is required.');
+          return false;
+        }
+        if (!month) {
+          Swal.showValidationMessage('Month is required.');
+          return false;
+        }
+        return { empCode, month };
+      }
+    });
+
+    if (!formValues) {
+      return;
+    }
+
+    $.ajax({
+      url: url,
+      type: 'GET',
+      data: {
+        emp_code: formValues.empCode,
+        month: formValues.month
+      },
+      statusCode: {
+        401: function() {
+          Swal.fire({
+            title: 'Session Expired',
+            text: 'Your session has expired. Please login again.',
+            icon: 'warning'
+          }).then(() => {
+            window.location.href = "{{ route('login') }}";
+          });
+        },
+        419: function() {
+          Swal.fire({
+            title: 'Session Expired',
+            text: 'Your session has expired. Please login again.',
+            icon: 'warning'
+          }).then(() => {
+            window.location.href = "{{ route('login') }}";
+          });
+        }
+      },
+      success: function(response) {
+        if(response.success) {
+          const modalHtml = `
+            <div class="text-muted mb-2"><small>${response.subtitle || ''}</small></div>
+            <div class="d-flex justify-content-end mb-2">
+              <button type="button" class="btn btn-sm btn-outline-secondary" id="print-leaves-report">Print</button>
+            </div>
+            ${response.html}
+          `;
+          Swal.fire({
+            width: 900,
+            draggable: true,
+            title: response.title || 'Leaves Applied',
+            html: modalHtml,
+            didOpen: () => {
+              const btn = document.getElementById('print-leaves-report');
+              if (btn) {
+                btn.addEventListener('click', () => {
+                  printLeavesReport(response.title || 'Leaves Applied', response.subtitle || '', response.html);
+                });
+              }
+            }
+          });
+        } else {
+          Swal.fire({
+            title: 'Error',
+            text: response.message || 'Could not fetch leaves applied.',
+            icon: 'error'
+          });
+        }
+      },
+      error: function() {
+        Swal.fire({
+          title: 'Error',
+          text: 'Could not fetch leaves applied.',
+          icon: 'error'
+        });
+      }
+    });
+  });
+@endpush

@@ -54,6 +54,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/apply-unpaid-leave/{emp_code}', [LeavesController::class, 'storeUnpaidLeave'])->name('store-unpaid-leave');
     Route::get('/check-if-any-leave/{emp_code}', [LeavesController::class, 'checkIfAnyLeave'])->name('check-if-any-leave');
     Route::get('/leaves-applied/{emp_code}', [LeavesController::class, 'leavesApplied'])->name('leaves-applied');
+    Route::get('/hr/leaves-applied', [LeavesController::class, 'leavesAppliedHr'])->name('hr-leaves-applied');
     Route::get('leave-approvals/{emp_code}', [LeavesController::class, 'leaveApprovals'])->name('leave-approvals');
     Route::post('/approve-leave/{leave_id}', [LeavesController::class, 'approveLeave'])->name('approve-leave');
     Route::post('/approve-all-leaves', [LeavesController::class, 'approveAll'])->name('approve-all-leaves');
