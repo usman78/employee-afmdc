@@ -6,7 +6,7 @@
     <style>
         body {
             font-family: "DejaVu Sans", sans-serif;
-            font-size: 10.5px;
+            font-size: 8.5px;
             color: #333;
             line-height: 1.2;
             margin: 0;
@@ -25,16 +25,16 @@
             height: auto;
         }
         .title {
-            font-size: 15px;
+            font-size: 12px;
             font-weight: bold;
             text-transform: uppercase;
         }
         .subtitle {
-            font-size: 10.5px;
+            font-size: 9.5px;
         }
         .meta {
             margin: 6px 0 6px;
-            font-size: 10.5px;
+            font-size: 9.5px;
         }
         .summary-table,
         .report-table {
@@ -47,7 +47,7 @@
         }
         th, td {
             border: 0;
-            padding: 3px 4px;
+            padding: 2px 4px;
             text-align: center;
             vertical-align: middle;
             word-wrap: break-word;
@@ -68,6 +68,33 @@
         .report-table td {
             border-bottom: 1px solid #e6e6e6;
         }
+        .notice-box {
+            margin-top: 14px;
+            border: 1px solid #333;
+            padding: 8px 10px 10px;
+            font-size: 8.5px;
+            line-height: 1.25;
+        }
+        .notice-strong {
+            font-weight: bold;
+            margin-top: 6px;
+        }
+        .signature-table {
+            width: 100%;
+            margin-top: 16px;
+            border-collapse: collapse;
+        }
+        .signature-table td {
+            border: 0;
+            text-align: center;
+            padding: 0;
+        }
+        .sig-name {
+            font-weight: bold;
+        }
+        .sig-title {
+            font-size: 9px;
+        }
     </style>
 </head>
 <body>
@@ -78,18 +105,13 @@
             </td>
         </tr>
         <tr>
-            <td class="title">Attendance Report</td>
-        </tr>
-        <tr>
-            <td class="subtitle">Period: {{ dateFormat($period_start) }} to {{ dateFormat($period_end) }}</td>
+            <td class="title">Attendance Report <small>({{ dateFormat($period_start) }} to {{ dateFormat($period_end) }})</small></td>
         </tr>
     </table>
 
-    <div class="meta">
-        <strong>Employee:</strong> {{ $emp_name }} ({{ $emp_code }})
-        <br>
-        <strong>Department:</strong> {{ $emp_department ?? '--' }}
-        <br>
+    <div class="meta" style="text-align: center;">
+        <strong>Employee:</strong> {{ $emp_name }} ({{ $emp_code }}) &nbsp;
+        <strong>Department:</strong> {{ $emp_department ?? '--' }} &nbsp;
         <strong>Designation:</strong> {{ $emp_designation ?? '--' }}
     </div>
 
@@ -134,12 +156,12 @@
     <table class="report-table">
         <thead>
             <tr>
-                <th>Sr#</th>
-                <th style="width: 16%;">Date</th>
-                <th style="width: 30%;">Time-In/Out</th>
-                <th style="width: 14%;">Late Mins</th>
-                <th style="width: 14%;">Early Mins</th>
-                <th style="width: 26%;">Status</th>
+                <th style="width: 10%; text-align: left;">Sr#</th>
+                <th style="width: 20%; text-align: left;">Date</th>
+                <th style="width: 20%; text-align: left;">Time-In/Out</th>
+                <th style="width: 15%; text-align: left;">Late Mins</th>
+                <th style="width: 15%; text-align: left;">Early Mins</th>
+                <th style="width: 20%; text-align: left;">Status</th>
             </tr>
         </thead>
         <tbody>
@@ -183,12 +205,12 @@
                     }
                 @endphp
                 <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td>{{ \Carbon\Carbon::parse($record['at_date'])->format('D, j M') }}</td>
-                    <td>{{ $timeText }}</td>
-                    <td>{{ $lateText }}</td>
-                    <td>{{ $earlyText }}</td>
-                    <td>{{ $statusText }}</td>
+                    <td style="text-align: left;">{{ $loop->iteration }}</td>
+                    <td style="text-align: left;">{{ \Carbon\Carbon::parse($record['at_date'])->format('D, j M') }}</td>
+                    <td style="text-align: left;">{{ $timeText }}</td>
+                    <td style="text-align: left;">{{ $lateText }}</td>
+                    <td style="text-align: left;">{{ $earlyText }}</td>
+                    <td style="text-align: left;">{{ $statusText }}</td>
                 </tr>
             @empty
                 <tr>
@@ -197,5 +219,35 @@
             @endforelse
         </tbody>
     </table>
+
+    <div class="notice-box">
+        <div>
+            It is observed from your attendance record that, you are habitually coming on your duty
+            late or going early from your duty, which is violation of duty timings of the institute and
+            is evident from your attendance report (In / Out) for current month.
+        </div>
+        <div>
+            Therefore, you are advised to follow the Institute timings, otherwise necessary action will
+            be taken as per institute policy.
+        </div>
+        <div class="notice-strong">Submit your explanation within three days after receiving this letter.</div>
+
+        <table class="signature-table">
+            <tr>
+                <td style="width: 33.33%;">
+                    <div class="sig-name">Saba Khan Sherwani</div>
+                    <div class="sig-title">Manager HR</div>
+                </td>
+                <td style="width: 33.33%;">
+                    <div class="sig-name">Dr. Ghulam Abbas Sheikh</div>
+                    <div class="sig-title">Principal AFM&amp;DC</div>
+                </td>
+                <td style="width: 33.33%;">
+                    <div class="sig-name">Prof. Dr. Muhammad Saeed</div>
+                    <div class="sig-title">COO AFT</div>
+                </td>
+            </tr>
+        </table>
+    </div>
 </body>
 </html>
