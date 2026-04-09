@@ -219,6 +219,12 @@
                     </a>
                 </div>
 
+                <div class="col-md-6 col-lg-3">
+                    <a href="{{ route('department-strength-report') }}" class="btn btn-primary w-100 text-nowrap">
+                    Department Strength
+                    </a>
+                </div>
+
                 <div class="col-md-6 col-lg-2">
                     <a href="{{ route('hr-leaves-applied') }}" class="btn btn-primary w-100 text-nowrap" id="hr-leaves-applied">
                     Leaves Status

@@ -30,6 +30,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/attendance-absent-report', [AttendanceController::class, 'attendanceAbsentReport'])->name('attendance-absent-report');
     Route::get('/attendance-present-report', [AttendanceController::class, 'attendancePresentReport'])->name('attendance-present-report');
     Route::get('/hr-reports', [AttendanceController::class, 'hrReports'])->name('hr-reports');
+    Route::get('/department-strength-report', [AttendanceController::class, 'departmentStrengthReport'])->name('department-strength-report');
     Route::post('/attendance-report-department', [AttendanceController::class, 'attendanceReportDepartmentData'])->name('attendance-report-department-data');
     Route::post('/attendance-report-department-email', [AttendanceController::class, 'attendanceReportDepartmentEmail'])->name('attendance-report-department-email');
     Route::post('/attendance-report-department-download', [AttendanceController::class, 'attendanceReportDepartmentDownload'])->name('attendance-report-department-download');

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Department;
+use App\Models\DepartmentStrength;
 use App\Jobs\SendAttendanceReportToHodJob;
 use App\Jobs\SendDepartmentAttendanceReportJob;
 use Illuminate\Support\Facades\Auth;
@@ -156,9 +157,84 @@ class AttendanceController extends Controller
             'absent_leave_count' => $absentLeaveCount,
             'male_percent' => $percent($maleStrength, $totalStrength),
             'female_percent' => $percent($femaleStrength, $totalStrength),
-            'present_percent' => $percent($totalPresent, $totalStrength),
-            'late_percent' => $percent($lateComing, $totalStrength),
-            'absent_leave_percent' => $percent($absentLeaveCount, $totalStrength),
+            'present_percent' => $percent($totalPresent, $totalStrengthAfmdc),
+            'late_percent' => $percent($lateComing, $totalStrengthAfmdc),
+            'absent_leave_percent' => $percent($absentLeaveCount, $totalStrengthAfmdc),
+        ]);
+    }
+
+    public function departmentStrengthReport()
+    {
+        $rows = DepartmentStrength::query()
+            ->select(
+                'pay_dept_strength_d.dept_code',
+                'pay_dept_strength_d.desg_code',
+                'pay_dept_strength_d.no_of_vacancy',
+                'pay_dept_strength_d.filled_vacancy',
+                'pay_dept.dept_desc',
+                'pay_desig.desg_short'
+            )
+            ->leftJoin('pay_dept', 'pay_dept.dept_code', '=', 'pay_dept_strength_d.dept_code')
+            ->leftJoin('pay_desig', 'pay_desig.desg_code', '=', 'pay_dept_strength_d.desg_code')
+            ->orderBy('pay_dept.dept_desc')
+            ->orderBy('pay_desig.desg_short')
+            ->get();
+
+        $employeeNames = Employee::whereNull('quit_stat')
+            ->where('loca_code', 1)
+            ->orderBy('name')
+            ->get(['emp_code', 'name', 'dept_code', 'desg_code'])
+            ->groupBy(function ($emp) {
+                return $emp->dept_code . '|' . $emp->desg_code;
+            })
+            ->map(function ($group) {
+                return $group->map(function ($emp) {
+                    return function_exists('capitalizeWords')
+                        ? capitalizeWords($emp->name)
+                        : ucfirst(strtolower($emp->name));
+                })->values();
+            });
+
+        $grouped = $rows->groupBy('dept_code')->map(function ($deptRows) use ($employeeNames) {
+            $deptRows = $deptRows->map(function ($row) use ($employeeNames) {
+                $key = $row->dept_code . '|' . $row->desg_code;
+                $names = $employeeNames->get($key, collect());
+                $shortage = (int) $row->no_of_vacancy - (int) $row->filled_vacancy;
+
+                return [
+                    'dept_code' => $row->dept_code,
+                    'dept_desc' => $row->dept_desc ?? '--',
+                    'desg_code' => $row->desg_code,
+                    'desg_short' => $row->desg_short ?? '--',
+                    'no_of_vacancy' => (int) $row->no_of_vacancy,
+                    'filled_vacancy' => (int) $row->filled_vacancy,
+                    'shortage' => $shortage,
+                    'names' => $names,
+                ];
+            });
+
+            $totals = [
+                'required' => $deptRows->sum('no_of_vacancy'),
+                'filled' => $deptRows->sum('filled_vacancy'),
+            ];
+            $totals['shortage'] = $totals['required'] - $totals['filled'];
+
+            return [
+                'rows' => $deptRows,
+                'totals' => $totals,
+            ];
+        });
+
+        $overallTotals = [
+            'required' => $rows->sum('no_of_vacancy'),
+            'filled' => $rows->sum('filled_vacancy'),
+        ];
+        $overallTotals['shortage'] = $overallTotals['required'] - $overallTotals['filled'];
+
+        return view('department-strength-report', [
+            'report_date' => Carbon::today()->toDateString(),
+            'grouped' => $grouped,
+            'overall_totals' => $overallTotals,
         ]);
     }
 
