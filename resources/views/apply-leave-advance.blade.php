@@ -16,7 +16,16 @@
     background-color: #2196f3;
 }
 label.btn.btn-outline-primary {
-  padding: 5px 2px;
+  padding: 5px 5px;
+  text-wrap: nowrap;
+}
+.leave-btns {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70px;
+  padding: 15px;
 }
 .form-check {
   display: inline-block;
@@ -176,7 +185,11 @@ ul.error-msg{
                 
                   <!-- Half Day Section -->
                   <li id="leave-interval-section" class="mt-2" style="display: none;">
-                    <strong>Select Leave Interval: </strong>
+                    <strong style="margin-bottom: 15px;">Select Leave Interval: </strong><br>
+                    <span class="alert alert-secondary mb-0 d-inline-block mt-3" style="font-size: 12px;">
+                      <i class="bi bi-info-circle"></i> 
+                       Custom day leave allows to select a specific time range within your duty timings.
+                    </span>
                     <div class="form-check mt-2">
                       <input class="btn-check" type="radio" name="leave_interval" id="leave-interval-first" value="1">
                       <label class="btn btn-outline-primary" for="leave-interval-first">
@@ -189,12 +202,45 @@ ul.error-msg{
                         Second Half
                       </label>
                     </div>
+                    <div class="form-check">
+                      <input class="btn-check" type="radio" name="leave_interval" id="leave-interval-custom" value="3">
+                      <label class="btn btn-outline-primary" for="leave-interval-custom">
+                        Custom Half
+                      </label>
+                    </div>
+                  </li>
+                  <li id="half-custom-time-section" class="mt-2" style="display: none;">
+                    <strong>Custom Half Day Time: </strong>
+                    <div class="row mt-2">
+                      <div class="col">
+                        <label for="half-custom-start-time">Start Time:</label>
+                        <input
+                          type="time"
+                          name="half_custom_start_time"
+                          id="half-custom-start-time"
+                          class="form-control"
+                          min="{{ substr((string) $employee->st_time, 0, 5) }}"
+                          max="{{ substr((string) $employee->end_time, 0, 5) }}"
+                        >
+                      </div>
+                      <div class="col">
+                        <label for="half-custom-end-time">End Time:</label>
+                        <input
+                          type="time"
+                          name="half_custom_end_time"
+                          id="half-custom-end-time"
+                          class="form-control"
+                          readonly
+                        >
+                      </div>
+                    </div>
+                    <div id="half-custom-time-warning" class="text-danger mt-2" style="display: none;"></div>
                   </li>
                   <div id="leave-type-section">
                     <li><strong>Select Leave Type: </strong></li>
                       <div style="margin-bottom: 15px;" class="form-check mt-2">
                         <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault1" value="1">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault1" style="width: 70px;">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault1" style="width: 75px;">
                           Casual
                         </label>
                       </div>
@@ -206,13 +252,13 @@ ul.error-msg{
                       </div>
                       <div class="form-check">
                         <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault3" value="3">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault3" style="width: 70px;">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault3" style="width: 75px;">
                           Annual
                         </label>
                       </div>
                       <div class="form-check">
                         <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault4" value="5">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault4" style="width: 70px;">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault4" style="width: 75px;">
                           W/O Pay
                         </label>
                       </div>    
@@ -229,13 +275,13 @@ ul.error-msg{
                   </li>
                 </ul>
                 <div class="row">
-                    <div class="col-12 d-flex justify-content-between mt-5">
-                        <a href="{{ route('leaves', $emp_code) }}" class="btn btn-secondary"><i class="fa-solid fa-backward"></i> Cancel</a>
-                        <a class="btn btn-primary" id="leaves-applied" data-emp-code="{{ $emp_code }}" href="{{route('leaves-applied', $emp_code)}}">
+                    <div class="col-12 d-flex justify-content-between mt-5 gap-2">
+                        <a href="{{ route('leaves', $emp_code) }}" class="btn btn-secondary leave-btns"><i class="fa-solid fa-backward"></i> Cancel</a>
+                        <a class="btn btn-primary leave-btns" id="leaves-applied" data-emp-code="{{ $emp_code }}" href="{{route('leaves-applied', $emp_code)}}">
                           <i class="fa-solid fa-check"></i>
                           Leaves Status
                         </a>
-                        <button type="submit" class="btn btn-success" id="submitBtn">
+                        <button type="submit" class="btn btn-success leave-btns" id="submitBtn">
                           <i class="fa-solid fa-person-walking-arrow-right me-1" aria-hidden="true"></i>
                           <span id="btnLabel">Apply Leave</span>
                           <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
@@ -365,8 +411,12 @@ ul.error-msg{
     const leaveDateSection = document.getElementById('leave-date-section');
     const leaveIntervalSection = document.getElementById('leave-interval-section');
     const shortTimeSection = document.getElementById('short-time-section');
+    const halfCustomTimeSection = document.getElementById('half-custom-time-section');
     const leaveTypeSection = document.getElementById('leave-type-section');
     const singleDateSection = document.getElementById('single-date-section');
+    const leaveIntervalFirst = document.getElementById('leave-interval-first');
+    const leaveIntervalSecond = document.getElementById('leave-interval-second');
+    const leaveIntervalCustom = document.getElementById('leave-interval-custom');
   
     function updateDisplay() {
       if (halfDay.checked) {
@@ -375,14 +425,17 @@ ul.error-msg{
         shortTimeSection.style.display = 'none';
         leaveTypeSection.style.display = 'block';
         singleDateSection.style.display = 'block';
+        updateHalfCustomDisplay();
         leaveDateSection.disabled = true;
         shortTimeSection.disabled = true;
       } else if (fullDay.checked) {
         leaveDateSection.style.display = 'block';
         leaveIntervalSection.style.display = 'none';
         shortTimeSection.style.display = 'none';
+        halfCustomTimeSection.style.display = 'none';
         leaveTypeSection.style.display = 'block';
         singleDateSection.style.display = 'none';
+        resetCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning);
         leaveIntervalSection.disabled = true;
         shortTimeSection.disabled = true;
         singleDateSection.disabled = true;
@@ -390,8 +443,10 @@ ul.error-msg{
         leaveIntervalSection.style.display = 'none';
         leaveDateSection.style.display = 'none';
         shortTimeSection.style.display = 'block';
+        halfCustomTimeSection.style.display = 'none';
         leaveTypeSection.style.display = 'none';
         singleDateSection.style.display = 'block';
+        resetCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning);
         leaveIntervalSection.disabled = true;
         leaveDateSection.disabled = true;
         leaveTypeSection.disabled = true;
@@ -399,7 +454,21 @@ ul.error-msg{
        else {
         leaveIntervalSection.style.display = 'none';
         leaveDateSection.style.display = 'none';
+        shortTimeSection.style.display = 'none';
+        halfCustomTimeSection.style.display = 'none';
+        singleDateSection.style.display = 'none';
+        leaveTypeSection.style.display = 'none';
+        resetCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning);
 
+      }
+    }
+
+    function updateHalfCustomDisplay() {
+      if (halfDay.checked && leaveIntervalCustom.checked) {
+        halfCustomTimeSection.style.display = 'block';
+      } else {
+        halfCustomTimeSection.style.display = 'none';
+        resetCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning);
       }
     }
   
@@ -407,14 +476,20 @@ ul.error-msg{
     halfDay.addEventListener('change', updateDisplay);
     fullDay.addEventListener('change', updateDisplay);
     shortDay.addEventListener('change', updateDisplay);
+    leaveIntervalFirst.addEventListener('change', updateHalfCustomDisplay);
+    leaveIntervalSecond.addEventListener('change', updateHalfCustomDisplay);
+    leaveIntervalCustom.addEventListener('change', updateHalfCustomDisplay);
   
-    // Initial state
-    updateDisplay();
-
     {{-- time picker --}}
     const startTime = document.getElementById("start-time");
     const endTime = document.getElementById("end-time");
     const warning = document.getElementById("time-warning");
+    const halfCustomStartTime = document.getElementById("half-custom-start-time");
+    const halfCustomEndTime = document.getElementById("half-custom-end-time");
+    const halfCustomWarning = document.getElementById("half-custom-time-warning");
+    const employeeStartMinutes = timeToMinutes("{{ substr((string) $employee->st_time, 0, 5) }}");
+    const employeeEndMinutes = timeToMinutes("{{ substr((string) $employee->end_time, 0, 5) }}");
+    const halfDayDurationMinutes = Math.round((employeeEndMinutes - employeeStartMinutes) / 2);
   
     function timeToMinutes(t) {
       const [hours, minutes] = t.split(":").map(Number);
@@ -426,38 +501,66 @@ ul.error-msg{
       const m = (minutes % 60).toString().padStart(2, "0");
       return `${h}:${m}`;
     }
+
+    function resetCalculatedTime(startInput, endInput, warningEl) {
+      startInput.value = "";
+      endInput.value = "";
+      warningEl.style.display = "none";
+      warningEl.innerText = "";
+    }
+
+    function bindCalculatedTime(startInput, endInput, warningEl, durationMinutes, validation) {
+      startInput.addEventListener("change", function () {
+        warningEl.style.display = "none";
+        warningEl.innerText = "";
+        const start = startInput.value;
+
+        if (!start) {
+          endInput.value = "";
+          return;
+        }
+
+        const startMinutes = timeToMinutes(start);
+        const validationMessage = validation(startMinutes, durationMinutes);
+
+        if (validationMessage) {
+          warningEl.style.display = "block";
+          warningEl.innerText = validationMessage;
+          startInput.value = "";
+          endInput.value = "";
+          return;
+        }
+
+        endInput.value = minutesToTime(startMinutes + durationMinutes);
+      });
+    }
   
-    startTime.addEventListener("change", function () {
-      warning.style.display = "none";
-      const start = startTime.value;
-  
-      if (!start) {
-        endTime.value = "";
-        return;
+    bindCalculatedTime(startTime, endTime, warning, 120, (startMinutes, durationMinutes) => {
+      if (startMinutes <= 600) {
+        return "Start time must be after 10:00 AM or later.";
       }
-  
-      const startMinutes = timeToMinutes(start);
-  
-      if (startMinutes <= 600) { // 10:00 AM = 600 minutes
-        warning.style.display = "block";
-        warning.innerText = "Start time must be after 10:00 AM or later.";
-        startTime.value = "";
-        endTime.value = "";
-        return;
+
+      if (startMinutes + durationMinutes >= 1440) {
+        return "Leave time cannot go past midnight.";
       }
-  
-      const endMinutes = startMinutes + 120; // 2 hours later
-  
-      if (endMinutes >= 1440) { // past midnight
-        warning.style.display = "block";
-        warning.innerText = "Leave time cannot go past midnight.";
-        startTime.value = "";
-        endTime.value = "";
-        return;
-      }
-  
-      endTime.value = minutesToTime(endMinutes);
+
+      return null;
     });
+
+    bindCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning, halfDayDurationMinutes, (startMinutes, durationMinutes) => {
+      if (startMinutes < employeeStartMinutes) {
+        return "Custom half leave cannot start before your office start time.";
+      }
+
+      if (startMinutes + durationMinutes > employeeEndMinutes) {
+        return "Custom half leave must end within your office timing.";
+      }
+
+      return null;
+    });
+
+    // Initial state
+    updateDisplay();
 
   formEl.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -510,12 +613,14 @@ ul.error-msg{
 
       await Swal.fire('Success', data.message, 'success');
       formEl.reset();
+      updateDisplay();
     } catch (err) {
       console.error(err);
       await Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
     } finally {
       setSubmitting(false); // always restore button for next submission
-      formEl.reset();   
+      formEl.reset();
+      updateDisplay();
     }
   });
 

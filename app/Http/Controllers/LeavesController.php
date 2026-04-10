@@ -306,7 +306,9 @@ class LeavesController extends Controller
             'leave_to_date' => 'required_if:leave_duration,full|date|nullable|after_or_equal:leave_from_date',
             'start_time' => 'required_if:leave_duration,short',
             'end_time' => 'required_if:leave_duration,short',
-            'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2',
+            'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2,3',
+            'half_custom_start_time' => 'required_if:leave_interval,3|nullable|date_format:H:i',
+            'half_custom_end_time' => 'required_if:leave_interval,3|nullable|date_format:H:i',
             'reason' => 'required|string|max:255',
         ]);
 
@@ -393,13 +395,32 @@ class LeavesController extends Controller
                 return response()->json(['error' => 'For half day leave, the selected date must be within the current month.']);
             }
             $time = Employee::where('emp_code', $emp_code)->first();
+            if (!$time || !$time->st_time || !$time->end_time) {
+                return response()->json(['error' => 'Office timing is not configured for this employee.']);
+            }
             $startTime = Carbon::parse(  "$leaveDate $time->st_time");
             $endTime = Carbon::parse( "$leaveDate $time->end_time");
             $durationMinutes = $startTime->diffInMinutes($endTime);
-            $halfDuration = $durationMinutes / 2;
+            $halfDuration = (int) round($durationMinutes / 2);
             $midPoint = $startTime->copy()->addMinutes($halfDuration);
             Carbon::parse($midPoint);
-            if($request->input('leave_interval') == 1){
+
+            if((int) $request->input('leave_interval') === 3){
+                $customStartInput = $request->input('half_custom_start_time');
+                $customStart = Carbon::parse("$leaveDate $customStartInput");
+                $customEnd = $customStart->copy()->addMinutes($halfDuration);
+
+                if ($customStart->lt($startTime)) {
+                    return response()->json(['error' => 'Custom half leave cannot start before office timing.']);
+                }
+
+                if ($customEnd->gt($endTime)) {
+                    return response()->json(['error' => 'Custom half leave must end within office timing.']);
+                }
+
+                $leave->from_date = $customStart;
+                $leave->to_date = $customEnd;
+            } elseif((int) $request->input('leave_interval') === 1){
                 $leave->from_date = $startTime;
                 $leave->to_date = $midPoint;
             } else {
