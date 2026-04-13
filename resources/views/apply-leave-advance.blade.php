@@ -261,7 +261,15 @@ ul.error-msg{
                         <label class="btn btn-outline-primary" for="flexRadioDefault4" style="width: 75px;">
                           W/O Pay
                         </label>
-                      </div>    
+                      </div>
+                      @if($employee->loca_code == 1)
+                      <div class="form-check">
+                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault5" value="12">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault5" style="width: 75px;">
+                          OD
+                        </label>
+                      </div>
+                      @endif     
                   </div>  
                   <li class="mt-2"><strong>Reason of Leave: </strong></li>
                   <input type="text" class="form-control mt-2" name="reason" id="reason" placeholder="Enter reason of leave" required>

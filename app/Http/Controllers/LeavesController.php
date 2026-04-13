@@ -122,8 +122,8 @@ class LeavesController extends Controller
 
     public function checkBalance($empcode, $leave_type, $leave_duration)
     {
-        if($leave_type == 5) {
-            // Unpaid leave does not require balance check
+        if($leave_type == 5 || $leave_type == 12){ 
+            // Unpaid & OD leave does not require balance check
             return true;
         }
 
@@ -300,7 +300,7 @@ class LeavesController extends Controller
         // Validate the request
         $validator = Validator::make($request->all(), [
             'leave_duration' => 'required|string|in:full,half,short',
-            'leave_type' => 'required_if:leave_duration,half,full|integer|in:1,2,3,5',
+            'leave_type' => 'required_if:leave_duration,half,full|integer|in:1,2,3,5,12',
             'single_leave_date' => 'required_if:leave_duration,half,short|nullable|date',
             'leave_from_date' => 'required_if:leave_duration,full|date|nullable|before_or_equal:leave_to_date',
             'leave_to_date' => 'required_if:leave_duration,full|date|nullable|after_or_equal:leave_from_date',
