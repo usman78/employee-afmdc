@@ -260,7 +260,7 @@
       html: `
         <div class="text-start">
           <label for="swal-emp-code" class="form-label">Employee Code</label>
-          <input id="swal-emp-code" class="form-control" value="${empCodeDefault}">
+          <input id="swal-emp-code" class="form-control" value="${empCodeDefault}" disabled>
         </div>
         <div class="text-start mt-2">
           <label for="swal-month" class="form-label">Month</label>
