@@ -165,20 +165,51 @@ class AttendanceController extends Controller
 
     public function departmentStrengthReport()
     {
-        $rows = DepartmentStrength::query()
-            ->select(
-                'pay_dept_strength_d.dept_code',
-                'pay_dept_strength_d.desg_code',
-                'pay_dept_strength_d.no_of_vacancy',
-                'pay_dept_strength_d.filled_vacancy',
-                'pay_dept.dept_desc',
-                'pay_desig.desg_short'
-            )
-            ->leftJoin('pay_dept', 'pay_dept.dept_code', '=', 'pay_dept_strength_d.dept_code')
-            ->leftJoin('pay_desig', 'pay_desig.desg_code', '=', 'pay_dept_strength_d.desg_code')
-            ->orderBy('pay_dept.dept_desc')
-            ->orderBy('pay_desig.desg_short')
-            ->get();
+        $departments = Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']);
+        return view('department-strength-report', [
+            'departments' => $departments,
+            'report_date' => Carbon::today()->toDateString(),
+        ]);
+    }
+
+    public function departmentStrengthReportData(Request $request)
+    {
+        $request->validate([
+            'dept_code' => 'nullable',
+        ]);
+
+        $deptCode = $request->input('dept_code');
+        $departments = Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']);
+
+        // Raw SQL query for accurate department strength data
+        $query = <<<SQL
+            SELECT dp.dept_desc,
+                   dp.dept_code,
+                   dg.desg_code,
+                   dg.desg_short,
+                   SUM(d.no_of_vacancy) AS no_of_vacancy,
+                   (
+                     SELECT COUNT(*)
+                     FROM payroll.pay_pers s
+                     WHERE s.desg_code = dg.desg_code
+                       AND s.dept_code = dp.dept_code
+                       AND s.quit_stat IS NULL
+                   ) AS filled_vacancy
+            FROM payroll.pay_dept_strength_d d
+            JOIN payroll.pay_desig dg ON d.desg_code = dg.desg_code
+            JOIN payroll.pay_dept dp ON d.dept_code = dp.dept_code
+        SQL;
+
+        if ($deptCode) {
+            $query .= " WHERE dp.dept_code = '{$deptCode}'";
+        }
+
+        $query .= " GROUP BY dp.dept_desc, dg.desg_code, dp.dept_code, dg.desg_short
+                    ORDER BY dp.dept_desc, dg.desg_short";
+
+        $rows = collect(DB::select($query))->map(function ($row) {
+            return (array) $row;
+        });
 
         $employeeNames = Employee::whereNull('quit_stat')
             ->where('loca_code', 1)
@@ -197,17 +228,17 @@ class AttendanceController extends Controller
 
         $grouped = $rows->groupBy('dept_code')->map(function ($deptRows) use ($employeeNames) {
             $deptRows = $deptRows->map(function ($row) use ($employeeNames) {
-                $key = $row->dept_code . '|' . $row->desg_code;
+                $key = $row['dept_code'] . '|' . $row['desg_code'];
                 $names = $employeeNames->get($key, collect());
-                $shortage = (int) $row->no_of_vacancy - (int) $row->filled_vacancy;
+                $shortage = (int) $row['no_of_vacancy'] - (int) $row['filled_vacancy'];
 
                 return [
-                    'dept_code' => $row->dept_code,
-                    'dept_desc' => $row->dept_desc ?? '--',
-                    'desg_code' => $row->desg_code,
-                    'desg_short' => $row->desg_short ?? '--',
-                    'no_of_vacancy' => (int) $row->no_of_vacancy,
-                    'filled_vacancy' => (int) $row->filled_vacancy,
+                    'dept_code' => $row['dept_code'],
+                    'dept_desc' => $row['dept_desc'] ?? '--',
+                    'desg_code' => $row['desg_code'],
+                    'desg_short' => $row['desg_short'] ?? '--',
+                    'no_of_vacancy' => (int) $row['no_of_vacancy'],
+                    'filled_vacancy' => (int) $row['filled_vacancy'],
                     'shortage' => $shortage,
                     'names' => $names,
                 ];
@@ -233,18 +264,110 @@ class AttendanceController extends Controller
 
         return view('department-strength-report', [
             'report_date' => Carbon::today()->toDateString(),
+            'departments' => $departments,
+            'dept_code' => $deptCode,
             'grouped' => $grouped,
             'overall_totals' => $overallTotals,
         ]);
     }
 
-    public function attendanceLateReport()
+    public function departmentStrengthReportDownload(Request $request)
     {
-        $departments = Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']);
-        return view('attendance-late-report', [
-            'departments' => $departments,
-            'report_date' => Carbon::today()->toDateString(),
+        $request->validate([
+            'dept_code' => 'nullable',
         ]);
+
+        $deptCode = $request->input('dept_code');
+
+        // Raw SQL query for accurate department strength data
+        $query = <<<SQL
+            SELECT dp.dept_desc,
+                   dp.dept_code,
+                   dg.desg_code,
+                   dg.desg_short,
+                   SUM(d.no_of_vacancy) AS no_of_vacancy,
+                   (
+                     SELECT COUNT(*)
+                     FROM payroll.pay_pers s
+                     WHERE s.desg_code = dg.desg_code
+                       AND s.dept_code = dp.dept_code
+                       AND s.quit_stat IS NULL
+                   ) AS filled_vacancy
+            FROM payroll.pay_dept_strength_d d
+            JOIN payroll.pay_desig dg ON d.desg_code = dg.desg_code
+            JOIN payroll.pay_dept dp ON d.dept_code = dp.dept_code
+        SQL;
+
+        if ($deptCode) {
+            $query .= " WHERE dp.dept_code = '{$deptCode}'";
+        }
+
+        $query .= " GROUP BY dp.dept_desc, dg.desg_code, dp.dept_code, dg.desg_short
+                    ORDER BY dp.dept_desc, dg.desg_short";
+
+        $rows = collect(DB::select($query))->map(function ($row) {
+            return (array) $row;
+        });
+
+        $employeeNames = Employee::whereNull('quit_stat')
+            ->where('loca_code', 1)
+            ->orderBy('name')
+            ->get(['emp_code', 'name', 'dept_code', 'desg_code'])
+            ->groupBy(function ($emp) {
+                return $emp->dept_code . '|' . $emp->desg_code;
+            })
+            ->map(function ($group) {
+                return $group->map(function ($emp) {
+                    return function_exists('capitalizeWords')
+                        ? capitalizeWords($emp->name)
+                        : ucfirst(strtolower($emp->name));
+                })->values();
+            });
+
+        $grouped = $rows->groupBy('dept_code')->map(function ($deptRows) use ($employeeNames) {
+            $deptRows = $deptRows->map(function ($row) use ($employeeNames) {
+                $key = $row['dept_code'] . '|' . $row['desg_code'];
+                $names = $employeeNames->get($key, collect());
+                $shortage = (int) $row['no_of_vacancy'] - (int) $row['filled_vacancy'];
+
+                return [
+                    'dept_code' => $row['dept_code'],
+                    'dept_desc' => $row['dept_desc'] ?? '--',
+                    'desg_code' => $row['desg_code'],
+                    'desg_short' => $row['desg_short'] ?? '--',
+                    'no_of_vacancy' => (int) $row['no_of_vacancy'],
+                    'filled_vacancy' => (int) $row['filled_vacancy'],
+                    'shortage' => $shortage,
+                    'names' => $names,
+                ];
+            });
+
+            $totals = [
+                'required' => $deptRows->sum('no_of_vacancy'),
+                'filled' => $deptRows->sum('filled_vacancy'),
+            ];
+            $totals['shortage'] = $totals['required'] - $totals['filled'];
+
+            return [
+                'rows' => $deptRows,
+                'totals' => $totals,
+            ];
+        });
+
+        $overallTotals = [
+            'required' => $rows->sum('no_of_vacancy'),
+            'filled' => $rows->sum('filled_vacancy'),
+        ];
+        $overallTotals['shortage'] = $overallTotals['required'] - $overallTotals['filled'];
+
+        $pdf = Pdf::loadView('pdf.department-strength-report', [
+            'report_date' => Carbon::today()->toDateString(),
+            'grouped' => $grouped,
+            'overall_totals' => $overallTotals,
+        ]);
+
+        $fileName = 'department_strength_' . Carbon::now()->format('Ymd_His') . '.pdf';
+        return $pdf->stream($fileName);
     }
 
     public function attendanceLateReportData(Request $request)

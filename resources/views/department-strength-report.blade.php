@@ -36,8 +36,54 @@
                     <a href="{{ route('hr-reports') }}" class="btn btn-outline-secondary btn-sm">Back</a>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered strength-table">
+                    @if(!isset($grouped) || $grouped->isEmpty())
+                        <form action="{{ route('department-strength-report-data') }}" method="POST">
+                            @csrf
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label for="dept_code" class="form-label">Department</label>
+                                    <select class="form-select" id="dept_code" name="dept_code">
+                                        <option value="">-- All Departments --</option>
+                                        @foreach($departments as $dept)
+                                            <option value="{{ $dept->dept_code }}" {{ isset($dept_code) && $dept_code == $dept->dept_code ? 'selected' : '' }}>
+                                                {{ capitalizeWords($dept->dept_desc) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary">Generate Report</button>
+                                </div>
+                            </div>
+                        </form>
+                    @else
+                        <div class="mb-3">
+                            <form action="{{ route('department-strength-report-data') }}" method="POST" class="d-flex gap-2">
+                                @csrf
+                                <select class="form-select w-auto" id="dept_code" name="dept_code">
+                                    <option value="">-- All Departments --</option>
+                                    @foreach($departments as $dept)
+                                        <option value="{{ $dept->dept_code }}" {{ isset($dept_code) && $dept_code == $dept->dept_code ? 'selected' : '' }}>
+                                            {{ capitalizeWords($dept->dept_desc) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                                <a href="{{ route('department-strength-report') }}" class="btn btn-secondary btn-sm">Reset</a>
+                            </form>
+                            <form action="{{ route('department-strength-report-download') }}" method="POST" class="d-inline" target="_blank">
+                                @csrf
+                                <input type="hidden" name="dept_code" value="{{ isset($dept_code) ? $dept_code : '' }}">
+                                <button type="submit" class="btn btn-success btn-sm ms-2 mt-2">
+                                    <i class="fas fa-download"></i> Download PDF
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+
+                    @if(isset($grouped) && $grouped->isNotEmpty())
+                        <div class="table-responsive">
+                            <table class="table table-bordered strength-table">
                             <thead class="thead-light">
                                 <tr>
                                     <th style="width: 4%;">#</th>
@@ -77,7 +123,7 @@
                                             </td>
                                             <td>
                                                 @if(($row['names'] ?? collect())->isNotEmpty())
-                                                    {{ ($row['names'] ?? collect())->implode(', ') }}
+                                                    {!! ($row['names'] ?? collect())->implode('<br>') !!}
                                                 @else
                                                     --
                                                 @endif
@@ -123,11 +169,15 @@
                                     </tr>
                                 @endif
                             </tbody>
-                        </table>
-                    </div>
-                    <div class="text-muted small">
-                        Shortage is calculated as approved seats minus on-roll seats.
-                    </div>
+                            </table>
+                        </div>
+                        <div class="text-muted small">
+                            Shortage is calculated as approved seats minus on-roll seats.
+                        </div>
+                        <div class="alert alert-info" role="alert">
+                            Please select filters and generate the report to view results.
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
