@@ -217,23 +217,29 @@
           if (response.has_no_short_leave) {
             console.log("he has short leaves");  
             Swal.fire({
-              title: 'Unpaid Leave or Short Leave',
-              text: 'You have no leaves available. You can apply for Short Leave or Unpaid Leave only.',
+              title: 'No Leave Balance',
+              text: 'You have no leaves available. You can apply for Short Leave, Unpaid or OD Leave only.',
               icon: 'warning',
               showCancelButton: true,
-              confirmButtonText: 'Apply Short Leave',
-              cancelButtonText: 'Unpaid Leave'
+              confirmButtonText: 'Short Leave',
+              cancelButtonText: 'Unpaid Leave',
+              showDenyButton: true,
+              denyButtonText: `OD Leave`
             }).then((result) => {
               if (result.isConfirmed) {
                 // send a flag to disable buttons except short leave                                                                                                                      
                 window.location.href = "{{ route('apply-leave-advance', ['emp_code' => $leaves->emp_code, 'shortLeaveOnly' => true])}}";
-              } else {
-                window.location.href = "{{ route('apply-unpaid-leave', ['emp_code' => $leaves->emp_code]) }}";
+              } else if (result.isDenied) {
+                window.location.href = "{{ route('apply-od-leave', ['emp_code' => $leaves->emp_code]) }}";
+              }
+              else if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
+                window.location.href = "{{ route('apply-unpaid-leave', ['emp_code' => $leaves->emp_code, 'employee'=> $employee ]) }}";
               }
             });
-          } else {
-            window.location.href = "{{ route('apply-unpaid-leave', ['emp_code' => $leaves->emp_code]) }}";
-          }
+          } 
+          {{-- else {
+            window.location.href = "{{ route('apply-unpaid-leave', ['emp_code' => $leaves->emp_code, 'employee'=> $employee ]) }}";
+          } --}}
         } else {
           window.location.href = "{{ route('apply-leave-advance', ['emp_code' => $leaves->emp_code, 'shortLeaveOnly' => false]) }}";
         }

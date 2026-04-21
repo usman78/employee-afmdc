@@ -131,18 +131,14 @@ ul.error-msg{
                 @endif
                 <ul>
                   <li class="mt-2"><strong>Select Leave Duration: </strong></li>
-                  <div style="margin-bottom: 15px;" class="form-check">
-                    <input class="btn-check" type="radio" name="leave_duration" id="full-day" value="full"
-                    @if($shortLeaveOnly) disabled @endif
-                    >
+                  <div style="margin-bottom: 15px;" class="form-check {{ $shortLeaveOnly ? 'd-none' : '' }}">
+                    <input class="btn-check" type="radio" name="leave_duration" id="full-day" value="full">
                     <label class="btn btn-outline-primary" for="full-day" style="width: 70px;">
                       Full
                     </label>
                   </div>
-                  <div class="form-check mt-2">
-                    <input class="btn-check" type="radio" name="leave_duration" id="half-day" value="half"
-                    @if($shortLeaveOnly) disabled @endif
-                    >
+                  <div class="form-check mt-2 {{ $shortLeaveOnly ? 'd-none' : '' }}">
+                    <input class="btn-check" type="radio" name="leave_duration" id="half-day" value="half">
                     <label class="btn btn-outline-primary" for="half-day" style="width: 70px;">
                       Half
                     </label>

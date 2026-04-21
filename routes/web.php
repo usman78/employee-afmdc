@@ -14,6 +14,7 @@ use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\AdmissionController;
 use App\Http\Controllers\RosterController;
+use App\Models\Employee;
 
 Auth::routes();
 
@@ -49,12 +50,22 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/apply-leave-advance/{emp_code}/{shortLeaveOnly?}', [LeavesController::class, 'applyLeaveAdvance'])->name('apply-leave-advance');
     Route::post('/leave/preview', [LeavesController::class, 'preview'])->name('leave.preview');
     Route::post('/apply-leave-advance/{emp_code}', [LeavesController::class, 'storeLeaveAdvance'])->name('store-leave-advance');
-    Route::get('/apply-unpaid-leave/{emp_code}', function() {
+    Route::get('/apply-unpaid-leave/{emp_code}', function($emp_code) {
+        $employee = Employee::where('emp_code', $emp_code)->first();
         return view('apply-leave-unpaid', [
+            'employee' => $employee,
             'emp_code' => request()->route('emp_code')
         ]);
     })->name('apply-unpaid-leave');
     Route::post('/apply-unpaid-leave/{emp_code}', [LeavesController::class, 'storeUnpaidLeave'])->name('store-unpaid-leave');
+    Route::get('/apply-od-leave/{emp_code}', function($emp_code) {
+        $employee = Employee::where('emp_code', $emp_code)->first();
+        return view('apply-od-leave', [
+            'employee' => $employee,
+            'emp_code' => request()->route('emp_code')
+        ]);
+    })->name('apply-od-leave');
+    Route::post('/apply-od-leave/{emp_code}', [LeavesController::class, 'storeOdLeave'])->name('store-od-leave');
     Route::get('/check-if-any-leave/{emp_code}', [LeavesController::class, 'checkIfAnyLeave'])->name('check-if-any-leave');
     Route::get('/leaves-applied/{emp_code}', [LeavesController::class, 'leavesApplied'])->name('leaves-applied');
     Route::get('/hr/leaves-applied', [LeavesController::class, 'leavesAppliedHr'])->name('hr-leaves-applied');

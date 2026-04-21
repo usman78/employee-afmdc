@@ -44,11 +44,11 @@ ul.error-msg{
       <div class="col-lg-12 justify-content-center mx-auto">
         <div class="portfolio-details">
           <div class="portfolio-info">
-            <h3>Unpaid Leave Application</h3>
+            <h3>OD Leave Application</h3>
             <div class="row">
-              <form action="{{ route('store-unpaid-leave', $emp_code) }}" 
+              <form action="{{ route('store-od-leave', $emp_code) }}" 
                 method="POST" enctype="multipart/form-data" 
-                id="unpaidLeaveForm">
+                id="odLeaveForm">
                 @csrf
                 @if ($errors->any())
                   <div class="alert alert-danger">

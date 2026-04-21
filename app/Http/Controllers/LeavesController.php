@@ -84,7 +84,7 @@ class LeavesController extends Controller
         // Get employee details
         $employee = Employee::where('emp_code', $emp_code)->first();
         $leaves->emp_name = capitalizeWords($employee->name);
-        return view('leaves', compact('leaves', 'pendingLeaves', 'yearlyLeaveSummary'))->with('emp_code', $emp_code);
+        return view('leaves', compact('leaves', 'pendingLeaves', 'yearlyLeaveSummary', 'employee'))->with('emp_code', $emp_code);
     }
 
     public function empType($emp_code)
@@ -764,7 +764,9 @@ class LeavesController extends Controller
             'single_leave_date' => 'required_if:leave_duration,half|date|nullable',
             'leave_from_date' => 'required_if:leave_duration,full|date|nullable|before_or_equal:leave_to_date',
             'leave_to_date' => 'required_if:leave_duration,full|date|nullable|after_or_equal:leave_from_date',
-            'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2',
+            'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2,3',
+            'half_custom_start_time' => 'required_if:leave_interval,3|nullable|date_format:H:i',
+            'half_custom_end_time' => 'required_if:leave_interval,3|nullable|date_format:H:i',
             'reason' => 'required|string|max:255',
         ]);
 
@@ -791,7 +793,7 @@ class LeavesController extends Controller
             $leave->to_date = Carbon::createFromDate($to)->format('Y-m-d');
             $leave->leave_id = self::getNextLeaveId();
             $leave->leave_date = Carbon::today();
-            $leave->leave_code = 5; // Unpaid leave code
+            $leave->leave_code = 5;
             $leave->l_day = $numberOfDays;
             list($employeeType, $deptCode) = $this->empType($emp_code);
             $leave->status = $employeeType == 'Regular' ? '1' : '3';
@@ -803,7 +805,7 @@ class LeavesController extends Controller
             $leave->emp_code = $emp_code;
             $leave->leave_date = Carbon::today();
             $leave->save();
-            return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+            return redirect()->route('leaves', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
         }
         else if($leave_duration == 'half') {
             // check if any leave already exists in the selected date
@@ -822,13 +824,31 @@ class LeavesController extends Controller
             $leaveDate = $request->input('single_leave_date');
             $leaveDate = date('d-m-Y', strtotime($leaveDate));
             $time = Employee::where('emp_code', $emp_code)->first();
+            if (!$time || !$time->st_time || !$time->end_time) {
+                return response()->json(['error' => 'Office timing is not configured for this employee.']);
+            }
             $startTime = Carbon::parse(  "$leaveDate $time->st_time");
             $endTime = Carbon::parse( "$leaveDate $time->end_time");
             $durationMinutes = $startTime->diffInMinutes($endTime);
             $halfDuration = $durationMinutes / 2;
             $midPoint = $startTime->copy()->addMinutes($halfDuration);
             Carbon::parse($midPoint);
-            if($request->input('leave_interval') == 1){
+            if((int) $request->input('leave_interval') === 3){
+                $customStartInput = $request->input('half_custom_start_time');
+                $customStart = Carbon::parse("$leaveDate $customStartInput");
+                $customEnd = $customStart->copy()->addMinutes($halfDuration);
+
+                if ($customStart->lt($startTime)) {
+                    return response()->json(['error' => 'Custom half leave cannot start before office timing.']);
+                }
+
+                if ($customEnd->gt($endTime)) {
+                    return response()->json(['error' => 'Custom half leave must end within office timing.']);
+                }
+
+                $leave->from_date = $customStart;
+                $leave->to_date = $customEnd;
+            } elseif((int) $request->input('leave_interval') === 1){
                 $leave->from_date = $startTime;
                 $leave->to_date = $midPoint;
             } else {
@@ -844,7 +864,126 @@ class LeavesController extends Controller
             $leave->moddate = now();
             $leave->remark = $request->input('reason');
             $leave->save();
-            return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+            return redirect()->route('leaves', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+        } else {
+            // Handle invalid leave exception
+            return redirect()->back()->with('error', 'Invalid leave type selected. Please try again!');
+        }
+    }
+
+    public function storeOdLeave(Request $request, $emp_code)
+    {
+        // Ensure logged-in user matches the requested employee code
+        $authUser = Auth::user();
+        if ($authUser->emp_code != $emp_code) {
+            return redirect()->route('home');
+        }
+
+        $request->validate([
+            'leave_duration' => 'required|string|in:full,half',
+            'single_leave_date' => 'required_if:leave_duration,half|date|nullable',
+            'leave_from_date' => 'required_if:leave_duration,full|date|nullable|before_or_equal:leave_to_date',
+            'leave_to_date' => 'required_if:leave_duration,full|date|nullable|after_or_equal:leave_from_date',
+            'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2,3',
+            'half_custom_start_time' => 'required_if:leave_interval,3|nullable|date_format:H:i',
+            'half_custom_end_time' => 'required_if:leave_interval,3|nullable|date_format:H:i',
+            'reason' => 'required|string|max:255',
+        ]);
+
+        $leave_duration = $request->input('leave_duration');
+
+        if ($leave_duration == 'full') {
+            // check if any leave already exists in the selected range
+            if(checkMultipleLeaves($emp_code,  
+                date('Y-m-d',strtotime($request->input('leave_from_date'))), 
+                date('Y-m-d',strtotime($request->input('leave_to_date'))))){
+                return redirect()->back()->with('error', 'You have already applied for leave on one or more of the selected dates.');
+            }
+            $range = $request->input('leave_from_date') . ' - ' . $request->input('leave_to_date');
+            list($from, $to) = explode(' - ', $range);
+            $to = date('d-m-Y', strtotime($to));
+            $from = date('d-m-Y', strtotime($from));
+            $fromDate = Carbon::parse($from);
+            $toDate = Carbon::parse($to);
+            $numberOfDays = (int) $fromDate->diffInDays($toDate) + 1;
+
+            $leave = new Leave();
+            $leave->from_date = Carbon::createFromDate($from)->format('Y-m-d');
+            $leave->to_date = Carbon::createFromDate($to)->format('Y-m-d');
+            $leave->leave_id = self::getNextLeaveId();
+            $leave->leave_date = Carbon::today();
+            $leave->leave_code = 12;
+            $leave->l_day = $numberOfDays;
+            list($employeeType, $deptCode) = $this->empType($emp_code);
+            $leave->status = $employeeType == 'Regular' ? '1' : '3';
+            $leave->dept_code = $deptCode;
+            $leave->user_id = $emp_code;
+            $leave->terminal_id = 'online';
+            $leave->moddate = now();
+            $leave->remark = $request->input('reason');
+            $leave->emp_code = $emp_code;
+            $leave->leave_date = Carbon::today();
+            $leave->save();
+            return redirect()->route('leaves', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+        }
+        else if($leave_duration == 'half') {
+            // check if any leave already exists in the selected date
+            if(checkMultipleLeaves(
+                $emp_code,
+                date('Y-m-d', strtotime($request->input('single_leave_date'))),
+                date('Y-m-d', strtotime($request->input('single_leave_date')))
+            )){
+                return redirect()->back()->with('error', 'You have already applied for leave on the selected date.');
+            }
+            $leave = new Leave();
+            $leave->leave_id = self::getNextLeaveId();
+            $leave->leave_date = Carbon::today();
+            $leave->emp_code = $emp_code;
+            $leave->leave_code = 12; 
+            $leaveDate = $request->input('single_leave_date');
+            $leaveDate = date('d-m-Y', strtotime($leaveDate));
+            $time = Employee::where('emp_code', $emp_code)->first();
+            if (!$time || !$time->st_time || !$time->end_time) {
+                return response()->json(['error' => 'Office timing is not configured for this employee.']);
+            }
+            $startTime = Carbon::parse(  "$leaveDate $time->st_time");
+            $endTime = Carbon::parse( "$leaveDate $time->end_time");
+            $durationMinutes = $startTime->diffInMinutes($endTime);
+            $halfDuration = $durationMinutes / 2;
+            $midPoint = $startTime->copy()->addMinutes($halfDuration);
+            Carbon::parse($midPoint);
+            if((int) $request->input('leave_interval') === 3){
+                $customStartInput = $request->input('half_custom_start_time');
+                $customStart = Carbon::parse("$leaveDate $customStartInput");
+                $customEnd = $customStart->copy()->addMinutes($halfDuration);
+
+                if ($customStart->lt($startTime)) {
+                    return response()->json(['error' => 'Custom half leave cannot start before office timing.']);
+                }
+
+                if ($customEnd->gt($endTime)) {
+                    return response()->json(['error' => 'Custom half leave must end within office timing.']);
+                }
+
+                $leave->from_date = $customStart;
+                $leave->to_date = $customEnd;
+            } elseif((int) $request->input('leave_interval') === 1){
+                $leave->from_date = $startTime;
+                $leave->to_date = $midPoint;
+            } else {
+                $leave->from_date = $midPoint;
+                $leave->to_date = $endTime;
+            }
+            $leave->l_day = 0.5;
+            list($employeeType, $deptCode) = $this->empType($emp_code);
+            $leave->status = $employeeType == 'Regular' ? '1' : '3';
+            $leave->dept_code = $deptCode;
+            $leave->user_id = $emp_code;
+            $leave->terminal_id = 'online';
+            $leave->moddate = now();
+            $leave->remark = $request->input('reason');
+            $leave->save();
+            return redirect()->route('leaves', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
         } else {
             // Handle invalid leave exception
             return redirect()->back()->with('error', 'Invalid leave type selected. Please try again!');
