@@ -123,8 +123,8 @@ strong {
               <li><a class="thick-underline" href="{{route('attendance', $employee->emp_code)}}">Check your current month attendance.</a></li>
               <li><a class="thick-underline" href="{{route('leaves', $employee->emp_code)}}">Check your leaves balance.</a></li>
               <li>
-                <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                  <strong>Please Note!</strong> The Outdoor Duty (OD) leaves should be applied manually through HR Approval.
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                  <strong>Please Note!</strong> The Outdoor Duty (OD) can be applied through the portal now, except for AFH employees.
                 </div>
               </li>
               <li><a class="btn-log-out" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a></li>
