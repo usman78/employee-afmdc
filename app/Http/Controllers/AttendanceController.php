@@ -51,11 +51,6 @@ class AttendanceController extends Controller
 
     public function attendance(Request $request, $emp_code)
     {
-        $authUser = Auth::user();
-        if ($authUser->emp_code != $emp_code) {
-            return redirect()->route('home');
-        }
-
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
 
@@ -171,7 +166,14 @@ class AttendanceController extends Controller
             'report_date' => Carbon::today()->toDateString(),
         ]);
     }
-
+    public function attendanceLateReport()
+    {
+        $departments = Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']);
+        return view('attendance-late-report', [
+            'departments' => $departments,
+            'report_date' => Carbon::today()->toDateString(),
+        ]);
+    }
     public function departmentStrengthReportData(Request $request)
     {
         $request->validate([
