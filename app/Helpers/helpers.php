@@ -83,7 +83,17 @@ function hisBoss($emp_code)
 
     return $boss;    
 }
+function hisSubordinates($emp_code)
+{
+    $subordinates = \DB::table('pre_leave_auth')
+        ->join('pay_pers', 'pre_leave_auth.emp_code_l', '=', 'pay_pers.emp_code')
+        ->where('emp_code_a', $emp_code)
+        // ->where('type', 'A')
+        ->where('quit_stat', null)
+        ->pluck('emp_code_l');
 
+    return $subordinates;    
+}   
 function employeeName($emp_code)
 {
     $name = \DB::table('pay_pers')
