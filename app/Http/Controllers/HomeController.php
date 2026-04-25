@@ -6,6 +6,7 @@ use App\Models\ApprovedLeave;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Employee;
+use App\Models\Notice;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Attendance;
 use App\Models\Leave;
@@ -31,6 +32,12 @@ class HomeController extends Controller
         $employee = Employee::where('emp_code', $user->emp_code)->first();
         $today = Attendance::where('emp_code', $user->emp_code)->whereDate('at_date', today())->first();
         $employeeStatus = employeeStatus($user->emp_code);
+        
+        // Fetch published notices
+        $notices = Notice::where('is_published', true)
+                    ->latest()
+                    ->take(5)
+                    ->get();
 
         if($today){
             if($today->timein != null){
@@ -40,7 +47,7 @@ class HomeController extends Controller
                 $today->timeout = date('H:i', strtotime($today->timeout));
             }
         }   
-        return view('home', compact('employee', 'today', 'employeeStatus'))->with('emp_code', $user);
+        return view('home', compact('employee', 'today', 'employeeStatus', 'notices'))->with('emp_code', $user);
     }
     public function changePassword()
     {

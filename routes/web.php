@@ -14,6 +14,7 @@ use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\AdmissionController;
 use App\Http\Controllers\RosterController;
+use App\Http\Controllers\NoticeController;
 use App\Models\Employee;
 
 Auth::routes();
@@ -145,6 +146,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/report', [App\Http\Controllers\ExitInterviewController::class, 'report'])->name('exit-interview.report');
         Route::get('/show/{id}', [App\Http\Controllers\ExitInterviewController::class, 'show'])->name('exit-interview.show');
         Route::get('/download-pdf/{id}', [App\Http\Controllers\ExitInterviewController::class, 'downloadPDF'])->name('exit-interview.download-pdf');
+    });
+
+    Route::prefix('notices')->group(function () {
+        Route::get('/', [NoticeController::class, 'index'])->name('notices.index');
+        Route::get('/create', [NoticeController::class, 'create'])->name('notices.create');
+        Route::post('/', [NoticeController::class, 'store'])->name('notices.store');
+        Route::get('/{notice}/review', [NoticeController::class, 'review'])->name('notices.review');
+        Route::post('/{notice}/approve', [NoticeController::class, 'approve'])->name('notices.approve');
+        Route::post('/{notice}/reject', [NoticeController::class, 'reject'])->name('notices.reject');
     });
 
     Route::get('/hr-dashboard', function () {

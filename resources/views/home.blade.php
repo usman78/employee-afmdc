@@ -73,6 +73,24 @@ strong {
   margin-top: 30px;
   cursor: pointer;
 }
+.side-btn{
+    position: fixed;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%) translateX(0);
+    z-index: 2000;
+    transition: transform 0.3s ease;
+    border-radius: 50%;
+    width: 75px;
+    height: 75px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+#accordionSidebar {
+  z-index: 999999999;
+}
 @endpush
 
 @section('content')
@@ -109,17 +127,9 @@ strong {
                 <li><strong>Your Status </strong>
                   <span class="badge badge-success">You have clocked out.</span> 
                 </li>  
-                @else You have not showed up today. 
-                @endif
-
-              {{-- </li>
-              <li><strong>Status: </strong>
-                @if ($today && $today->timein != null) 
-                <span class="badge badge-success">In the Office</span> 
                 @else 
-                <span class="badge badge-danger">Out of office</span> 
+                  You have not showed up today. 
                 @endif
-              </li> --}}
               <li><a class="thick-underline" href="{{route('attendance', $employee->emp_code)}}">Check your current month attendance.</a></li>
               <li><a class="thick-underline" href="{{route('leaves', $employee->emp_code)}}">Check your leaves balance.</a></li>
               <li>
@@ -227,11 +237,86 @@ strong {
 
   </div> --}}
 </div>
+<button id="canvasBtn" class="btn btn-primary side-btn"
+        data-bs-toggle="offcanvas"
+        data-bs-target="#myOffcanvas">
+    Notice Board
+</button>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="myOffcanvas">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title">Notice Board</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        @if($notices->count() > 0)
+            <div class="notices-list">
+                @foreach($notices as $notice)
+                    <div class="notice-item mb-4 pb-3" style="border-bottom: 1px solid #ddd;">
+                        <h6 class="text-primary fw-bold">{{ $notice->title }}</h6>
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-calendar"></i> 
+                            {{ $notice->created_at->format('M d, Y') }}
+                            @if($notice->creator)
+                                <br>
+                                <i class="bi bi-person"></i> 
+                                {{ capitalizeWords($notice->creator->name) }}
+                            @endif
+                        </p>
+                        <p class="mb-2">{{ Str::limit($notice->content, 150) }}</p>
+                        <small class="text-muted d-block">
+                            <a href="javascript:void(0);" onclick="showNoticeModal('{{ $notice->title }}', `{{ $notice->content }}`)">Read more</a>
+                        </small>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="alert alert-info" role="alert">
+                <p class="mb-0">No notices at the moment. Check back later!</p>
+            </div>
+        @endif
+    </div>
+</div>
 @endsection
 
+<!-- Notice Modal -->
+<div class="modal fade" id="noticeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="noticeTitle">Notice</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="noticeContent"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
-  
+  const offcanvas = document.getElementById('myOffcanvas');
+  const btn = document.getElementById('canvasBtn');
+
+  offcanvas.addEventListener('show.bs.offcanvas', function () {
+      btn.style.transform = "translateY(-50%) translateX(-400px)";
+  });
+
+  offcanvas.addEventListener('hide.bs.offcanvas', function () {
+      btn.style.transform = "translateY(-50%) translateX(0)";
+  });
+
+  function showNoticeModal(title, content) {
+      document.getElementById('noticeTitle').textContent = title;
+      document.getElementById('noticeContent').textContent = content;
+      const modal = new bootstrap.Modal(document.getElementById('noticeModal'));
+      modal.show();
+  }
 @endpush
+
 
 
 

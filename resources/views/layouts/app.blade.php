@@ -250,6 +250,23 @@
                         </div>
                     </div>
                 </li>
+                {{-- Notices --}}
+                @if(auth::user()->isHR())
+                <li @class(['nav-item', 'active' => in_array(request()->route()->getName(), ['notices.index', 'notices.review', 'notices.create'])])>
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseNotices">
+                        <i class="fas fa-fw fa-bullhorn"></i>
+                        <span>Notice Board</span>
+                    </a>
+                    <div id="collapseNotices"
+                        class="collapse {{ in_array(request()->route()->getName(), ['notices.index', 'notices.review', 'notices.create']) ? 'show' : '' }}"
+                        data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['notices.create']) ? 'active' : '' }}" href="{{ route('notices.create') }}">Create Notice</a>
+                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['notices.index', 'notices.review']) ? 'active' : '' }}" href="{{ route('notices.index') }}">All Notices</a>
+                        </div>
+                    </div>
+                </li>
+                @endif
                 {{-- Team (Boss only) --}}
                 @if(Auth::user()->isBoss())
                     <li @class([
@@ -346,7 +363,7 @@
                                     data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     <i class="fas fa-bell fa-fw"></i>
                                     <!-- Counter - Alerts -->
-                                    {{-- <span class="badge badge-danger badge-counter">3+</span> --}}
+                                    <span class="badge badge-danger badge-counter">{{ auth()->user()->unreadNotifications->count() }}</span>
                                 </a>
                                 <!-- Dropdown - Alerts -->
                                 <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
@@ -354,7 +371,24 @@
                                     <h6 class="dropdown-header">
                                         Alerts Center
                                     </h6>
-                                    <a class="dropdown-item d-flex align-items-center" href="#">
+                                    @if (auth()->user()->unreadNotifications->count() > 0)
+                                        @foreach (auth()->user()->unreadNotifications as $notification)
+                                            <a class="dropdown-item d-flex align-items-center" href="/notices/{{ $notification->data['notice_id'] }}/review">
+                                                <div class="mr-3">
+                                                    <div class="icon-circle bg-primary">
+                                                        <i class="fas fa-file-alt text-white"></i>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="small text-gray-500">{{ $notification->created_at->format('F j, Y, g:i a') }}</div>
+                                                    <span class="font-weight-bold">{{ $notification->data['message'] }}</span>
+                                                </div>
+                                            </a>
+                                        @endforeach
+                                    @else
+                                        <a class="dropdown-item text-center small text-gray-500" href="#">No new notifications</a>
+                                    @endif
+                                    {{-- <a class="dropdown-item d-flex align-items-center" href="#">
                                         <div class="mr-3">
                                             <div class="icon-circle bg-primary">
                                                 <i class="fas fa-file-alt text-white"></i>
@@ -364,8 +398,8 @@
                                             <div class="small text-gray-500">December 12, 2019</div>
                                             <span class="font-weight-bold">A new monthly report is ready to download!</span>
                                         </div>
-                                    </a>
-                                    <a class="dropdown-item d-flex align-items-center" href="#">
+                                    </a> --}}
+                                    {{-- <a class="dropdown-item d-flex align-items-center" href="#">
                                         <div class="mr-3">
                                             <div class="icon-circle bg-success">
                                                 <i class="fas fa-donate text-white"></i>
@@ -375,8 +409,8 @@
                                             <div class="small text-gray-500">December 7, 2019</div>
                                             $290.29 has been deposited into your account!
                                         </div>
-                                    </a>
-                                    <a class="dropdown-item d-flex align-items-center" href="#">
+                                    </a> --}}
+                                    {{-- <a class="dropdown-item d-flex align-items-center" href="#">
                                         <div class="mr-3">
                                             <div class="icon-circle bg-warning">
                                                 <i class="fas fa-exclamation-triangle text-white"></i>
@@ -386,7 +420,7 @@
                                             <div class="small text-gray-500">December 2, 2019</div>
                                             Spending Alert: We've noticed unusually high spending for your account.
                                         </div>
-                                    </a>
+                                    </a> --}}
                                     <a class="dropdown-item text-center small text-gray-500" href="#">Show All Alerts</a>
                                 </div>
                             </li>
@@ -455,6 +489,7 @@
         <!-- SB Admin 2 JS Files -->
         <script src="{{ asset('sb/vendor/jquery/jquery.min.js') }}"></script>
         <script src="{{ asset('sb/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
         <!-- Core plugin JavaScript-->
         <script src="{{ asset('sb/vendor/jquery-easing/jquery.easing.min.js') }}"></script>
         <!-- Custom scripts for all pages-->
