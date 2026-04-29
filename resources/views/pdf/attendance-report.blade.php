@@ -220,6 +220,7 @@
         </tbody>
     </table>
 
+    @if($include_signatures ?? true)
     <div class="notice-box">
         <div>
             It is observed from your attendance record that, you are habitually coming on your duty
@@ -249,5 +250,6 @@
             </tr>
         </table>
     </div>
+    @endif
 </body>
 </html>

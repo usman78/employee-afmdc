@@ -272,14 +272,35 @@
                 </small>
               </div>
               <div class="d-flex gap-2">
-                <form action="{{ route('attendance-report-download', ['emp_code' => $searched_emp_code ?? old('emp_code')]) }}" method="POST" target="_blank">
-                  <input type="hidden" name="start_date" value="{{ $report_start_date ?? ($searched_start_date ?? Carbon::now()->startOfMonth()->toDateString()) }}">
-                  @csrf
-                  <input type="hidden" name="end_date" value="{{ $report_end_date ?? ($searched_end_date ?? Carbon::today()->toDateString()) }}">
-                  <button type="submit" class="btn btn-primary">
+                <div class="dropdown">
+                  <button class="btn btn-primary dropdown-toggle" type="button" id="downloadDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-download"></i> Download Report as PDF
                   </button>
-                </form>
+                  <ul class="dropdown-menu" aria-labelledby="downloadDropdown">
+                    <li>
+                      <form action="{{ route('attendance-report-download', ['emp_code' => $searched_emp_code ?? old('emp_code')]) }}" method="POST" target="_blank" style="display: inline;">
+                        <input type="hidden" name="start_date" value="{{ $report_start_date ?? ($searched_start_date ?? Carbon::now()->startOfMonth()->toDateString()) }}">
+                        @csrf
+                        <input type="hidden" name="end_date" value="{{ $report_end_date ?? ($searched_end_date ?? Carbon::today()->toDateString()) }}">
+                        <input type="hidden" name="include_signatures" value="1">
+                        <button type="submit" class="dropdown-item">
+                          <i class="fas fa-pen"></i> With Signatures
+                        </button>
+                      </form>
+                    </li>
+                    <li>
+                      <form action="{{ route('attendance-report-download', ['emp_code' => $searched_emp_code ?? old('emp_code')]) }}" method="POST" target="_blank" style="display: inline;">
+                        <input type="hidden" name="start_date" value="{{ $report_start_date ?? ($searched_start_date ?? Carbon::now()->startOfMonth()->toDateString()) }}">
+                        @csrf
+                        <input type="hidden" name="end_date" value="{{ $report_end_date ?? ($searched_end_date ?? Carbon::today()->toDateString()) }}">
+                        <input type="hidden" name="include_signatures" value="0">
+                        <button type="submit" class="dropdown-item">
+                          <i class="fas fa-file"></i> Without Signatures
+                        </button>
+                      </form>
+                    </li>
+                  </ul>
+                </div>
                 <form id="email-report-form" action="{{ route('attendance-report-email', ['emp_code' => $searched_emp_code ?? old('emp_code')]) }}" method="POST">
                   @csrf
                   <input type="hidden" name="start_date" value="{{ $report_start_date ?? ($searched_start_date ?? Carbon::now()->startOfMonth()->toDateString()) }}">

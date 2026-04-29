@@ -740,10 +740,12 @@ class AttendanceController extends Controller
         $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'include_signatures' => 'nullable|in:0,1',
         ]);
 
         $startDate = Carbon::parse($request->input('start_date'))->toDateString();
         $endDate = Carbon::parse($request->input('end_date'))->toDateString();
+        $includeSignatures = (bool) $request->input('include_signatures', 1);
         $employee = Employee::with(['department', 'designation'])
             ->where('emp_code', $emp_code)
             ->first();
@@ -785,6 +787,7 @@ class AttendanceController extends Controller
             'leave_counts' => $reportData['leave_counts'] ?? [],
             'period_start' => $periodStart,
             'period_end' => $periodEnd,
+            'include_signatures' => $includeSignatures,
         ]);
 
         $now = Carbon::now()->format('Ymd_His');

@@ -118,14 +118,35 @@
                 Apply Range
               </button>
             </form>
-            <form action="{{ route('attendance-report-download', ['emp_code' => $emp_code ?? '']) }}" method="POST">
-              @csrf
-              <input type="hidden" name="start_date" value="{{ $report_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString() }}">
-              <input type="hidden" name="end_date" value="{{ $report_end_date ?? \Carbon\Carbon::today()->toDateString() }}">
-              <button type="submit" class="btn btn-primary btn-sm">
+            <div class="dropdown">
+              <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="downloadDropdownAttendance" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="fas fa-download"></i> Download Report as PDF
               </button>
-            </form>
+              <ul class="dropdown-menu" aria-labelledby="downloadDropdownAttendance">
+                <li>
+                  <form action="{{ route('attendance-report-download', ['emp_code' => $emp_code ?? '']) }}" method="POST" target="_blank" style="display: inline;">
+                    <input type="hidden" name="start_date" value="{{ $report_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString() }}">
+                    @csrf
+                    <input type="hidden" name="end_date" value="{{ $report_end_date ?? \Carbon\Carbon::today()->toDateString() }}">
+                    <input type="hidden" name="include_signatures" value="1">
+                    <button type="submit" class="dropdown-item">
+                      <i class="fas fa-pen"></i> With Signatures
+                    </button>
+                  </form>
+                </li>
+                <li>
+                  <form action="{{ route('attendance-report-download', ['emp_code' => $emp_code ?? '']) }}" method="POST" target="_blank" style="display: inline;">
+                    <input type="hidden" name="start_date" value="{{ $report_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString() }}">
+                    @csrf
+                    <input type="hidden" name="end_date" value="{{ $report_end_date ?? \Carbon\Carbon::today()->toDateString() }}">
+                    <input type="hidden" name="include_signatures" value="0">
+                    <button type="submit" class="dropdown-item">
+                      <i class="fas fa-file"></i> Without Signatures
+                    </button>
+                  </form>
+                </li>
+              </ul>
+            </div>
           </div>
           <div class="row gy-4 stats">
             <div class="col-md-3">
