@@ -17,6 +17,7 @@ use App\Models\Department;
 use App\Models\Attendance;
 use App\Models\Designation;
 use App\Models\Balance;
+use App\Models\Holidays;
 
 class LeavesController extends Controller
 {
@@ -1310,15 +1311,7 @@ class LeavesController extends Controller
             return ['late' => 0, 'early' => 0];
         }
 
-        $holidays = [
-            '2025-03-31','2025-04-01','2025-04-02',
-            '2025-05-01','2025-05-07',
-            '2025-06-09','2025-06-10','2025-06-11',
-            '2025-07-05','2025-08-14',
-            '2025-11-09','2025-12-25',
-            '2026-02-05', '2026-02-06', '2026-02-07',
-            '2026-03-19', '2026-03-20', '2026-03-21', '2026-03-23'
-        ];
+        $holidays = $this->getHolidayDates();
 
         $totalLate  = 0;
         $totalEarly = 0;
@@ -1329,7 +1322,7 @@ class LeavesController extends Controller
 
             $dateStr = $date->toDateString();
 
-            if ($date->isSunday() || in_array($dateStr, $holidays)) {
+            if ($date->isSunday() || in_array($dateStr, $holidays, true)) {
                 $date->addDay();
                 continue;
             }
@@ -1504,6 +1497,28 @@ class LeavesController extends Controller
             'early' => $totalEarly
         ];
     }
+
+    private function getHolidayDates(): array
+    {
+        static $holidayDates = null;
+
+        if ($holidayDates !== null) {
+            return $holidayDates;
+        }
+
+        $holidayDates = Holidays::query()
+            ->whereNotNull('h_date')
+            ->pluck('h_date')
+            ->map(function ($date) {
+                return Carbon::parse($date)->toDateString();
+            })
+            ->unique()
+            ->values()
+            ->all();
+
+        return $holidayDates;
+    }
+
     public function leaveReportDownload($start_date, $end_date)
     {
         $dept_desc = request()->input('dept_desc');

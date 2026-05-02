@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon; 
 use App\Models\Leave;
+use App\Models\Holidays;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class AttendanceController extends Controller
@@ -923,15 +924,7 @@ class AttendanceController extends Controller
         /* -------------------------
         Holidays
         -------------------------- */
-        $holidays = [
-            '2025-03-31','2025-04-01','2025-04-02',
-            '2025-05-01','2025-05-07',
-            '2025-06-09','2025-06-10','2025-06-11',
-            '2025-07-05','2025-08-14',
-            '2025-11-09','2025-12-25',
-            '2026-02-05', '2026-02-06', '2026-02-07',
-            '2026-03-19', '2026-03-20', '2026-03-21', '2026-03-23'
-        ];
+        $holidays = $this->getHolidayDates();
 
         $start_date = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->startOfMonth();
         $selectedEndDate = $endDate ? Carbon::parse($endDate)->startOfDay() : Carbon::today();
@@ -942,7 +935,7 @@ class AttendanceController extends Controller
 
         while ($tempDate->lte($end_date)) {
             $dateString = $tempDate->toDateString();
-            $isHoliday  = in_array($dateString, $holidays);
+            $isHoliday  = in_array($dateString, $holidays, true);
 
             if ($tempDate->isSunday() || $isHoliday) {
                 $allDates->push([
@@ -1230,15 +1223,23 @@ class AttendanceController extends Controller
 
     private function getHolidayDates(): array
     {
-        return [
-            '2025-03-31','2025-04-01','2025-04-02',
-            '2025-05-01','2025-05-07',
-            '2025-06-09','2025-06-10','2025-06-11',
-            '2025-07-05','2025-08-14',
-            '2025-11-09','2025-12-25',
-            '2026-02-05', '2026-02-06', '2026-02-07',
-            '2026-03-19', '2026-03-20', '2026-03-21', '2026-03-23'
-        ];
+        static $holidayDates = null;
+
+        if ($holidayDates !== null) {
+            return $holidayDates;
+        }
+
+        $holidayDates = Holidays::query()
+            ->whereNotNull('h_date')
+            ->pluck('h_date')
+            ->map(function ($date) {
+                return Carbon::parse($date)->toDateString();
+            })
+            ->unique()
+            ->values()
+            ->all();
+
+        return $holidayDates;
     }
 
     private function buildLateEmployeesForDate($employees, Carbon $date, ?array $holidays = null): array
@@ -1489,15 +1490,7 @@ class AttendanceController extends Controller
         $monthStart = $reportCarbon->copy()->startOfMonth()->toDateString();
         $statsEnd = $reportCarbon->gt(Carbon::today()) ? Carbon::today()->toDateString() : $reportCarbon->toDateString();
 
-        $holidays = [
-            '2025-03-31','2025-04-01','2025-04-02',
-            '2025-05-01','2025-05-07',
-            '2025-06-09','2025-06-10','2025-06-11',
-            '2025-07-05','2025-08-14',
-            '2025-11-09','2025-12-25',
-            '2026-02-05', '2026-02-06', '2026-02-07',
-            '2026-03-19', '2026-03-20', '2026-03-21', '2026-03-23'
-        ];
+        $holidays = $this->getHolidayDates();
 
         $isNonWorkingDay = $reportCarbon->isSunday() || in_array($reportDate, $holidays, true);
 
