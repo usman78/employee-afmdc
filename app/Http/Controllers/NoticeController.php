@@ -39,15 +39,28 @@ class NoticeController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
+            'attachment' => 'nullable|file|max:10240',
         ]);
 
         $user = Auth::user();
         
+        $attachmentPath = null;
+        $attachmentName = null;
+
+        // Handle file upload
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $attachmentName = $file->getClientOriginalName();
+            $attachmentPath = $file->store('notices', 'public');
+        }
+
         $notice = Notice::create([
             'title' => $validated['title'],
             'content' => $validated['content'],
             'created_by' => $user->emp_code,
-            'is_published' => false,
+            'is_published' => true,
+            'attachment_path' => $attachmentPath,
+            'attachment_name' => $attachmentName,
         ]);
 
         // Find COO (Chief Operating Officer) by designation code or description
@@ -61,14 +74,14 @@ class NoticeController extends Controller
             $approval = NoticeApproval::create([
                 'notice_id' => $notice->id,
                 'approver_id' => $coo->emp_code,
-                'approval_status' => 'pending',
+                'approval_status' => 'approved',
             ]);
 
             // Send notification to COO
-            $coo->notify(new NoticeApprovalNotification($notice));
+            // $coo->notify(new NoticeApprovalNotification($notice));
         }
 
-        return redirect()->route('notices.create')->with('success', 'Notice created successfully! It will be displayed after approval.');
+        return redirect()->route('notices.create')->with('success', 'Notice created successfully!');
     }
 
     /**
@@ -78,12 +91,12 @@ class NoticeController extends Controller
     {
         $notice = Notice::findOrFail($noticeId);
         $approval = NoticeApproval::where('notice_id', $noticeId)
-                                   ->where('approver_id', Auth::user()->emp_code)
+                                //    ->where('approver_id', Auth::user()->emp_code)
                                    ->firstOrFail();
-        $notification = Auth::user()->notifications()
-                            ->where('data->notice_id', $noticeId)
-                            ->first();
-        $notification?->markAsRead();                                               
+        // $notification = Auth::user()->notifications()
+        //                     ->where('data->notice_id', $noticeId)
+        //                     ->first();
+        // $notification?->markAsRead();                                               
 
         return view('notices.review', compact('notice', 'approval'));
     }

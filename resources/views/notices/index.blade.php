@@ -43,9 +43,9 @@
                                         default => 'clock-fill'
                                     };
                                 @endphp
-                                <span class="badge bg-{{ $statusClass }}">
+                                {{-- <span class="badge bg-{{ $statusClass }}">
                                     <i class="bi bi-{{ $statusIcon }}"></i> {{ ucfirst($approval?->approval_status ?? 'pending') }}
-                                </span>
+                                </span> --}}
                             </div>
 
                             <!-- Creator Info -->
@@ -67,7 +67,7 @@
                             @if ($approval)
                                 <div class="border-top pt-3 mb-3">
                                     <small>
-                                        <strong>Approver:</strong> {{ $approval->approver?->name ?? 'Unknown' }}<br>
+                                        {{-- <strong>Approver:</strong> {{ $approval->approver?->name ?? 'Unknown' }}<br> --}}
                                         @if ($approval->updated_at && $approval->updated_at != $approval->created_at)
                                             <strong>Decision Date:</strong> {{ $approval->updated_at?->format('d-m-Y H:i') ?? 'N/A' }}<br>
                                         @endif

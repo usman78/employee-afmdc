@@ -28,7 +28,7 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('notices.store') }}" method="POST">
+                    <form action="{{ route('notices.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
                         <div class="mb-3">
@@ -60,9 +60,25 @@
                             @enderror
                         </div>
 
+                        <div class="mb-3">
+                            <label for="attachment" class="form-label">Attachment (Optional)</label>
+                            <input 
+                                type="file" 
+                                class="form-control @error('attachment') is-invalid @enderror" 
+                                id="attachment" 
+                                name="attachment"
+                                accept=".pdf,.doc,.docx,.xlsx,.txt,.jpg,.jpeg,.png,.gif">
+                            <small class="text-muted d-block mt-2">
+                                Max file size: 10MB. Allowed formats: PDF, DOC, DOCX, XLSX, TXT, JPG, JPEG, PNG, GIF
+                            </small>
+                            @error('attachment')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+{{-- 
                         <div class="alert alert-info" role="alert">
                             <strong>Note:</strong> This notice will be sent for approval by the COO before going live on the notice board.
-                        </div>
+                        </div> --}}
 
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">

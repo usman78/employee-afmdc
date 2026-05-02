@@ -15,6 +15,8 @@ class Notice extends Model
         'content',
         'created_by',
         'is_published',
+        'attachment_path',
+        'attachment_name',
     ];
 
     protected $casts = [

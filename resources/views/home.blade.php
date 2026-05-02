@@ -264,6 +264,13 @@ strong {
                             @endif
                         </p>
                         <p class="mb-2">{{ Str::limit($notice->content, 150) }}</p>
+                        @if($notice->attachment_path)
+                            <div class="mb-2">
+                                <a href="{{ asset('storage/' . $notice->attachment_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-download"></i> {{ $notice->attachment_name }}
+                                </a>
+                            </div>
+                        @endif
                         <small class="text-muted d-block">
                             <a href="javascript:void(0);" onclick="showNoticeModal('{{ $notice->title }}', `{{ $notice->content }}`)">Read more</a>
                         </small>
