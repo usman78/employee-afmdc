@@ -115,6 +115,10 @@
         <strong>Designation:</strong> {{ $emp_designation ?? '--' }}
     </div>
 
+    <div class="meta" style="text-align: center; font-size: 8px; color: #666;">
+        <strong>Report Generated:</strong> {{ $download_date_time->format('j M Y, H:i:s') }}
+    </div>
+
     <table class="summary-table">
         <thead>
             <tr>

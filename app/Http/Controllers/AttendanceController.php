@@ -645,6 +645,7 @@ class AttendanceController extends Controller
             'department_name' => $departmentReport['selected_dept_desc'],
             'report_date' => $departmentReport['dept_report_date'],
             'rows' => $departmentReport['departmentAttendanceRows'],
+            'download_date_time' => Carbon::now(),
         ]);
 
         $fileName = 'department_attendance_' . $deptCode . '_' . Carbon::now()->format('Ymd_His') . '.pdf';
@@ -789,6 +790,7 @@ class AttendanceController extends Controller
             'period_start' => $periodStart,
             'period_end' => $periodEnd,
             'include_signatures' => $includeSignatures,
+            'download_date_time' => Carbon::now(),
         ]);
 
         $now = Carbon::now()->format('Ymd_His');
@@ -1673,6 +1675,8 @@ function leaveDescription($leaveCode, $fromDate = null, $toDate = null)
                     return 'Full Day Medical Leave';
                 case '3':
                     return 'Full Day Annual Leave';
+                case '4':
+                    return 'Full Day CPL Leave';    
                 case '5':
                     return 'Full Day Without Pay Leave';
                 case '12':
@@ -1689,6 +1693,8 @@ function leaveDescription($leaveCode, $fromDate = null, $toDate = null)
             return 'Medical ' . date('H:i', strtotime($fromDate)) . ' to ' . date('H:i',strtotime($toDate));
         case '3':
             return 'Annual '  . date('H:i', strtotime($fromDate)) . ' to ' . date('H:i',strtotime($toDate));
+        case '4':
+            return 'CPL ' . date('H:i', strtotime($fromDate)) . ' to ' . date('H:i',strtotime($toDate));
         case '5':
             return 'Without Pay Leave';
         case '8':

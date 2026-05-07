@@ -61,7 +61,8 @@
         <div class="title">Department Attendance Report</div>
         <div class="subtitle">
             <strong>Department:</strong> {{ $department_name }} |
-            <strong>Date:</strong> {{ dateFormat($report_date) }}
+            <strong>Date:</strong> {{ dateFormat($report_date) }} |
+            <strong>Report Generated:</strong> {{ $download_date_time->format('j M Y, H:i:s') }}
         </div>
     </div>
 
