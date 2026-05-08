@@ -112,7 +112,7 @@ ul.error-msg{
 @endpush
 @section('content')
 <div class="container">
-    <div class="row">
+    <div class="row mb-3">
       <div class="col-lg-6 justify-content-center mx-auto">
         <div class="portfolio-details">
           <div class="portfolio-info">
@@ -149,7 +149,41 @@ ul.error-msg{
                       Short
                     </label>
                   </div>
-                
+                  <div id="leave-type-section">
+                    <li><strong>Select Leave Type: </strong></li>
+                      <div style="margin-bottom: 15px;" class="form-check mt-2">
+                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault1" value="1">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault1" style="width: 75px;">
+                          Casual
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault2" value="2">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault2" style="width: 75px;">
+                          Medical
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault3" value="3">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault3" style="width: 75px;">
+                          Annual
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault4" value="5">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault4" style="width: 75px;">
+                          W/O Pay
+                        </label>
+                      </div>
+                      @if($employee->loca_code == 1)
+                      <div class="form-check">
+                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault5" value="12">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault5" style="width: 75px;">
+                          OD
+                        </label>
+                      </div>
+                      @endif     
+                  </div>  
                   <!-- Full Day Section -->
                   <li id="leave-date-section" class="mt-2" style="display: none;">
                     <strong>From Date: </strong>
@@ -204,6 +238,12 @@ ul.error-msg{
                         Custom Half
                       </label>
                     </div>
+                    <div class="form-check" id="leave-interval-custom-time-wrap" style="display: none;">
+                      <input class="btn-check" type="radio" name="leave_interval" id="leave-interval-custom-time" value="4">
+                      <label class="btn btn-outline-primary" for="leave-interval-custom-time">
+                        Custom Time
+                      </label>
+                    </div>
                   </li>
                   <li id="half-custom-time-section" class="mt-2" style="display: none;">
                     <strong>Custom Half Day Time: </strong>
@@ -226,47 +266,14 @@ ul.error-msg{
                           name="half_custom_end_time"
                           id="half-custom-end-time"
                           class="form-control"
+                          min="{{ substr((string) $employee->st_time, 0, 5) }}"
+                          max="{{ substr((string) $employee->end_time, 0, 5) }}"
                           readonly
                         >
                       </div>
                     </div>
                     <div id="half-custom-time-warning" class="text-danger mt-2" style="display: none;"></div>
                   </li>
-                  <div id="leave-type-section">
-                    <li><strong>Select Leave Type: </strong></li>
-                      <div style="margin-bottom: 15px;" class="form-check mt-2">
-                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault1" value="1">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault1" style="width: 75px;">
-                          Casual
-                        </label>
-                      </div>
-                      <div class="form-check">
-                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault2" value="2">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault2" style="width: 75px;">
-                          Medical
-                        </label>
-                      </div>
-                      <div class="form-check">
-                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault3" value="3">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault3" style="width: 75px;">
-                          Annual
-                        </label>
-                      </div>
-                      <div class="form-check">
-                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault4" value="5">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault4" style="width: 75px;">
-                          W/O Pay
-                        </label>
-                      </div>
-                      @if($employee->loca_code == 1)
-                      <div class="form-check">
-                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault5" value="12">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault5" style="width: 75px;">
-                          OD
-                        </label>
-                      </div>
-                      @endif     
-                  </div>  
                   <li class="mt-2"><strong>Reason of Leave: </strong></li>
                   <input type="text" class="form-control mt-2" name="reason" id="reason" placeholder="Enter reason of leave" required>
                   <li style="margin-top: 20px;">
@@ -421,6 +428,9 @@ ul.error-msg{
     const leaveIntervalFirst = document.getElementById('leave-interval-first');
     const leaveIntervalSecond = document.getElementById('leave-interval-second');
     const leaveIntervalCustom = document.getElementById('leave-interval-custom');
+    const leaveIntervalCustomTimeWrap = document.getElementById('leave-interval-custom-time-wrap');
+    const leaveIntervalCustomTime = document.getElementById('leave-interval-custom-time');
+    const odLeaveType = document.querySelector('input[name="leave_type"][value="12"]');
   
     function updateDisplay() {
       if (halfDay.checked) {
@@ -468,10 +478,21 @@ ul.error-msg{
     }
 
     function updateHalfCustomDisplay() {
-      if (halfDay.checked && leaveIntervalCustom.checked) {
+      const isOdHalfLeave = halfDay.checked && odLeaveType && odLeaveType.checked;
+      leaveIntervalCustomTimeWrap.style.display = isOdHalfLeave ? 'inline-block' : 'none';
+
+      if (!isOdHalfLeave && leaveIntervalCustomTime.checked) {
+        leaveIntervalCustomTime.checked = false;
+      }
+
+      if (halfDay.checked && (leaveIntervalCustom.checked || leaveIntervalCustomTime.checked)) {
+        const isCustomTime = leaveIntervalCustomTime.checked;
+        halfCustomTimeSection.querySelector('strong').innerText = isCustomTime ? 'Custom OD Time: ' : 'Custom Half Day Time: ';
+        halfCustomEndTime.readOnly = !isCustomTime;
         halfCustomTimeSection.style.display = 'block';
       } else {
         halfCustomTimeSection.style.display = 'none';
+        halfCustomEndTime.readOnly = true;
         resetCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning);
       }
     }
@@ -482,7 +503,17 @@ ul.error-msg{
     shortDay.addEventListener('change', updateDisplay);
     leaveIntervalFirst.addEventListener('change', updateHalfCustomDisplay);
     leaveIntervalSecond.addEventListener('change', updateHalfCustomDisplay);
-    leaveIntervalCustom.addEventListener('change', updateHalfCustomDisplay);
+    leaveIntervalCustom.addEventListener('change', () => {
+      resetCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning);
+      updateHalfCustomDisplay();
+    });
+    leaveIntervalCustomTime.addEventListener('change', () => {
+      resetCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning);
+      updateHalfCustomDisplay();
+    });
+    document.querySelectorAll('input[name="leave_type"]').forEach((leaveTypeInput) => {
+      leaveTypeInput.addEventListener('change', updateHalfCustomDisplay);
+    });
   
     {{-- time picker --}}
     const startTime = document.getElementById("start-time");
@@ -535,8 +566,45 @@ ul.error-msg{
           return;
         }
 
+        if (leaveIntervalCustomTime.checked) {
+          return;
+        }
+
         endInput.value = minutesToTime(startMinutes + durationMinutes);
       });
+    }
+
+    function validateCustomTimeRange() {
+      if (!leaveIntervalCustomTime.checked) {
+        return true;
+      }
+
+      halfCustomWarning.style.display = "none";
+      halfCustomWarning.innerText = "";
+
+      if (!halfCustomStartTime.value || !halfCustomEndTime.value) {
+        return true;
+      }
+
+      const customStartMinutes = timeToMinutes(halfCustomStartTime.value);
+      const customEndMinutes = timeToMinutes(halfCustomEndTime.value);
+
+      let message = "";
+      if (customStartMinutes < employeeStartMinutes) {
+        message = "Custom OD time cannot start before your office start time.";
+      } else if (customEndMinutes > employeeEndMinutes) {
+        message = "Custom OD time must end within your office timing.";
+      } else if (customEndMinutes <= customStartMinutes) {
+        message = "Custom OD end time must be after the start time.";
+      }
+
+      if (message) {
+        halfCustomWarning.style.display = "block";
+        halfCustomWarning.innerText = message;
+        return false;
+      }
+
+      return true;
     }
   
     bindCalculatedTime(startTime, endTime, warning, 120, (startMinutes, durationMinutes) => {
@@ -556,18 +624,23 @@ ul.error-msg{
         return "Custom half leave cannot start before your office start time.";
       }
 
-      if (startMinutes + durationMinutes > employeeEndMinutes) {
+      if (!leaveIntervalCustomTime.checked && startMinutes + durationMinutes > employeeEndMinutes) {
         return "Custom half leave must end within your office timing.";
       }
 
       return null;
     });
 
+    halfCustomEndTime.addEventListener("change", validateCustomTimeRange);
+
     // Initial state
     updateDisplay();
 
   formEl.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!validateCustomTimeRange()) {
+      return;
+    }
     setSubmitting(true);
 
     try {

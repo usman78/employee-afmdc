@@ -78,6 +78,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/leave-report-data', [LeavesController::class, 'leaveReportData'])->name('leave-report-data');
     Route::post('/leave-report-download/{start_date}/{end_date}/{dept_code?}', [LeavesController::class, 'leaveReportDownload'])->name('leave.report.download');
     Route::get('/leave-report-employee-search', [LeavesController::class, 'leaveReportEmployeeSearch'])->name('leave-report-employee-search');
+    Route::get('/pending-leaves-report/{status}', [LeavesController::class, 'getPendingLeavesByStatus'])->name('pending-leaves-report');
+    Route::get('/pending-leaves-report-view', [LeavesController::class, 'getPendingLeavesReportView'])->name('pending-leaves-report-view');
 
     Route::get('/job-dashboard', [JobController::class, 'summaryDashboard'])->name('job-dashboard');
     Route::get('/open-jobs', [JobController::class, 'openJobs'])->name('open-jobs');

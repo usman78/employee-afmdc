@@ -307,9 +307,9 @@ class LeavesController extends Controller
             'leave_to_date' => 'required_if:leave_duration,full|date|nullable|after_or_equal:leave_from_date',
             'start_time' => 'required_if:leave_duration,short',
             'end_time' => 'required_if:leave_duration,short',
-            'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2,3',
-            'half_custom_start_time' => 'required_if:leave_interval,3|nullable|date_format:H:i',
-            'half_custom_end_time' => 'required_if:leave_interval,3|nullable|date_format:H:i',
+            'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2,3,4',
+            'half_custom_start_time' => 'required_if:leave_interval,3,4|nullable|date_format:H:i',
+            'half_custom_end_time' => 'required_if:leave_interval,3,4|nullable|date_format:H:i',
             'reason' => 'required|string|max:255',
         ]);
 
@@ -406,7 +406,31 @@ class LeavesController extends Controller
             $midPoint = $startTime->copy()->addMinutes($halfDuration);
             Carbon::parse($midPoint);
 
-            if((int) $request->input('leave_interval') === 3){
+            if((int) $request->input('leave_interval') === 4){
+                if ((int) $request->input('leave_type') !== 12) {
+                    return response()->json(['error' => 'Custom time is only available for OD half leave.']);
+                }
+
+                $customStartInput = $request->input('half_custom_start_time');
+                $customEndInput = $request->input('half_custom_end_time');
+                $customStart = Carbon::parse("$leaveDate $customStartInput");
+                $customEnd = Carbon::parse("$leaveDate $customEndInput");
+
+                if ($customStart->lt($startTime)) {
+                    return response()->json(['error' => 'Custom OD time cannot start before office timing.']);
+                }
+
+                if ($customEnd->gt($endTime)) {
+                    return response()->json(['error' => 'Custom OD time must end within office timing.']);
+                }
+
+                if ($customEnd->lte($customStart)) {
+                    return response()->json(['error' => 'Custom OD end time must be after start time.']);
+                }
+
+                $leave->from_date = $customStart;
+                $leave->to_date = $customEnd;
+            } elseif((int) $request->input('leave_interval') === 3){
                 $customStartInput = $request->input('half_custom_start_time');
                 $customStart = Carbon::parse("$leaveDate $customStartInput");
                 $customEnd = $customStart->copy()->addMinutes($halfDuration);
@@ -1543,5 +1567,155 @@ class LeavesController extends Controller
         //     'dept_desc' => $dept_desc,
         //     'report' => $report
         // ]);
+    }
+
+    public function getPendingLeavesByStatus($status)
+    {
+        // Get month from request, default to current month
+        $month = request()->input('month', Carbon::now()->format('Y-m'));
+        
+        // Parse the month string and get first and last day
+        $startOfMonth = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $endOfMonth = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
+
+        // Get leaves by status and join with employee, designation, and department
+        // Filter leaves where from_date or to_date falls within the selected month
+        $leaves = Leave::where('status', $status)
+            ->whereRaw("(TRUNC(from_date) <= TRUNC(TO_DATE(?, 'YYYY-MM-DD')) AND TRUNC(to_date) >= TRUNC(TO_DATE(?, 'YYYY-MM-DD')))", 
+                [$endOfMonth->toDateString(), $startOfMonth->toDateString()])
+            ->join('pay_pers', 'pre_leave_tran.emp_code', '=', 'pay_pers.emp_code')
+            ->leftJoin('pay_desig', 'pay_pers.desg_code', '=', 'pay_desig.desg_code')
+            ->leftJoin('pay_dept', 'pay_pers.dept_code', '=', 'pay_dept.dept_code')
+            ->select(
+                'pre_leave_tran.leave_id',
+                'pre_leave_tran.emp_code',
+                'pre_leave_tran.leave_code',
+                'pre_leave_tran.from_date',
+                'pre_leave_tran.to_date',
+                'pre_leave_tran.leave_date',
+                'pre_leave_tran.l_day',
+                'pay_pers.name',
+                'pay_desig.desg_short',
+                'pay_dept.dept_desc'
+            )
+            ->orderBy('pre_leave_tran.leave_date', 'desc')
+            ->get();
+        // Map leave codes to leave types
+        $leaveTypeMap = [
+            1 => 'Casual Leave',
+            2 => 'Medical Leave',
+            3 => 'Annual Leave',
+            4 => 'CPL Leave',
+            5 => 'Without Pay Leave',
+            8 => 'Short Leave',
+            12 => 'OD Leave',
+        ];
+
+        // Format the response
+        $formattedLeaves = $leaves->map(function ($leave) use ($leaveTypeMap) {
+            return [
+                'leave_id' => $leave->leave_id,
+                'emp_code' => $leave->emp_code,
+                'name' => capitalizeWords($leave->name),
+                'leave_type' => $leaveTypeMap[$leave->leave_code] ?? 'Unknown',
+                'leave_code' => $leave->leave_code,
+                'designation' => $leave->desg_short ?? 'N/A',
+                'department' => $leave->dept_desc ?? 'N/A',
+                'applied_date' => Carbon::parse($leave->leave_date)->format('d M, y'),
+                'from_date' => Carbon::parse($leave->from_date)->format('d M, y'),
+                'to_date' => Carbon::parse($leave->to_date)->format('d M, y'),
+                'days' => $leave->l_day ?? 0,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $formattedLeaves,
+        ]);
+    }
+
+    public function getPendingLeavesReportView()
+    {
+        // Get month from request, default to current month
+        $month = request()->input('month', Carbon::now()->format('Y-m'));
+        
+        // Parse the month string and get first and last day
+        $startOfMonth = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $endOfMonth = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
+
+        // Status map
+        $statusMap = [
+            1 => 'Recommended',
+            3 => 'HOD Stage',
+            5 => 'HR Stage',
+            7 => 'Approved',
+            9 => 'Cancelled',
+        ];
+
+        // Leave type map
+        $leaveTypeMap = [
+            1 => 'Casual Leave',
+            2 => 'Medical Leave',
+            3 => 'Annual Leave',
+            4 => 'CPL Leave',
+            5 => 'Without Pay Leave',
+            8 => 'Short Leave',
+            12 => 'OD Leave',
+        ];
+
+        // Fetch leaves for all statuses
+        $leavesData = [];
+        foreach ($statusMap as $status => $stageName) {
+            $leaves = Leave::where('status', $status)
+                ->whereRaw("(TRUNC(from_date) <= TRUNC(TO_DATE(?, 'YYYY-MM-DD')) AND TRUNC(to_date) >= TRUNC(TO_DATE(?, 'YYYY-MM-DD')))", 
+                    [$endOfMonth->toDateString(), $startOfMonth->toDateString()])
+                ->join('pay_pers', 'pre_leave_tran.emp_code', '=', 'pay_pers.emp_code')
+                ->leftJoin('pay_desig', 'pay_pers.desg_code', '=', 'pay_desig.desg_code')
+                ->leftJoin('pay_dept', 'pay_pers.dept_code', '=', 'pay_dept.dept_code')
+                ->select(
+                    'pre_leave_tran.leave_id',
+                    'pre_leave_tran.emp_code',
+                    'pre_leave_tran.leave_code',
+                    'pre_leave_tran.from_date',
+                    'pre_leave_tran.to_date',
+                    'pre_leave_tran.leave_date',
+                    'pre_leave_tran.l_day',
+                    'pay_pers.name',
+                    'pay_desig.desg_short',
+                    'pay_dept.dept_desc'
+                )
+                ->orderBy('pre_leave_tran.leave_date', 'desc')
+                ->get();
+
+            // Format the leaves
+            $formattedLeaves = $leaves->map(function ($leave) use ($leaveTypeMap) {
+                return [
+                    'leave_id' => $leave->leave_id,
+                    'emp_code' => $leave->emp_code,
+                    'name' => capitalizeWords($leave->name),
+                    'leave_type' => $leaveTypeMap[$leave->leave_code] ?? 'Unknown',
+                    'leave_code' => $leave->leave_code,
+                    'designation' => $leave->desg_short ?? 'N/A',
+                    'department' => $leave->dept_desc ?? 'N/A',
+                    'applied_date' => Carbon::parse($leave->leave_date)->format('d M, y'),
+                    'from_date' => Carbon::parse($leave->from_date)->format('d M, y'),
+                    'to_date' => Carbon::parse($leave->to_date)->format('d M, y'),
+                    'days' => $leave->l_day ?? 0,
+                ];
+            });
+
+            $leavesData[$status] = $formattedLeaves->toArray();
+        }
+
+        // Format month for display
+        $monthDate = Carbon::createFromFormat('Y-m', $month);
+        $monthName = $monthDate->format('F Y');
+
+        return view('pending-leaves-report', [
+            'leavesData' => $leavesData,
+            'statusMap' => $statusMap,
+            'monthName' => $monthName,
+            'currentMonth' => $month,
+        ]);
     }
 }

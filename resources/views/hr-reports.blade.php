@@ -230,6 +230,12 @@
                     Leaves Status
                     </a>
                 </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <button type="button" class="btn btn-primary w-100 text-nowrap" id="pending-leaves-report-btn">
+                    Pending Leaves Report
+                    </button>
+                </div>
             </div>
         </div>
       </div>
@@ -382,5 +388,39 @@
         });
       }
     });
+  });
+
+  // Pending Leaves Report functionality
+  document.getElementById('pending-leaves-report-btn').addEventListener('click', async function() {
+    const now = new Date();
+    const monthDefault = now.toISOString().slice(0, 7);
+
+    const { value: month } = await Swal.fire({
+      title: 'Pending Leaves Report',
+      html: `
+        <div class="text-start">
+          <label for="swal-month" class="form-label">Select Month</label>
+          <input id="swal-month" type="month" class="form-control" value="${monthDefault}">
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'View Report',
+      preConfirm: () => {
+        const selectedMonth = document.getElementById('swal-month').value;
+        if (!selectedMonth) {
+          Swal.showValidationMessage('Month is required.');
+          return false;
+        }
+        return selectedMonth;
+      }
+    });
+
+    if (!month) {
+      return;
+    }
+
+    // Navigate to dedicated view
+    window.location.href = "{{ route('pending-leaves-report-view') }}?month=" + month;
   });
 @endpush
