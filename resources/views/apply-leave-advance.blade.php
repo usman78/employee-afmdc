@@ -218,7 +218,7 @@ ul.error-msg{
                     <strong style="margin-bottom: 15px;">Select Leave Interval: </strong><br>
                     <span class="alert alert-secondary mb-0 d-inline-block mt-3" style="font-size: 12px;">
                       <i class="bi bi-info-circle"></i> 
-                       Custom day leave allows to select a specific time range within your duty timings.
+                      Custom Time option is only available for OD half day leave and allows you to select any custom time range within your office timings.
                     </span>
                     <div class="form-check mt-2">
                       <input class="btn-check" type="radio" name="leave_interval" id="leave-interval-first" value="1">
