@@ -517,7 +517,7 @@ class LeavesController extends Controller
         }
     }
 
-    public function leaveApprovals($emp_code)
+    public function leaveApprovals(Request $request, $emp_code)
     {
         // Ensure logged-in user matches the requested employee code
         $authUser = Auth::user();
@@ -525,11 +525,31 @@ class LeavesController extends Controller
             return redirect()->route('home');
         }
 
+        $leaveTypes = [
+            1 => 'Casual Leave',
+            2 => 'Sick Leave',
+            3 => 'Annual Leave',
+            5 => 'Leave Without Pay',
+            8 => 'Short Leave',
+            12 => 'Outdoor Duty',
+        ];
+
+        $request->validate([
+            'hr_leave_type' => 'nullable|integer|in:' . implode(',', array_keys($leaveTypes)),
+        ]);
+
+        $selectedHrLeaveType = $request->filled('hr_leave_type')
+            ? (int) $request->input('hr_leave_type')
+            : null;
+
         // Check if the user is HR
         $hrApprovals = null;
         $hr = $this->identifyHR($emp_code);
         if($hr != null){
             $hrApprovals = Leave::where('status', 5)
+            ->when($selectedHrLeaveType, function ($query) use ($selectedHrLeaveType) {
+                $query->where('leave_code', $selectedHrLeaveType);
+            })
             ->where(function ($query) {     //only get leaves that are of current or previous month
                 $query->whereMonth('leave_date', Carbon::now()->month)
                       ->orWhereMonth('leave_date', Carbon::now()->subMonth()->month);
@@ -559,6 +579,8 @@ class LeavesController extends Controller
             'leaves' => $leavesToApprove,
             'hrApprovals' => $hrApprovals,
             'hr' => $hr,
+            'leaveTypes' => $leaveTypes,
+            'selectedHrLeaveType' => $selectedHrLeaveType,
         ]);
     }
     public function approveLeave(Request $request, $leave_id)
@@ -615,17 +637,17 @@ class LeavesController extends Controller
     public function approveAll(Request $request)
     {
         $user = Auth::user()->emp_code;
-        $leaveIds = $request->input('leave_ids');
+        $leaveIds = $request->input('leave_ids', []);
         if (!$leaveIds || !is_array($leaveIds)) {
             return response()->json(['success' => false, 'message' => 'No leave IDs provided']);
         }
 
-        foreach ($leaveIds as $leaveId) {
-            $leave = Leave::find($leaveId);
-            if (!$leave) {
-                continue; // Skip if leave not found
-            }
-            Leave::where('leave_id', $leaveId)
+        $leaves = Leave::whereIn('leave_id', $leaveIds)
+            ->where('status', 5)
+            ->get();
+
+        foreach ($leaves as $leave) {
+            Leave::where('leave_id', $leave->leave_id)
                 ->update(['status' => 7, 'user_id_p' => $user, 'terminal_id_p' => 'WEB', 'moddate_p' => now()]);
             
             $approvedLeave = new ApprovedLeave();
@@ -644,7 +666,11 @@ class LeavesController extends Controller
             $approvedLeave->leave_nature = 'R';
             $approvedLeave->save();
         }
-        return response()->json(['success' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $leaves->count() . ' leave(s) approved successfully.',
+        ]);
     }
 
     public function identifyHR($emp_code)

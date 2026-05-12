@@ -197,9 +197,27 @@ td {
       <div class="col-12">
         <div class="portfolio-details mt-5 mb-5">
           <div class="portfolio-info pt-4">
-            <h3 class="d-flex justify-content-between align-items-center">
-              HR Leave Approvals
-              <button id="approveAllBtn" class="btn btn-success btn-sm">Approve All</button>
+            <h3 class="d-flex justify-content-between align-items-center flex-wrap">
+              <span>HR Leave Approvals</span>
+              <div class="d-flex align-items-end flex-wrap" style="gap: 8px;">
+                <form method="GET" action="{{ route('leave-approvals', auth()->user()->emp_code) }}" class="d-flex align-items-end flex-wrap mb-0" style="gap: 8px;">
+                  <div>
+                    <label for="hr_leave_type" class="mb-1" style="font-size: 13px;">Leave Type</label>
+                    <select name="hr_leave_type" id="hr_leave_type" class="form-control form-control-sm" onchange="this.form.submit()">
+                      <option value="">All Leave Types</option>
+                      @foreach($leaveTypes as $leaveCode => $leaveType)
+                        <option value="{{ $leaveCode }}" {{ (int) $selectedHrLeaveType === (int) $leaveCode ? 'selected' : '' }}>{{ $leaveType }}</option>
+                      @endforeach
+                    </select>
+                  </div>
+                  @if($selectedHrLeaveType)
+                    <a href="{{ route('leave-approvals', auth()->user()->emp_code) }}" class="btn btn-secondary btn-sm">Reset</a>
+                  @endif
+                </form>
+                <button id="approveAllBtn" class="btn btn-success btn-sm">
+                  {{ $selectedHrLeaveType ? 'Approve Filtered' : 'Approve All' }}
+                </button>
+              </div>
             </h3>
             <table class="table mt-5 mb-5">
               <thead>
@@ -271,7 +289,23 @@ td {
         <div class="col-12">
           <div class="portfolio-details mt-5 mb-5">
             <div class="portfolio-info">
-              <h3>HR Leave Approvals</h3>
+              <h3 class="d-flex justify-content-between align-items-center flex-wrap">
+                <span>HR Leave Approvals</span>
+                <form method="GET" action="{{ route('leave-approvals', auth()->user()->emp_code) }}" class="d-flex align-items-end flex-wrap mb-0" style="gap: 8px;">
+                  <div>
+                    <label for="hr_leave_type_empty" class="mb-1" style="font-size: 13px;">Leave Type</label>
+                    <select name="hr_leave_type" id="hr_leave_type_empty" class="form-control form-control-sm" onchange="this.form.submit()">
+                      <option value="">All Leave Types</option>
+                      @foreach($leaveTypes as $leaveCode => $leaveType)
+                        <option value="{{ $leaveCode }}" {{ (int) $selectedHrLeaveType === (int) $leaveCode ? 'selected' : '' }}>{{ $leaveType }}</option>
+                      @endforeach
+                    </select>
+                  </div>
+                  @if($selectedHrLeaveType)
+                    <a href="{{ route('leave-approvals', auth()->user()->emp_code) }}" class="btn btn-secondary btn-sm">Reset</a>
+                  @endif
+                </form>
+              </h3>
               <table class="table mt-5 mb-5">
                 <tbody>
                   <tr>
