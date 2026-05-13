@@ -486,6 +486,60 @@ class AttendanceController extends Controller
             'present_rows' => $presentReport['rows'],
         ]);
     }
+
+    public function manualAttendanceReport()
+    {
+        $fromDate = Carbon::now()->startOfMonth()->toDateString();
+        $toDate = Carbon::today()->toDateString();
+        $manualReport = $this->buildManualAttendanceReport($fromDate, $toDate);
+
+        return view('manual-attendance-report', [
+            'from_date' => $fromDate,
+            'to_date' => $toDate,
+            'manual_rows' => $manualReport['rows'],
+        ]);
+    }
+
+    public function manualAttendanceReportData(Request $request)
+    {
+        $request->validate([
+            'from_date' => 'required|date',
+            'to_date' => 'required|date|after_or_equal:from_date',
+        ]);
+
+        $fromDate = Carbon::parse($request->input('from_date'))->toDateString();
+        $toDate = Carbon::parse($request->input('to_date'))->toDateString();
+        $manualReport = $this->buildManualAttendanceReport($fromDate, $toDate);
+
+        return view('manual-attendance-report', [
+            'from_date' => $fromDate,
+            'to_date' => $toDate,
+            'manual_rows' => $manualReport['rows'],
+        ]);
+    }
+
+    public function manualAttendanceReportDownload(Request $request)
+    {
+        $request->validate([
+            'from_date' => 'required|date',
+            'to_date' => 'required|date|after_or_equal:from_date',
+        ]);
+
+        $fromDate = Carbon::parse($request->input('from_date'))->toDateString();
+        $toDate = Carbon::parse($request->input('to_date'))->toDateString();
+        $manualReport = $this->buildManualAttendanceReport($fromDate, $toDate);
+
+        $pdf = Pdf::loadView('pdf.manual-attendance-report', [
+            'from_date' => $fromDate,
+            'to_date' => $toDate,
+            'rows' => $manualReport['rows'],
+            'download_date_time' => Carbon::now(),
+        ])->setPaper('a4', 'landscape');
+
+        $fileName = 'manual_attendance_' . Carbon::parse($fromDate)->format('Ymd') . '_' . Carbon::parse($toDate)->format('Ymd') . '_' . Carbon::now()->format('Ymd_His') . '.pdf';
+        return $pdf->stream($fileName);
+    }
+
     public function attendanceLateReportDownload(Request $request)
     {
         $request->validate([
@@ -1641,6 +1695,61 @@ class AttendanceController extends Controller
                 'department' => $employee->department->dept_desc ?? '--',
                 'time_in' => $timeIn,
                 'time_out' => $timeOut,
+            ];
+        });
+
+        return ['rows' => $rows];
+    }
+
+    private function buildManualAttendanceReport(string $fromDate, string $toDate): array
+    {
+        $sql = <<<SQL
+            SELECT D.EMP_CODE,
+                   P.NAME,
+                   B.DESG_SHORT,
+                   A.DEPT_DESC,
+                   D.AT_DATE,
+                   D.TIMEIN,
+                   D.TIMEOUT,
+                   D.REMARKS,
+                   NVL(D.USER_ID1, D.USER_ID) || '       ' ||
+                       (SELECT USER_NAME FROM MIS.AUTH_USER WHERE USER_ID = NVL(D.USER_ID1, D.USER_ID)) AS USERNAME,
+                   NVL(D.TERMINAL_ID1, D.TERMINAL_ID) AS USER_IP,
+                   NVL(D.TIMESTAMP_ID1, D.TIMESTAMP_ID) AS TIME_OF_CHANGE,
+                   CASE
+                       WHEN D.USER_ID1 IS NOT NULL THEN 'Manual Change'
+                       WHEN D.USER_ID1 IS NULL AND D.USER_ID IS NOT NULL THEN 'Manual Attend'
+                   END AS ATT_TYPE
+            FROM PAYROLL.DAILY_ATTND D,
+                 PAYROLL.PAY_PERS P,
+                 PAYROLL.PAY_DEPT A,
+                 PAYROLL.PAY_DESIG B
+            WHERE D.EMP_CODE = P.EMP_CODE
+              AND P.DESG_CODE = B.DESG_CODE
+              AND P.DEPT_CODE = A.DEPT_CODE
+              AND D.IS_MANUAL = 'Y'
+              AND P.QUIT_STAT IS NULL
+              AND D.AT_DATE BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD') + 1 - (1/86400)
+              AND D.EMP_CODE IS NOT NULL
+            ORDER BY D.AT_DATE DESC
+        SQL;
+
+        $rows = collect(DB::select($sql, [$fromDate, $toDate]))->map(function ($row) {
+            $row = array_change_key_case((array) $row, CASE_LOWER);
+
+            return [
+                'emp_code' => $row['emp_code'] ?? '',
+                'name' => $row['name'] ?? '',
+                'designation' => $row['desg_short'] ?? '',
+                'department' => $row['dept_desc'] ?? '',
+                'date' => $row['at_date'] ?? null,
+                'time_in' => $row['timein'] ?? null,
+                'time_out' => $row['timeout'] ?? null,
+                'remarks' => $row['remarks'] ?? '',
+                'username' => $row['username'] ?? '',
+                'user_ip' => $row['user_ip'] ?? '',
+                'time_of_change' => $row['time_of_change'] ?? null,
+                'att_type' => $row['att_type'] ?? '',
             ];
         });
 
