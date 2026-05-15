@@ -170,15 +170,21 @@ ul.error-msg{
                         </label>
                       </div>
                       <div class="form-check">
-                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault4" value="5">
+                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault4" value="{{ \App\Models\Leave::CPL }}">
                         <label class="btn btn-outline-primary" for="flexRadioDefault4" style="width: 75px;">
+                          CPL
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault5" value="5">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault5" style="width: 75px;">
                           W/O Pay
                         </label>
                       </div>
                       @if($employee->loca_code == 1)
                       <div class="form-check">
-                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault5" value="12">
-                        <label class="btn btn-outline-primary" for="flexRadioDefault5" style="width: 75px;">
+                        <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault12" value="12">
+                        <label class="btn btn-outline-primary" for="flexRadioDefault12" style="width: 75px;">
                           OD
                         </label>
                       </div>
@@ -312,21 +318,26 @@ ul.error-msg{
               <div class="col-12">
                 <ul>
                   @foreach ($employee->leavesBalance as $balance)
-                    @if ($balance->leav_code == 1)
+                    @if ($balance->leav_code == \App\Models\Leave::CASUAL)
                       <li>
                         <strong>Casual Leaves: </strong>{{$balance->leav_open + $balance->leav_credit - $balance->leav_taken - $balance->leave_encashed}}
                         ({{isset($pendingLeaves['casual_leave']) ? 'Approval Pending '.$pendingLeaves['casual_leave'] : 'No Pending Leave'}})
                       </li>
-                    @elseif ($balance->leav_code == 2)
+                    @elseif ($balance->leav_code == \App\Models\Leave::MEDICAL)
                       <li>
                         <strong>Medical Leaves: </strong>{{$balance->leav_open + $balance->leav_credit - $balance->leav_taken - $balance->leave_encashed}}
                         ({{isset($pendingLeaves['medical_leave']) ? 'Approval Pending '.$pendingLeaves['medical_leave'] : 'No Pending Leave'}})
                       </li>
-                    @elseif ($balance->leav_code == 3)
+                    @elseif ($balance->leav_code == \App\Models\Leave::ANNUAL)
                       <li>
                         <strong>Annual Leaves: </strong>{{$balance->leav_open + $balance->leav_credit - $balance->leav_taken - $balance->leave_encashed}}
                         ({{isset($pendingLeaves['annual_leave']) ? 'Approval Pending '.$pendingLeaves['annual_leave'] : 'No Pending Leave'}})
                       </li> 
+                    @elseif ($balance->leav_code == \App\Models\Leave::CPL)
+                      <li>
+                        <strong>CPL Leaves: </strong>{{$balance->leav_open + $balance->leav_credit - $balance->leav_taken - $balance->leave_encashed}}
+                        ({{isset($pendingLeaves['compensatory_leave']) ? 'Approval Pending '.$pendingLeaves['compensatory_leave'] : 'No Pending Leave'}})
+                      </li>
                     @endif
                   @endforeach
                 </ul>

@@ -150,6 +150,10 @@ td {
                             Annual Leave
                             @break
 
+                        @case(4)
+                            CPL Leave
+                            @break
+
                         @case(5)
                             Leave Without Pay
                             @break    
@@ -248,6 +252,10 @@ td {
           
                               @case(3)
                                   Annual Leave
+                                  @break
+
+                              @case(4)
+                                  CPL Leave
                                   @break
 
                               @case(5)

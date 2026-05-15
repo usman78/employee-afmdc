@@ -150,6 +150,9 @@ class LeavesController extends Controller
                 case 3:
                     $balance -= $pending['annual_leave'];
                     break;
+                case Leave::CPL:
+                    $balance -= $pending['compensatory_leave'];
+                    break;
             }
         }
         
@@ -167,6 +170,7 @@ class LeavesController extends Controller
         $pendingCasual = $pending['casual_leave'] ?? 0;
         $pendingMedical = $pending['medical_leave'] ?? 0;
         $pendingAnnual = $pending['annual_leave'] ?? 0;
+        $pendingCompensatory = $pending['compensatory_leave'] ?? 0;
 
         // Check casual leave (leave_code = 1)
         $casualBalance = LeavesBalance::where('emp_code', $empcode)->where('leav_code', 1)->first();
@@ -186,8 +190,14 @@ class LeavesController extends Controller
             $annualBalance->leav_open + $annualBalance->leav_credit - $annualBalance->leav_taken - $annualBalance->leave_encashed - $pendingAnnual 
             : 0;
 
+        // Check CPL / compensatory leave (leave_code = 4)
+        $compensatoryBalance = LeavesBalance::where('emp_code', $empcode)->where('leav_code', Leave::CPL)->first();
+        $compensatoryAvailable = $compensatoryBalance ?
+            $compensatoryBalance->leav_open + $compensatoryBalance->leav_credit - $compensatoryBalance->leav_taken - $compensatoryBalance->leave_encashed - $pendingCompensatory
+            : 0;
+
         // If all types are 0 or less, then user has no leave left
-        return $casualAvailable <= 0 && $medicalAvailable <= 0 && $annualAvailable <= 0;
+        return $casualAvailable <= 0 && $medicalAvailable <= 0 && $annualAvailable <= 0 && $compensatoryAvailable <= 0;
     }
 
     public function checkIfAnyLeave($emp_code)
@@ -301,7 +311,7 @@ class LeavesController extends Controller
         // Validate the request
         $validator = Validator::make($request->all(), [
             'leave_duration' => 'required|string|in:full,half,short',
-            'leave_type' => 'required_if:leave_duration,half,full|integer|in:1,2,3,5,12',
+            'leave_type' => 'required_if:leave_duration,half,full|integer|in:1,2,3,4,5,12',
             'single_leave_date' => 'required_if:leave_duration,half,short|nullable|date',
             'leave_from_date' => 'required_if:leave_duration,full|date|nullable|before_or_equal:leave_to_date',
             'leave_to_date' => 'required_if:leave_duration,full|date|nullable|after_or_equal:leave_from_date',
@@ -529,6 +539,7 @@ class LeavesController extends Controller
             1 => 'Casual Leave',
             2 => 'Sick Leave',
             3 => 'Annual Leave',
+            4 => 'CPL Leave',
             5 => 'Leave Without Pay',
             8 => 'Short Leave',
             12 => 'Outdoor Duty',
@@ -698,6 +709,7 @@ class LeavesController extends Controller
             'casual_leave' => 0,
             'medical_leave' => 0,
             'annual_leave' => 0,
+            'compensatory_leave' => 0,
         ];
     
         foreach ($leaves as $leave) {
@@ -710,6 +722,9 @@ class LeavesController extends Controller
                     break;
                 case 3:
                     $pending['annual_leave'] += $leave->l_day;
+                    break;
+                case Leave::CPL:
+                    $pending['compensatory_leave'] += $leave->l_day;
                     break;
             }
         }
