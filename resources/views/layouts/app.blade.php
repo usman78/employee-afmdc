@@ -288,15 +288,20 @@
                     Work
                 </div>
                 {{-- Tasks / SOPs / Meetings --}}
-                <li class="nav-item">
+                <li @class([
+                    'nav-item',
+                    'active' => in_array(request()->route()->getName(), ['tasks','employee-tasks.index','employee-tasks.create','employee-tasks.show','employee-tasks.edit','meetings','assigned-tasks','sops'])
+                ])>
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTasks">
                         <i class="fas fa-fw fa-tasks"></i>
                         <span>Meeting & Tasks</span>
                     </a>
                     <div id="collapseTasks"
-                        class="collapse {{ in_array(request()->route()->getName(), ['tasks','meetings','assigned-tasks','sops',]) ? 'show' : '' }}"
+                        class="collapse {{ in_array(request()->route()->getName(), ['tasks','employee-tasks.index','employee-tasks.create','employee-tasks.show','employee-tasks.edit','meetings','assigned-tasks','sops']) ? 'show' : '' }}"
                         data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['tasks']) ? 'active' : '' }}" href="{{ route('tasks') }}">Overview</a>
+                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['employee-tasks.index','employee-tasks.create','employee-tasks.show','employee-tasks.edit']) ? 'active' : '' }}" href="{{ route('employee-tasks.index') }}">Task System</a>
                             <a class="collapse-item {{ in_array(request()->route()->getName(), ['meetings']) ? 'active' : '' }}" href="{{ route('meetings') }}">Meetings</a>
                             {{-- <a class="collapse-item {{ in_array(request()->route()->getName(), ['tasks','assigned-tasks']) ? 'active' : '' }}" href="{{ route('assigned-tasks') }}">Assigned Tasks</a> --}}
                             <a class="collapse-item {{ in_array(request()->route()->getName(), ['sops']) ? 'active' : '' }}" href="{{ route('sops') }}">SOPs</a>
@@ -377,7 +382,7 @@
                                     </h6>
                                     @if (auth()->user()->unreadNotifications->count() > 0)
                                         @foreach (auth()->user()->unreadNotifications as $notification)
-                                            <a class="dropdown-item d-flex align-items-center" href="/notices/{{ $notification->data['notice_id'] }}/review">
+                                            <a class="dropdown-item d-flex align-items-center" href="{{ route('notifications.redirect', $notification->id) }}">
                                                 <div class="mr-3">
                                                     <div class="icon-circle bg-primary">
                                                         <i class="fas fa-file-alt text-white"></i>

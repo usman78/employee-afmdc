@@ -9,6 +9,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\EmployeeTaskController;
 use App\Http\Controllers\ServiceRequestController;
 use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\TimetableController;
@@ -99,6 +100,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/assigned-tasks', [TaskController::class, 'tasks'])->name('assigned-tasks');
     Route::post('/update-progress', [TaskController::class, 'updateProgress'])->name('update-progress');
     Route::get('/sops', [TaskController::class, 'sops'])->name('sops');
+    Route::post('/employee-tasks/{employeeTask}/progress', [EmployeeTaskController::class, 'progress'])->name('employee-tasks.progress');
+    Route::post('/employee-tasks/{employeeTask}/comments', [EmployeeTaskController::class, 'comment'])->name('employee-tasks.comments.store');
+    Route::resource('employee-tasks', EmployeeTaskController::class)->parameters(['employee-tasks' => 'employeeTask']);
+    Route::get('/notifications/redirect/{notification}', [NotificationsController::class, 'handle'])->name('notifications.redirect');
 
     Route::get('/inventory/{emp_code}', [InventoryController::class, 'inventory'])->name('inventory');
 
@@ -110,7 +115,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [ServiceRequestController::class, 'index'])->name('service-requests.index');
         Route::get('/create', [ServiceRequestController::class, 'create'])->name('service-requests.create');
         Route::post('/', [ServiceRequestController::class, 'store'])->name('service-requests.store');
-        Route::get('/notifications/redirect/{notification}', [NotificationsController::class, 'handle'])->name('notifications.redirect');
         Route::get('/assignment/{id}', [ServiceRequestController::class, 'assignment'])->name('service-requests.assignment');
         Route::post('/approve/{id}', [ServiceRequestController::class, 'approve'])->name('service-requests.approve');
         Route::get('/hod-approvals', [ServiceRequestController::class, 'hodApprovals'])->name('service-requests.hod-approvals');
