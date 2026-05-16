@@ -15,12 +15,16 @@ class Notice extends Model
         'content',
         'created_by',
         'is_published',
+        'publish_starts_at',
+        'publish_ends_at',
         'attachment_path',
         'attachment_name',
     ];
 
     protected $casts = [
         'is_published' => 'boolean',
+        'publish_starts_at' => 'datetime',
+        'publish_ends_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

@@ -33,8 +33,16 @@ class HomeController extends Controller
         $today = Attendance::where('emp_code', $user->emp_code)->whereDate('at_date', today())->first();
         $employeeStatus = employeeStatus($user->emp_code);
         
-        // Fetch published notices
+        // Fetch notices that are currently inside their publish window
         $notices = Notice::where('is_published', true)
+                    ->where(function ($query) {
+                        $query->whereNull('publish_starts_at')
+                              ->orWhere('publish_starts_at', '<=', now());
+                    })
+                    ->where(function ($query) {
+                        $query->whereNull('publish_ends_at')
+                              ->orWhere('publish_ends_at', '>=', now());
+                    })
                     ->latest()
                     ->take(5)
                     ->get();

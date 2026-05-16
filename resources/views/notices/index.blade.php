@@ -56,6 +56,13 @@
                                 </small>
                             </div>
 
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <strong>Publish Start:</strong> {{ $notice->publish_starts_at?->format('d-m-Y H:i') ?? 'Immediately' }}<br>
+                                    <strong>Removal Time:</strong> {{ $notice->publish_ends_at?->format('d-m-Y H:i') ?? 'No end time' }}
+                                </small>
+                            </div>
+
                             <!-- Notice Content Preview -->
                             <div class="mb-3">
                                 <p class="card-text text-truncate" style="max-height: 60px; overflow: hidden;">
@@ -96,19 +103,30 @@
                             </div>
 
                             <!-- Published Status -->
-                            @if ($notice->is_published)
-                                <div class="mt-2">
-                                    <span class="badge bg-success">
-                                        <i class="bi bi-eye"></i> Published on Notice Board
-                                    </span>
-                                </div>
-                            @else
-                                <div class="mt-2">
+                            @php
+                                $now = now();
+                                $hasStarted = !$notice->publish_starts_at || $notice->publish_starts_at->lte($now);
+                                $hasEnded = $notice->publish_ends_at && $notice->publish_ends_at->lt($now);
+                            @endphp
+                            <div class="mt-2">
+                                @if (!$notice->is_published)
                                     <span class="badge bg-secondary">
                                         <i class="bi bi-eye-slash"></i> Not Published
                                     </span>
-                                </div>
-                            @endif
+                                @elseif (!$hasStarted)
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-clock"></i> Scheduled
+                                    </span>
+                                @elseif ($hasEnded)
+                                    <span class="badge bg-dark">
+                                        <i class="bi bi-calendar-x"></i> Expired
+                                    </span>
+                                @else
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-eye"></i> Visible on Notice Board
+                                    </span>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>

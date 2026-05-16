@@ -60,6 +60,40 @@
                             @enderror
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="publish_starts_at" class="form-label">Publish Start Time</label>
+                                <input
+                                    type="datetime-local"
+                                    class="form-control @error('publish_starts_at') is-invalid @enderror"
+                                    id="publish_starts_at"
+                                    name="publish_starts_at"
+                                    value="{{ old('publish_starts_at') }}">
+                                <small class="text-muted d-block mt-2">
+                                    Leave blank to publish immediately.
+                                </small>
+                                @error('publish_starts_at')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="publish_ends_at" class="form-label">Removal Time</label>
+                                <input
+                                    type="datetime-local"
+                                    class="form-control @error('publish_ends_at') is-invalid @enderror"
+                                    id="publish_ends_at"
+                                    name="publish_ends_at"
+                                    value="{{ old('publish_ends_at') }}">
+                                <small class="text-muted d-block mt-2">
+                                    Leave blank to keep the notice visible.
+                                </small>
+                                @error('publish_ends_at')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label for="attachment" class="form-label">Attachment (Optional)</label>
                             <input 

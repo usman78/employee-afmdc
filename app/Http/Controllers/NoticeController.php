@@ -39,6 +39,10 @@ class NoticeController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
+            'publish_starts_at' => 'nullable|date',
+            'publish_ends_at' => $request->filled('publish_starts_at')
+                ? 'nullable|date|after:publish_starts_at'
+                : 'nullable|date|after:now',
             'attachment' => 'nullable|file|max:10240',
         ]);
 
@@ -59,6 +63,8 @@ class NoticeController extends Controller
             'content' => $validated['content'],
             'created_by' => $user->emp_code,
             'is_published' => true,
+            'publish_starts_at' => $validated['publish_starts_at'] ?? now(),
+            'publish_ends_at' => $validated['publish_ends_at'] ?? null,
             'attachment_path' => $attachmentPath,
             'attachment_name' => $attachmentName,
         ]);

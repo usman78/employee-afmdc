@@ -58,6 +58,17 @@
                             </div>
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Publish Start</label>
+                                <p class="form-control-plaintext">{{ $notice->publish_starts_at?->format('d-m-Y H:i') ?? 'Immediately' }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Removal Time</label>
+                                <p class="form-control-plaintext">{{ $notice->publish_ends_at?->format('d-m-Y H:i') ?? 'No end time' }}</p>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label class="form-label fw-bold">Content</label>
                             <div class="border p-3 rounded bg-light" style="min-height: 200px;">
