@@ -181,7 +181,7 @@ ul.error-msg{
                           W/O Pay
                         </label>
                       </div>
-                      @if($employee->loca_code == 1)
+                      @if($employee->loca_code == 1 || $employee->emp_code == 325)
                       <div class="form-check">
                         <input class="btn-check" type="radio" name="leave_type" id="flexRadioDefault12" value="12">
                         <label class="btn btn-outline-primary" for="flexRadioDefault12" style="width: 75px;">
