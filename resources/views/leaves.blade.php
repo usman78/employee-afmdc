@@ -131,7 +131,7 @@
                 <i class="fa-solid fa-check"></i>
                 Leaves Status
               </a>
-              <a class="btn btn-success" id="apply-leave" href="{{route('check-if-any-leave', $leaves->emp_code)}}">
+              <a class="btn btn-success" id="apply-leave" href="{{ route('apply-leave-advance', ['emp_code' => $leaves->emp_code, 'shortLeaveOnly' => false]) }}">
                 <i class="fa-solid fa-person-walking-arrow-right me-1" aria-hidden="true"></i>
                 Apply Leave
               </a>
@@ -182,77 +182,6 @@
     printWindow.focus();
     printWindow.print();
   }
-
-  document.getElementById('apply-leave').addEventListener('click', function(event) {
-    event.preventDefault(); // Prevent the default link behavior
-    // send ajax request to check if any leave available
-    const url = this.href; // Get the URL from the link's href attribute
-    $.ajax({
-      url: url,
-      type: 'GET',
-      statusCode: {
-        401: function() {
-          Swal.fire({
-            title: 'Session Expired',
-            text: 'Your session has expired. Please login again.',
-            icon: 'warning'
-          }).then(() => {
-            window.location.href = "{{ route('login') }}";
-          });
-        },
-        419: function() {
-          Swal.fire({
-            title: 'Session Expired',
-            text: 'Your session has expired. Please login again.',
-            icon: 'warning'
-          }).then(() => {
-            window.location.href = "{{ route('login') }}";
-          });
-        }
-      },
-      success: function(response) {
-        console.log(response);
-        if (response.has_no_leaves) {
-            console.log("he has no leaves");     // <-- no need for response.data
-          if (response.has_no_short_leave) {
-            console.log("he has short leaves");  
-            Swal.fire({
-              title: 'No Leave Balance',
-              text: 'You have no leaves available. You can apply for Short Leave, Unpaid or OD Leave only.',
-              icon: 'warning',
-              showCancelButton: true,
-              confirmButtonText: 'Short Leave',
-              cancelButtonText: 'Unpaid Leave',
-              showDenyButton: true,
-              denyButtonText: `OD Leave`
-            }).then((result) => {
-              if (result.isConfirmed) {
-                // send a flag to disable buttons except short leave                                                                                                                      
-                window.location.href = "{{ route('apply-leave-advance', ['emp_code' => $leaves->emp_code, 'shortLeaveOnly' => true])}}";
-              } else if (result.isDenied) {
-                window.location.href = "{{ route('apply-od-leave', ['emp_code' => $leaves->emp_code]) }}";
-              }
-              else if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
-                window.location.href = "{{ route('apply-unpaid-leave', ['emp_code' => $leaves->emp_code, 'employee'=> $employee ]) }}";
-              }
-            });
-          } 
-          {{-- else {
-            window.location.href = "{{ route('apply-unpaid-leave', ['emp_code' => $leaves->emp_code, 'employee'=> $employee ]) }}";
-          } --}}
-        } else {
-          window.location.href = "{{ route('apply-leave-advance', ['emp_code' => $leaves->emp_code, 'shortLeaveOnly' => false]) }}";
-        }
-      },
-      error: function() {
-        Swal.fire({
-          title: 'Error',
-          text: 'Could not process your request.',
-          icon: 'error'
-        });
-      }
-    });
-  });  
 
   document.getElementById('leaves-applied').addEventListener('click', async function(event) {
     event.preventDefault();
