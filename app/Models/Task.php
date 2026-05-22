@@ -33,11 +33,13 @@ class Task extends Model
         'DEPARTMENT_ID',
         'CLOSED_AT',
         'CLOSED_BY',
+        'HOD_COMPLETED_AT',
     ];
 
     protected $casts = [
         'due_date' => 'date',
         'closed_at' => 'datetime',
+        'hod_completed_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

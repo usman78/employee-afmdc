@@ -287,23 +287,38 @@
                 <div class="sidebar-heading">
                     Work
                 </div>
-                {{-- Tasks / SOPs / Meetings --}}
+                {{-- Task System --}}
                 <li @class([
                     'nav-item',
                     'active' => in_array(request()->route()->getName(), ['tasks','employee-tasks.index','employee-tasks.create','employee-tasks.show','employee-tasks.edit','meetings','assigned-tasks','sops'])
                 ])>
-                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTasks">
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTaskSystem">
                         <i class="fas fa-fw fa-tasks"></i>
-                        <span>Meeting & Tasks</span>
+                        <span>Task System</span>
                     </a>
-                    <div id="collapseTasks"
-                        class="collapse {{ in_array(request()->route()->getName(), ['tasks','employee-tasks.index','employee-tasks.create','employee-tasks.show','employee-tasks.edit','meetings','assigned-tasks','sops']) ? 'show' : '' }}"
+                    <div id="collapseTaskSystem"
+                        class="collapse {{ in_array(request()->route()->getName(), ['employee-tasks.index','employee-tasks.create','employee-tasks.show','employee-tasks.edit']) ? 'show' : '' }}"
+                        data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['employee-tasks.index','employee-tasks.create','employee-tasks.show','employee-tasks.edit']) ? 'active' : '' }}" href="{{ route('employee-tasks.index') }}">Task System</a>
+                        </div>
+                    </div>
+                </li>
+                {{-- Meetings --}}
+                <li @class([
+                    'nav-item',
+                    'active' => in_array(request()->route()->getName(), ['tasks','meetings','assigned-tasks','sops'])
+                ])>
+                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseMeetings">
+                        <i class="fas fa-fw fa-calendar-alt"></i>
+                        <span>Meetings</span>
+                    </a>
+                    <div id="collapseMeetings"
+                        class="collapse {{ in_array(request()->route()->getName(), ['tasks','meetings','assigned-tasks','sops']) ? 'show' : '' }}"
                         data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <a class="collapse-item {{ in_array(request()->route()->getName(), ['tasks']) ? 'active' : '' }}" href="{{ route('tasks') }}">Overview</a>
-                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['employee-tasks.index','employee-tasks.create','employee-tasks.show','employee-tasks.edit']) ? 'active' : '' }}" href="{{ route('employee-tasks.index') }}">Task System</a>
                             <a class="collapse-item {{ in_array(request()->route()->getName(), ['meetings']) ? 'active' : '' }}" href="{{ route('meetings') }}">Meetings</a>
-                            {{-- <a class="collapse-item {{ in_array(request()->route()->getName(), ['tasks','assigned-tasks']) ? 'active' : '' }}" href="{{ route('assigned-tasks') }}">Assigned Tasks</a> --}}
                             <a class="collapse-item {{ in_array(request()->route()->getName(), ['sops']) ? 'active' : '' }}" href="{{ route('sops') }}">SOPs</a>
                         </div>
                     </div>

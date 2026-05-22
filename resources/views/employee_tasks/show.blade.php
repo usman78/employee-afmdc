@@ -40,6 +40,10 @@
                         <dd class="col-sm-9">{{ $priorities[$task->priority] ?? ucfirst($task->priority) }}</dd>
                         <dt class="col-sm-3">Due Date</dt>
                         <dd class="col-sm-9">{{ $task->due_date ? $task->due_date->format('d-M-Y') : 'N/A' }}</dd>
+                        @if($task->hod_completed_at ?? $task->HOD_COMPLETED_AT)
+                            <dt class="col-sm-3">HOD Completion Check</dt>
+                            <dd class="col-sm-9">{{ \Carbon\Carbon::parse($task->hod_completed_at ?? $task->HOD_COMPLETED_AT)->format('d-M-Y h:i A') }}</dd>
+                        @endif
                         <dt class="col-sm-3">Progress</dt>
                         <dd class="col-sm-9">
                             <div class="progress" style="height: 20px;">
@@ -131,6 +135,19 @@
                         <form method="POST" action="{{ route('employee-tasks.destroy', $task) }}" onsubmit="return confirm('Close this task?');">
                             @csrf
                             @method('DELETE')
+                            <div class="form-group">
+                                <label for="hod_completed_at">Completion Date & Time</label>
+                                <input
+                                    type="datetime-local"
+                                    name="hod_completed_at"
+                                    id="hod_completed_at"
+                                    max="{{ now()->format('Y-m-d\TH:i') }}"
+                                    value="{{ old('hod_completed_at', now()->format('Y-m-d\TH:i')) }}"
+                                    class="form-control @error('hod_completed_at') is-invalid @enderror"
+                                    required
+                                >
+                                @error('hod_completed_at') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                            </div>
                             <button class="btn btn-danger btn-block" type="submit">
                                 <i class="fas fa-lock mr-1"></i> Close Task
                             </button>

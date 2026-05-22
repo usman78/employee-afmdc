@@ -155,18 +155,25 @@ class EmployeeTaskController extends Controller
         return redirect()->route('employee-tasks.show', $employeeTask)->with('success', 'Task updated successfully.');
     }
 
-    public function destroy(Task $employeeTask)
+    public function destroy(Request $request, Task $employeeTask)
     {
         $this->authorize('close', $employeeTask);
 
+        $validated = $request->validate([
+            'hod_completed_at' => 'required|date|before_or_equal:now',
+        ]);
+
+        $hodCompletedAt = \Carbon\Carbon::parse($validated['hod_completed_at'])->format('Y-m-d H:i:s');
         $oldStatus = $employeeTask->status;
         $employeeTask->forceFill([
             'STATUS' => Task::STATUS_CLOSED,
             'CLOSED_AT' => now(),
             'CLOSED_BY' => auth()->user()->emp_code,
+            'HOD_COMPLETED_AT' => $hodCompletedAt,
         ])->save();
 
-        $this->logActivity($employeeTask, 'closed', $oldStatus, Task::STATUS_CLOSED, 'Task closed by HOD.');
+        $completedAt = \Carbon\Carbon::parse($hodCompletedAt)->format('M d, Y h:i A');
+        $this->logActivity($employeeTask, 'closed', $oldStatus, Task::STATUS_CLOSED, 'Task closed by HOD after final completion check: ' . $completedAt . '.');
 
         return redirect()->route('employee-tasks.index')->with('success', 'Task closed successfully.');
     }

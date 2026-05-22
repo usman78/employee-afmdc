@@ -48,8 +48,6 @@
                     2 => 'Medical Leave',
                     3 => 'Annual Leave',
                     4 => 'Compensatory Leave',
-                    // 5 => 'Leave Without Pay',
-                    // 12 => 'Outdoor Duty (OD)',
                   ];
 
                   $pendingLeaveKeys = [
@@ -57,7 +55,6 @@
                     2 => 'medical_leave',
                     3 => 'annual_leave',
                     4 => 'compensatory_leave',
-                    // 12 => 'od_leave',
                   ];
 
                   $leavesByCode = $leaves->keyBy('leav_code');
@@ -69,9 +66,6 @@
                       $balance = 0;
                       if ($leave) {
                         $balance = $leave->leav_open + $leave->leav_credit - $leave->leav_taken - $leave->leave_encashed;
-                        // $balance = $leaveCode == 12
-                          // ? $leave->leav_taken
-                          // : ($leave->leav_open + $leave->leav_credit - $leave->leav_taken - $leave->leave_encashed);
                       }
                       $pendingKey = $pendingLeaveKeys[$leaveCode] ?? null;
                     @endphp
@@ -110,21 +104,6 @@
             </tr>
           </tbody>
         </table>
-        {{-- show total od leaves taken up until now --}}
-        {{-- @php
-          $totalOdLeaves = 0;
-          foreach ($leaves as $leave) {
-            if ($leave->leav_code == 12) {
-              $totalOdLeaves = $leave->leav_taken;
-              break;
-            }
-          }
-        @endphp --}}
-        {{-- <div class="row mt-3">
-          <div class="col-12">
-            <p class="text-center"><strong>Total Outdoor Duty (OD) Leaves Taken until now: {{ $totalOdLeaves }}</strong></p>
-          </div>
-        </div> --}}
           <div class="row mt-5">
             <div class="col-12 d-flex justify-content-around gap-2" style="text-align: center;">
               <a class="btn btn-primary" id="leaves-applied" data-emp-code="{{ $leaves->emp_code }}" href="{{route('leaves-applied', $leaves->emp_code)}}">
