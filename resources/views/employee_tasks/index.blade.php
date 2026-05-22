@@ -9,6 +9,9 @@
         color: #991b1b;
         font-weight: 700;
     }
+    .tasks-pagination > nav > div:nth-child(2) > div:nth-child(1) {
+        margin-right: 10px;
+    }
 @endpush
 
 @section('content')
@@ -132,8 +135,18 @@
                 </table>
             </div>
 
-            <div class="mt-3">
-                {{ $tasks->links('pagination::bootstrap-5') }}
+            <div class="mt-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                <div class="text-muted small mb-2 mb-md-0">
+                    @if($tasks->total() > 0)
+                        Showing {{ $tasks->firstItem() }} to {{ $tasks->lastItem() }} of {{ $tasks->total() }} tasks
+                        - Page {{ $tasks->currentPage() }} of {{ $tasks->lastPage() }}
+                    @else
+                        Showing 0 tasks - Page 1 of 1
+                    @endif
+                </div>
+                <div class="tasks-pagination">
+                    {{ $tasks->links('pagination::bootstrap-5') }}
+                </div>
             </div>
         </div>
     </div>
