@@ -77,6 +77,10 @@ class User extends Authenticatable
     {
         return in_array($this->desg_code, ['716', '971', '991', '44', '996', '786', '95']);
     }
+    public function canViewLeaveReport()
+    {
+        return $this->isHR() || in_array($this->emp_code, ['1225']);
+    }
     public function isManagerHR()
     {
         return in_array($this->desg_code, ['716']);

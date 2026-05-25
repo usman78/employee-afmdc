@@ -21,6 +21,11 @@ use App\Models\Holidays;
 
 class LeavesController extends Controller
 {
+    private function authorizeLeaveReportAccess(): void
+    {
+        abort_unless(Auth::user()?->canViewLeaveReport(), 403);
+    }
+
     public function leaves(Request $request, $emp_code)                                                                      
     {
         // Check if the logged in user is the same as the user whose leaves are being viewed
@@ -1219,6 +1224,8 @@ class LeavesController extends Controller
     }
     public function leaveReport()
     {
+        $this->authorizeLeaveReportAccess();
+
         $departments = Department::whereNotIn('dept_code', [61, 60, 64, 48, 54, 11, 13, 17, 18, 19, 31, 32, 58, 65])->get();
         $designations = Designation::all();
         return view('leave-report', [
@@ -1228,6 +1235,8 @@ class LeavesController extends Controller
     }
     public function leaveReportEmployeeSearch(Request $request)
     {
+        $this->authorizeLeaveReportAccess();
+
         $term = trim($request->input('q', ''));
         if (strlen($term) < 2) {
             return response()->json(['results' => []]);
@@ -1254,6 +1263,8 @@ class LeavesController extends Controller
     }
     public function leaveReportData(Request $request)
     {
+        $this->authorizeLeaveReportAccess();
+
         $filter = $request->input('filter');
         if (!in_array($filter, ['department', 'employee'])) {
             return redirect()->back()->with('error', 'Invalid filter selected.');
@@ -1586,6 +1597,8 @@ class LeavesController extends Controller
 
     public function leaveReportDownload($start_date, $end_date)
     {
+        $this->authorizeLeaveReportAccess();
+
         $dept_desc = request()->input('dept_desc');
         $report = request()->input('report');
         $desgShort = request()->input('desg_short');
