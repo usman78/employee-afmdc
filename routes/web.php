@@ -16,6 +16,7 @@ use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\AdmissionController;
 use App\Http\Controllers\RosterController;
 use App\Http\Controllers\NoticeController;
+use App\Http\Controllers\AdvanceSalaryController;
 use App\Models\Employee;
 
 Auth::routes();
@@ -155,6 +156,18 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/show/{id}', [App\Http\Controllers\ExitInterviewController::class, 'show'])->name('exit-interview.show');
         Route::get('/download-pdf/{id}', [App\Http\Controllers\ExitInterviewController::class, 'downloadPDF'])->name('exit-interview.download-pdf');
     });
+
+    Route::get('/advance-salary-report', [AdvanceSalaryController::class, 'report'])->name('advance-salary.report');
+    Route::post('/advance-salary-report/{application}/decision', [AdvanceSalaryController::class, 'hrDecision'])->name('advance-salary.hr-decision');
+    Route::get('/finance-reports', [AdvanceSalaryController::class, 'financeReports'])->name('finance-reports');
+    Route::get('/finance/advance-salary-report', [AdvanceSalaryController::class, 'accountsReport'])->name('advance-salary.accounts-report');
+    Route::post('/finance/advance-salary-report/{application}/decision', [AdvanceSalaryController::class, 'accountsDecision'])->name('advance-salary.accounts-decision');
+    Route::get('/advance-salary-subordinate-applications', [AdvanceSalaryController::class, 'hodIndex'])->name('advance-salary.hod-index');
+    Route::get('/advance-salary-approvals/{application}', [AdvanceSalaryController::class, 'hodShow'])->name('advance-salary.hod-show');
+    Route::post('/advance-salary-approvals/{application}/decision', [AdvanceSalaryController::class, 'hodDecision'])->name('advance-salary.hod-decision');
+    Route::get('/advance-salary/{emp_code}', [AdvanceSalaryController::class, 'create'])->name('advance-salary.create');
+    Route::post('/advance-salary/{emp_code}', [AdvanceSalaryController::class, 'store'])->name('advance-salary.store');
+    Route::post('/advance-salary/{emp_code}/{application}/revoke', [AdvanceSalaryController::class, 'revoke'])->name('advance-salary.revoke');
 
     Route::prefix('notices')->group(function () {
         Route::get('/', [NoticeController::class, 'index'])->name('notices.index');

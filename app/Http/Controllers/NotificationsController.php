@@ -24,6 +24,15 @@ class NotificationsController extends Controller
                 return redirect()->route('service-requests.assignment-details', ['requestId' => $data['service_assignment_id']]);
             case 'App\Notifications\NewServiceRequestAssigned':    
                 return redirect()->route('service-requests.assignment-details', ['requestId' => $data['request_id']]);
+            case 'App\Notifications\AdvanceSalarySubmittedNotification':
+                return redirect()->route('advance-salary.hod-show', ['application' => $data['advance_salary_application_id']]);
+            case 'App\Notifications\AdvanceSalaryHodApprovedNotification':
+                return redirect()->route('advance-salary.report');
+            case 'App\Notifications\AdvanceSalaryHrApprovedNotification':
+                return redirect()->route('advance-salary.accounts-report');
+            case 'App\Notifications\AdvanceSalaryHodDecisionNotification':
+            case 'App\Notifications\AdvanceSalaryDecisionNotification':
+                return redirect()->route('advance-salary.create', ['emp_code' => auth()->user()->emp_code]);
             default:
                 if (isset($data['notice_id'])) {
                     return redirect()->route('notices.review', ['notice' => $data['notice_id']]);
