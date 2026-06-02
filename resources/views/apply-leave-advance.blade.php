@@ -627,6 +627,10 @@ ul.error-msg{
         return "Leave time cannot go past midnight.";
       }
 
+      if (startMinutes + durationMinutes > employeeEndMinutes) {
+        return "Short leave end time cannot go past your office end time.";
+      }
+
       return null;
     });
 
