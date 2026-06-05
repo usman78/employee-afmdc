@@ -27,7 +27,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/change-password', [HomeController::class, 'changePassword'])->name('change-password');
     Route::post('/update-password', [HomeController::class, 'updatePassword'])->name('update-password');
 
-    Route::get('/roster/{empCode}', [RosterController::class, 'index'])->name('roster');
+    Route::get('/att', [RosterController::class, 'index'])->name('attendance.index');
 
     Route::get('/attendance-report', [AttendanceController::class, 'attendanceReport'])->name('attendance-report');
     Route::get('/attendance-late-report', [AttendanceController::class, 'attendanceLateReport'])->name('attendance-late-report');
