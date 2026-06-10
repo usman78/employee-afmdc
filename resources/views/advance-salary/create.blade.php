@@ -60,7 +60,8 @@
               <div class="col-md-4">
                 <div>Gross Salary</div>
                 <strong>
-                  {{ $summary['gross_salary'] === null ? 'Not found' : 'PKR ' . number_format($summary['gross_salary']) }}
+                  {{-- {{ $summary['gross_salary'] === null ? 'Not found' : 'PKR ' . number_format($summary['gross_salary']) }} --}}
+                  {{ $summary['gross_salary'] === null ? 'Not found' : 'PKR ' . str_repeat('*', strlen(number_format($summary['gross_salary']))) }}
                 </strong>
               </div>
               <div class="col-md-4">
@@ -69,7 +70,8 @@
               </div>
               <div class="col-md-4">
                 <div>Remaining Limit</div>
-                <strong>PKR {{ number_format($summary['remaining_limit']) }}</strong>
+                {{-- <strong>PKR {{ number_format($summary['remaining_limit']) }}</strong> --}}
+                <strong>PKR {{ str_repeat('*', strlen(number_format($summary['remaining_limit']))) }}</strong>
               </div>
             </div>
           </div>
