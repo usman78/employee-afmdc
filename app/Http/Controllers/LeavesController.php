@@ -340,7 +340,8 @@ class LeavesController extends Controller
         if ($leave_duration == 'full') {
             if(checkMultipleLeaves($emp_code,  
                 date('Y-m-d',strtotime($request->input('leave_from_date'))), 
-                date('Y-m-d',strtotime($request->input('leave_to_date'))))){
+                date('Y-m-d',strtotime($request->input('leave_to_date'))),
+                $request->input('leave_type'))){
                 return response()->json(['error' => 'You have already applied for leave on one or more of the selected dates.']);
             }
             $range = $request->input('leave_from_date') . ' - ' . $request->input('leave_to_date');
@@ -395,7 +396,8 @@ class LeavesController extends Controller
             if(checkMultipleLeaves(
                 $emp_code,
                 date('Y-m-d', strtotime($request->input('single_leave_date'))),
-                date('Y-m-d', strtotime($request->input('single_leave_date')))
+                date('Y-m-d', strtotime($request->input('single_leave_date'))),
+                $request->input('leave_type')
             )){
                 return response()->json(['error' => 'You have already applied for leave on the selected date.']);
             }
@@ -493,7 +495,8 @@ class LeavesController extends Controller
             if(checkMultipleLeaves(
                 $emp_code,
                 date('Y-m-d', strtotime($request->input('single_leave_date'))),
-                date('Y-m-d', strtotime($request->input('single_leave_date')))
+                date('Y-m-d', strtotime($request->input('single_leave_date'))),
+                8
             )){
                 return response()->json(['error' => 'You have already applied for leave on the selected date.']);
             }
@@ -772,8 +775,8 @@ class LeavesController extends Controller
 
     public function checkConsecutiveLeave($emp_code, $leave_code, $from_date, $to_date)
     {
-        if($leave_code == 5 || $leave_code == 3) {
-            // Unpaid leave & annual leave does not require consecutive check
+        // check if leave_code is 3,4,5,8,12 then no need to check for consecutive leave as these leaves can be taken without break 
+        if(in_array($leave_code, [3, 4, 5, 8, 12])) {
             return true;
         }
         $from = Carbon::parse($from_date);
@@ -848,7 +851,8 @@ class LeavesController extends Controller
             // check if any leave already exists in the selected range
             if(checkMultipleLeaves($emp_code,  
                 date('Y-m-d',strtotime($request->input('leave_from_date'))), 
-                date('Y-m-d',strtotime($request->input('leave_to_date'))))){
+                date('Y-m-d',strtotime($request->input('leave_to_date'))),
+                5)){
                 return redirect()->back()->with('error', 'You have already applied for leave on one or more of the selected dates.');
             }
             $range = $request->input('leave_from_date') . ' - ' . $request->input('leave_to_date');
@@ -883,7 +887,8 @@ class LeavesController extends Controller
             if(checkMultipleLeaves(
                 $emp_code,
                 date('Y-m-d', strtotime($request->input('single_leave_date'))),
-                date('Y-m-d', strtotime($request->input('single_leave_date')))
+                date('Y-m-d', strtotime($request->input('single_leave_date'))),
+                5
             )){
                 return redirect()->back()->with('error', 'You have already applied for leave on the selected date.');
             }
@@ -967,7 +972,8 @@ class LeavesController extends Controller
             // check if any leave already exists in the selected range
             if(checkMultipleLeaves($emp_code,  
                 date('Y-m-d',strtotime($request->input('leave_from_date'))), 
-                date('Y-m-d',strtotime($request->input('leave_to_date'))))){
+                date('Y-m-d',strtotime($request->input('leave_to_date'))),
+                12)){
                 return redirect()->back()->with('error', 'You have already applied for leave on one or more of the selected dates.');
             }
             $range = $request->input('leave_from_date') . ' - ' . $request->input('leave_to_date');
@@ -1002,7 +1008,8 @@ class LeavesController extends Controller
             if(checkMultipleLeaves(
                 $emp_code,
                 date('Y-m-d', strtotime($request->input('single_leave_date'))),
-                date('Y-m-d', strtotime($request->input('single_leave_date')))
+                date('Y-m-d', strtotime($request->input('single_leave_date'))),
+                12
             )){
                 return redirect()->back()->with('error', 'You have already applied for leave on the selected date.');
             }
