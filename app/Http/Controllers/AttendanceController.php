@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Department;
 use App\Models\DepartmentStrength;
+use App\Models\Roster;
 use App\Jobs\SendAttendanceReportToHodJob;
 use App\Jobs\SendDepartmentAttendanceReportJob;
 use Illuminate\Support\Facades\Auth;
@@ -985,6 +986,7 @@ class AttendanceController extends Controller
         $start_date = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->startOfMonth();
         $selectedEndDate = $endDate ? Carbon::parse($endDate)->startOfDay() : Carbon::today();
         $end_date = $selectedEndDate->gt(Carbon::today()) ? Carbon::today() : $selectedEndDate;
+        $rostersByDate = $this->getRosterRowsByDate($emp_code, $start_date, $end_date);
 
         $allDates = collect();
         $tempDate = $start_date->copy();
@@ -992,13 +994,18 @@ class AttendanceController extends Controller
         while ($tempDate->lte($end_date)) {
             $dateString = $tempDate->toDateString();
             $isHoliday  = in_array($dateString, $holidays, true);
+            $roster = $rostersByDate->get($dateString);
+            $hasRoster = $roster && $this->isUsableRosterRow($roster);
+            $isRosterRest = $hasRoster && (int) $roster->day_type === 0;
 
-            if ($tempDate->isSunday() || $isHoliday) {
+            if ($isRosterRest || (!$hasRoster && ($tempDate->isSunday() || $isHoliday))) {
                 $allDates->push([
                     'at_date'   => $dateString,
                     'time_logs' => [],
-                    'is_sunday' => $tempDate->isSunday(),
-                    'is_holiday'=> $isHoliday,
+                    'is_sunday' => !$hasRoster && $tempDate->isSunday(),
+                    'is_holiday'=> !$hasRoster && $isHoliday,
+                    'is_weekly_rest' => $isRosterRest,
+                    'has_roster' => $hasRoster,
                     'is_leave'  => false
                 ]);
 
@@ -1055,7 +1062,9 @@ class AttendanceController extends Controller
                     'at_date'   => $dateString,
                     'time_logs' => [],
                     'is_sunday' => false,
-                    'is_holiday'=> $isHoliday,
+                    'is_holiday'=> !$hasRoster && $isHoliday,
+                    'is_weekly_rest' => false,
+                    'has_roster' => $hasRoster,
                     'is_leave'  => $isLeave,
                     'leave_type'=> $isLeave ? $leaveType : null
                 ]);
@@ -1065,10 +1074,29 @@ class AttendanceController extends Controller
             }
 
             $workDate = Carbon::parse($dateString);
-            $startTimeCarbon = $workDate->copy()->setTimeFromTimeString($emp_category->st_time);
-            $endTimeCarbon   = $workDate->copy()->setTimeFromTimeString($emp_category->end_time);
+            if ($hasRoster) {
+                $startTimeCarbon = $this->rosterShiftDateTime($workDate, $roster->r_shift_start);
+                $endTimeCarbon = $this->rosterShiftDateTime($workDate, $roster->r_shift_end);
 
-            if ($emp_category->twh != 12) {
+                if ($endTimeCarbon->lte($startTimeCarbon)) {
+                    $endTimeCarbon->addDay();
+                }
+
+                $totalMins = $startTimeCarbon->diffInMinutes($endTimeCarbon);
+            } else {
+                $totalMins = 480;
+
+                if ($emp_category->catg_code == 2) {
+                    $totalMins = 360;
+                } elseif ($emp_category->twh == 12) {
+                    $totalMins = 720;
+                }
+
+                $startTimeCarbon = $workDate->copy()->setTimeFromTimeString($emp_category->st_time);
+                $endTimeCarbon   = $workDate->copy()->setTimeFromTimeString($emp_category->end_time);
+            }
+
+            if (!$hasRoster && $emp_category->twh != 12) {
                 if ($emp_category->catg_code == 2 && $workDate->isFriday()) {
                     $totalMins = 300;
                     $startTimeCarbon->setTime(8, 0);
@@ -1082,7 +1110,7 @@ class AttendanceController extends Controller
                 }
             }
 
-            $ramadanDeductionMins = $this->getRamadanDeductionMinutes($emp_category, $workDate);
+            $ramadanDeductionMins = $hasRoster ? 0 : $this->getRamadanDeductionMinutes($emp_category, $workDate);
             $adjustedEndTimeCarbon = $endTimeCarbon->copy()->subMinutes($ramadanDeductionMins);
 
             $minsWorked = 0;
@@ -1110,7 +1138,7 @@ class AttendanceController extends Controller
                     $maxOut = Carbon::parse($attendanceRecords->max('timeout'));
                 }
 
-                if ($emp_category->twh == 12) {
+                if (!$hasRoster && $emp_category->twh == 12) {
                     $required = $totalMins;
 
                     if ($leaveMins > 0) {
@@ -1170,7 +1198,9 @@ class AttendanceController extends Controller
                 'late_minutes'      => $lateMins,
                 'early_minutes'     => $earlyMins,
                 'is_sunday'         => false,
-                'is_holiday'        => $isHoliday,
+                'is_holiday'        => !$hasRoster && $isHoliday,
+                'is_weekly_rest'    => false,
+                'has_roster'        => $hasRoster,
                 'is_leave'          => $isLeave,
                 'leave_type'        => $isLeave ? $leaveType : null,
                 'short_duty_status' => $leaveRemark
@@ -1211,6 +1241,59 @@ class AttendanceController extends Controller
             'report_start_date' => $start_date->toDateString(),
             'report_end_date' => $end_date->toDateString(),
         ];
+    }
+
+    private function getRosterRowsByDate($empCode, Carbon $startDate, Carbon $endDate)
+    {
+        $rows = Roster::where('r_emp_code', $empCode)
+            ->whereRaw(
+                "TRUNC(r_effective_from) <= TO_DATE(?, 'YYYY-MM-DD') AND NVL(TRUNC(r_effective_to), TRUNC(r_effective_from)) >= TO_DATE(?, 'YYYY-MM-DD')",
+                [$endDate->toDateString(), $startDate->toDateString()]
+            )
+            ->orderBy('r_effective_from')
+            ->get();
+
+        $byDate = collect();
+        foreach ($rows as $row) {
+            $from = Carbon::parse($row->r_effective_from)->startOfDay();
+            $to = $row->r_effective_to
+                ? Carbon::parse($row->r_effective_to)->startOfDay()
+                : $from->copy();
+
+            $date = $from->gt($startDate) ? $from->copy() : $startDate->copy();
+            $last = $to->lt($endDate) ? $to->copy() : $endDate->copy();
+
+            while ($date->lte($last)) {
+                $byDate->put($date->toDateString(), $row);
+                $date->addDay();
+            }
+        }
+
+        return $byDate;
+    }
+
+    private function isUsableRosterRow($roster): bool
+    {
+        if ($roster->day_type === null) {
+            return false;
+        }
+
+        if ((int) $roster->day_type === 0) {
+            return true;
+        }
+
+        return !empty($roster->r_shift_start) && !empty($roster->r_shift_end);
+    }
+
+    private function rosterShiftDateTime(Carbon $date, $shiftTime): Carbon
+    {
+        $shift = Carbon::parse($shiftTime);
+
+        return $date->copy()->setTime(
+            (int) $shift->format('H'),
+            (int) $shift->format('i'),
+            (int) $shift->format('s')
+        );
     }
 
     private function buildLateAttendanceReport(string $reportDate, ?string $deptCode = null): array

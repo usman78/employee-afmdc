@@ -203,10 +203,10 @@
                   <td>{{ Carbon::parse($record['at_date'])->format('D, j M') }}</td>
                   {{-- Time In / Out --}}
                   <td>
-                      @if ($record['is_sunday'] || $record['is_holiday'])
-                          <span class="badge badge-info">
-                              {{ $record['is_holiday'] ? 'Holiday' : 'Sunday' }}
-                          </span>
+                      @if ($record['is_sunday'] || $record['is_holiday'] || ($record['is_weekly_rest'] ?? false))
+                           <span class="badge badge-info">
+                              {{ $record['is_holiday'] ? 'Holiday' : (($record['is_weekly_rest'] ?? false) ? 'Weekly Rest' : 'Sunday') }}
+                           </span>
                       @else
                           @if (!empty($record['time_logs']))
                               @foreach ($record['time_logs'] as $log)
@@ -231,8 +231,9 @@
                   {{-- Late Minutes (DAY LEVEL) --}}
                   <td>
                       @if (
-                          !$record['is_sunday']
-                          && !$record['is_holiday']
+                           !$record['is_sunday']
+                           && !$record['is_holiday']
+                           && !($record['is_weekly_rest'] ?? false)
                           // && $record['at_date'] !== $today
                       )
                           @if (($record['late_minutes'] ?? 0) >= 10)
@@ -247,8 +248,9 @@
                   {{-- Early Minutes (DAY LEVEL) --}}
                   <td>
                       @if (
-                          !$record['is_sunday']
-                          && !$record['is_holiday']
+                           !$record['is_sunday']
+                           && !$record['is_holiday']
+                           && !($record['is_weekly_rest'] ?? false)
                           // && $record['at_date'] !== $today
                       )
                           @if (($record['early_minutes'] ?? 0) > 0)
@@ -262,9 +264,9 @@
                   </td>
                   {{-- Status --}}
                   <td>
-                    @if ($record['is_sunday'] || $record['is_holiday'])
+                    @if ($record['is_sunday'] || $record['is_holiday'] || ($record['is_weekly_rest'] ?? false))
                       <span class="badge badge-info">
-                        {{ $record['is_holiday'] ? 'Holiday' : 'Sunday' }}
+                        {{ $record['is_holiday'] ? 'Holiday' : (($record['is_weekly_rest'] ?? false) ? 'Weekly Rest' : 'Sunday') }}
                       </span>
                     @elseif ($record['leave_type'])
                       <span class="badge badge-success">{{ $record['leave_type'] }}</span>  

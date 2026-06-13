@@ -156,10 +156,10 @@
                   {{-- Time In / Out --}}
                   <td>{{ timeFormatFromString($record['in_date']) }} - {{ timeFormatFromString($record['out_date']) }}</td>
                   {{-- <td>
-                      @if ($record['is_sunday'] || $record['is_holiday'])
-                          <span class="badge badge-info">
-                              {{ $record['is_holiday'] ? 'Holiday' : 'Sunday' }}
-                          </span>
+                      @if ($record['is_sunday'] || $record['is_holiday'] || ($record['is_weekly_rest'] ?? false))
+                           <span class="badge badge-info">
+                              {{ $record['is_holiday'] ? 'Holiday' : (($record['is_weekly_rest'] ?? false) ? 'Weekly Rest' : 'Sunday') }}
+                           </span>
                       @else
                           @if (!empty($record['time_logs']))
                               @foreach ($record['time_logs'] as $log)
@@ -189,6 +189,7 @@
                       @if (
                           !$record['is_sunday']
                           && !$record['is_holiday']
+                          && !($record['is_weekly_rest'] ?? false)
                           // && $record['at_date'] !== $today
                       )
                           @if (($record['late_minutes'] ?? 0) >= 10)
@@ -207,6 +208,7 @@
                       {{-- @if (
                           !$record['is_sunday']
                           && !$record['is_holiday']
+                          && !($record['is_weekly_rest'] ?? false)
                           // && $record['at_date'] !== $today
                       )
                           @if (($record['early_minutes'] ?? 0) > 0)

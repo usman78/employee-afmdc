@@ -172,8 +172,8 @@
             @forelse ($attendance as $record)
                 @php
                     $timeText = '';
-                    if ($record['is_sunday'] || $record['is_holiday']) {
-                        $timeText = $record['is_holiday'] ? 'Holiday' : 'Sunday';
+                    if ($record['is_sunday'] || $record['is_holiday'] || ($record['is_weekly_rest'] ?? false)) {
+                        $timeText = $record['is_holiday'] ? 'Holiday' : (($record['is_weekly_rest'] ?? false) ? 'Weekly Rest' : 'Sunday');
                     } elseif (!empty($record['time_logs'])) {
                         $pairs = [];
                         foreach ($record['time_logs'] as $log) {
@@ -189,17 +189,17 @@
                     }
 
                     $lateText = '-';
-                    if (!$record['is_sunday'] && !$record['is_holiday'] && (($record['late_minutes'] ?? 0) >= 10)) {
+                    if (!$record['is_sunday'] && !$record['is_holiday'] && !($record['is_weekly_rest'] ?? false) && (($record['late_minutes'] ?? 0) >= 10)) {
                         $lateText = intval($record['late_minutes']) . ' mins';
                     }
 
                     $earlyText = '-';
-                    if (!$record['is_sunday'] && !$record['is_holiday'] && (($record['early_minutes'] ?? 0) > 0)) {
+                    if (!$record['is_sunday'] && !$record['is_holiday'] && !($record['is_weekly_rest'] ?? false) && (($record['early_minutes'] ?? 0) > 0)) {
                         $earlyText = intval(round($record['early_minutes'])) . ' mins';
                     }
 
-                    if ($record['is_sunday'] || $record['is_holiday']) {
-                        $statusText = $record['is_holiday'] ? 'Holiday' : 'Sunday';
+                    if ($record['is_sunday'] || $record['is_holiday'] || ($record['is_weekly_rest'] ?? false)) {
+                        $statusText = $record['is_holiday'] ? 'Holiday' : (($record['is_weekly_rest'] ?? false) ? 'Weekly Rest' : 'Sunday');
                     } elseif (!empty($record['leave_type'])) {
                         $statusText = $record['leave_type'];
                     } elseif (empty($record['time_logs'])) {

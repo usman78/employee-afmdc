@@ -6,5 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Roster extends Model
 {
-    protected $table = 'pay_month_att_minutes';
+    protected $table = 'emp_roster';
+
+    public $timestamps = false;
 }
