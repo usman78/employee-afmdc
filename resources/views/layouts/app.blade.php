@@ -22,119 +22,122 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
         <link href="{{asset('css/main.css')}}" rel="stylesheet">
         @stack('cdn-styles')
-            <!-- Main CSS File -->
-            
-            <style>
-                .btn-primary {
-                    --bs-btn-bg: #2196f3;
+        <!-- Main CSS File -->
+        <style>
+            .btn-primary {
+                --bs-btn-bg: #2196f3;
+            }
+            .navmenu .dropdown.d-xl-none {
+                display: inline-block;
+            }
+            .header .header-social-links .dropdown {
+                display: inline-block;
+            }
+            .header .header-social-links .dropdown a.btn.dropdown-toggle {
+                border: none;
+            } 
+            .navmenu a.dropdown-toggle {
+                padding: 10px 0;
+            }
+            .navmenu .dropdown .btn.dropdown-toggle {
+                border: none;
+            }
+            .navmenu .dropdown .dropdown-toggle::after {
+                display: none;
+            }
+            span.position-absolute.top-0.start-100.translate-middle.badge.rounded-pill.bg-danger
+            {
+                font-size: x-small;
+                transform: translate(-175%, -20%) !important;
+            }
+            .thick-underline {
+                text-decoration-line: underline;
+                text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
+                text-decoration-color: #973594;
+                text-underline-offset: 4px;
+                color: #973594;
+                font-weight: 600;
+            }
+            .thick-underline:hover {
+                text-decoration-line: underline;
+                text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
+                text-decoration-color: #973594;
+                text-underline-offset: 4px;
+                color: #2196f3;
+                font-weight: 600;
+            }
+            table.table thead tr th {
+            /* color: #2196F3; */
+            }
+            .table thead {
+                --bs-table-bg: #2196f3;
+                --bs-table-color: #fff;
+            }
+            .header {
+                background-color: #c0ddff;
+            }
+            .header::after {
+                content: "";
+                position: absolute;
+                height: 3%;
+                padding: 2px 0;
+                width: 100%;
+                background: #9C27B0;
+                left: 50%;
+                top: 0;
+                translate: -50% -50%;
+                z-index: -99999999999;
+            }
+            li.nav-item {
+                margin-bottom: 0;
+            }
+            .header .header-social-links a:hover {
+                color: #973594;
+            }
+            .header .header-social-links a
+            {
+                font-size: 16px;
+            } 
+            .section-title h2:after
+            {
+                background: #973594;
+            }
+            .accordion-body {
+                background-color: aliceblue;
+            }
+            .sidebar-dark hr.sidebar-divider
+            {
+                border-top: 1px solid rgb(255 255 255 / 90%);
+            }
+            @media (max-width: 768px) {
+                .table {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                white-space: nowrap;
                 }
-                .navmenu .dropdown.d-xl-none {
-                    display: inline-block;
-                }
-                .header .header-social-links .dropdown {
-                    display: inline-block;
-                }
-                .header .header-social-links .dropdown a.btn.dropdown-toggle {
-                    border: none;
-                } 
-                .navmenu a.dropdown-toggle {
-                    padding: 10px 0;
-                }
-                .navmenu .dropdown .btn.dropdown-toggle {
-                    border: none;
-                }
-                .navmenu .dropdown .dropdown-toggle::after {
-                    display: none;
-                }
-                span.position-absolute.top-0.start-100.translate-middle.badge.rounded-pill.bg-danger
-                {
-                    font-size: x-small;
-                    transform: translate(-175%, -20%) !important;
-                }
-                .thick-underline {
-                    text-decoration-line: underline;
-                    text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
-                    text-decoration-color: #973594;
-                    text-underline-offset: 4px;
-                    color: #973594;
-                    font-weight: 600;
-                }
-                .thick-underline:hover {
-                    text-decoration-line: underline;
-                    text-decoration-thickness: 2px; /* Can also use 'from-font', 'auto', or specific units */
-                    text-decoration-color: #973594;
-                    text-underline-offset: 4px;
-                    color: #2196f3;
-                    font-weight: 600;
-                }
-                table.table thead tr th {
-                /* color: #2196F3; */
-                }
-                .table thead {
-                    --bs-table-bg: #2196f3;
-                    --bs-table-color: #fff;
-                }
-                .header {
-                    background-color: #c0ddff;
-                }
-                .header::after {
-                    content: "";
-                    position: absolute;
-                    height: 3%;
-                    padding: 2px 0;
-                    width: 100%;
-                    background: #9C27B0;
-                    left: 50%;
-                    top: 0;
-                    translate: -50% -50%;
-                    z-index: -99999999999;
-                }
-                li.nav-item {
-                    margin-bottom: 0;
-                }
-                .header .header-social-links a:hover {
-                    color: #973594;
-                }
-                .header .header-social-links a
-                {
-                    font-size: 16px;
-                } 
-                .section-title h2:after
-                {
-                    background: #973594;
-                }
-                .accordion-body {
-                    background-color: aliceblue;
-                }
-                @media (max-width: 768px) {
-                    .table {
-                    display: block;
-                    width: 100%;
-                    overflow-x: auto;
-                    white-space: nowrap;
-                    }
-                    @media (max-width: 1199px) {
-                        .navmenu a:hover, .navmenu .active, .navmenu .active:focus {
-                            color: #973594;
-                        }
-                    }
-                }
-                @media (min-width: 1200px) {
-                    .navmenu li:hover>a, .navmenu .active, .navmenu .active:focus {
+                @media (max-width: 1199px) {
+                    .navmenu a:hover, .navmenu .active, .navmenu .active:focus {
                         color: #973594;
                     }
-                    .navmenu>ul>li>a:before {
-                    background-color: #973594;
-                    }
-                    .navmenu a:hover:before, .navmenu li:hover>a:before, .navmenu .active:before {
-                    width: 100%;
-                    }
-                    .navmenu a, .navmenu a:focus {
-                    color: #353636;
-                    font-size: 15px;
-                    font-weight: 700;
-                    }
                 }
+            }
+            @media (min-width: 1200px) {
+                .navmenu li:hover>a, .navmenu .active, .navmenu .active:focus {
+                    color: #973594;
+                }
+                .navmenu>ul>li>a:before {
+                background-color: #973594;
+                }
+                .navmenu a:hover:before, .navmenu li:hover>a:before, .navmenu .active:before {
+                width: 100%;
+                }
+                .navmenu a, .navmenu a:focus {
+                color: #353636;
+                font-size: 15px;
+                font-weight: 700;
+                }
+            }
             @stack('styles');
         </style>
     </head>
@@ -302,21 +305,11 @@
                     Work
                 </div>
                 {{-- Task System --}}
-                <li @class([
-                    'nav-item',
-                    'active' => in_array(request()->route()->getName(), ['tasks','employee-tasks.index','employee-tasks.create','employee-tasks.show','employee-tasks.edit','meetings','assigned-tasks','sops'])
-                ])>
-                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTaskSystem">
+                <li @class(['nav-item', 'active' => request()->routeIs('tasks','employee-tasks.index','employee-tasks.create','employee-tasks.show','employee-tasks.edit','meetings','assigned-tasks','sops')])>
+                    <a class="nav-link" href="{{ route('employee-tasks.index') }}">
                         <i class="fas fa-fw fa-tasks"></i>
                         <span>Task System</span>
                     </a>
-                    <div id="collapseTaskSystem"
-                        class="collapse {{ in_array(request()->route()->getName(), ['employee-tasks.index','employee-tasks.create','employee-tasks.show','employee-tasks.edit']) ? 'show' : '' }}"
-                        data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['employee-tasks.index','employee-tasks.create','employee-tasks.show','employee-tasks.edit']) ? 'active' : '' }}" href="{{ route('employee-tasks.index') }}">Task System</a>
-                        </div>
-                    </div>
                 </li>
                 {{-- Meetings --}}
                 <li @class([
