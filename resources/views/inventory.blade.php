@@ -17,6 +17,24 @@
 .table>:not(caption)>*>* {
   padding: .5rem .5rem;
 }
+.nav-tabs .nav-link {
+  color: #333;
+  border: 1px solid #dee2e6;
+}
+.nav-tabs .nav-link.active {
+  background-color: #2196f3;
+  color: #fff;
+  border-color: #2196f3;
+}
+.acknowledged-badge {
+  background-color: #28a745;
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+.portfolio-details .portfolio-info ul li {
+    margin-top: 10px;
+}
 @endpush
 
 @section('content')
@@ -27,41 +45,107 @@
       <div class="portfolio-details mt-5 mb-5">
         <div class="portfolio-info">
           <h3>Store Issuance</h3>
-          <ul>
-            {{-- <li><strong>Employee Code: </strong>{{$inventory->emp_code}}</li> --}}
-            {{-- <li><strong>Employee Name: </strong>{{$inventory->emp_name}}</li> --}}
+          
+          <!-- Tabs -->
+          <ul class="nav nav-tabs mt-4 mb-4" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link active" id="issues-tab" data-bs-toggle="tab" href="#issues" role="tab">Issues</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="acknowledged-tab" data-bs-toggle="tab" href="#acknowledged" role="tab">Acknowledged Issues</a>
+            </li>
           </ul>
-          <table class="table mt-5 mb-5">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Item Code</th>
-                    <th>Item Description</th>
-                    <th>Item Quantity</th>
-                    <th>Rate</th>
-                    <th>Value</th>
-                </tr>
-            </thead>
-            <tbody>
-              @if ($inventory->isEmpty())
-                <tr>
-                    <td colspan="6" class="text-center">No records found.</td>
-                </tr>
-              @else
-                @foreach ($inventory as $inv)
-                  <tr>
-                      <td>{{ date('d-m-Y',strtotime($inv->doc_date)) }}</td>
-                      <td>{{ $inv->item_code }}</td>
-                      <td>{{ $inv->inventory->item_desc }}</td>
-                      <td>{{ $inv->qty }}</td>
-                      <td>{{ $inv->rate }}</td>
-                      <td>{{ $inv->value }}</td>
-                  </tr>
-                @endforeach
-              @endif
-                
-            </tbody>
-        </table>
+
+          <!-- Tab Content -->
+          <div class="tab-content">
+            <!-- Unacknowledged Issues Tab -->
+            <div class="tab-pane fade show active" id="issues" role="tabpanel">
+              <table class="table mt-3 mb-5">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Issue</th>
+                        <th>Item Code</th>
+                        <th>Item Description</th>
+                        <th>Quantity</th>
+                        <th>Rate</th>
+                        <th>Value</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                  @if ($unacknowledged->isEmpty())
+                    <tr>
+                        <td colspan="7" class="text-center">No pending issues found.</td>
+                    </tr>
+                  @else
+                    @foreach ($unacknowledged as $inv)
+                      <tr>
+                          <td>{{ date('d-m-Y',strtotime($inv->doc_date)) }}</td>
+                          <td>{{ $inv->doc_no }}</td>
+                          <td>{{ $inv->item_code }}</td>
+                          <td>{{ $inv->inventory->item_desc }}</td>
+                          <td>{{ $inv->qty }}</td>
+                          <td>{{ $inv->rate }}</td>
+                          <td>{{ $inv->value }}</td>
+                          <td>
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#acknowledgeModal" 
+                              onclick="setItemId({{ $inv->doc_no }})">
+                              Acknowledge
+                            </button>
+                          </td>
+                      </tr>
+                    @endforeach
+                  @endif
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Acknowledged Issues Tab -->
+            <div class="tab-pane fade" id="acknowledged" role="tabpanel">
+              <table class="table mt-3 mb-5">
+                <thead>
+                    <tr>
+                        <th>Date Issued</th>
+                        <th>Issue</th>
+                        <th>Item Code</th>
+                        <th>Item Description</th>
+                        <th>Quantity</th>
+                        <th>Rate</th>
+                        <th>Value</th>
+                        <th>Acknowledged Date</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                  @if ($acknowledged->isEmpty())
+                    <tr>
+                        <td colspan="8" class="text-center">No acknowledged issues found.</td>
+                    </tr>
+                  @else
+                    @foreach ($acknowledged as $inv)
+                      <tr>
+                          <td>{{ date('d-m-Y',strtotime($inv->doc_date)) }}</td>
+                          <td>{{ $inv->doc_no }}</td>
+                          <td>{{ $inv->item_code }}</td>
+                          <td>{{ $inv->inventory->item_desc }}</td>
+                          <td>{{ $inv->qty }}</td>
+                          <td>{{ $inv->rate }}</td>
+                          <td>{{ $inv->value }}</td>
+                          <td>
+                            <span class="acknowledged-badge">
+                              {{ date('d-m-Y H:i',strtotime($inv->dated)) }}
+                            </span>
+                          </td>
+                          <td>{{ $inv->remarks ?? '-' }}</td>
+                      </tr>
+                    @endforeach
+                  @endif
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -69,9 +153,76 @@
   </div>
 </div>
 
+<!-- Acknowledge Modal -->
+<div class="modal fade" id="acknowledgeModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Acknowledge Item Receipt</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="acknowledgeForm">
+        @csrf
+        <div class="modal-body">
+          <div class="form-group mb-3">
+            <label for="remarks">Remarks (Optional)</label>
+            <textarea class="form-control" id="remarks" name="remarks" rows="3" placeholder="Enter any remarks about the item receipt"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Acknowledge</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 @endsection
 
 @push('scripts')
+
+let issue_doc_no = null;
+
+function setItemId(itemId) {
+    issue_doc_no = itemId;
+    document.getElementById('acknowledgeForm').reset();
+}
+
+document.getElementById('acknowledgeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const remarks = document.getElementById('remarks').value;
+    
+    // Make AJAX request to acknowledge the item
+    fetch(`/inventory/acknowledge/${issue_doc_no}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            remarks: remarks
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload(); // Reload the page to refresh the data
+        } else {
+            alert('Error: ' + (data.error || 'Failed to acknowledge item'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while acknowledging the item');
+    });
+    
+    // Close the modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('acknowledgeModal'));
+    modal.hide();
+});
 
 @endpush
 

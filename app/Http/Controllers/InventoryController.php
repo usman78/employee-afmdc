@@ -16,9 +16,49 @@ class InventoryController extends Controller
         if($authUser->emp_code != $emp_code){
             return redirect()->route('home');
         }
-        // Get inventory for the user
-        $inventory = Issue::where('emp_code', $emp_code)->orderBy('doc_date', 'desc')->get();
-        // $inventory->emp_code = $emp_code;
-        return view('inventory', compact('inventory'));
+        
+        // Get unacknowledged items
+        $unacknowledged = Issue::where('emp_code', $emp_code)
+            ->where(function($query) {
+                $query->whereNull('ackn_by_user')
+                      ->orWhere('ackn_by_user', 'n');
+            })
+            ->orderBy('doc_date', 'desc')
+            ->get();
+        
+        // Get acknowledged items
+        $acknowledged = Issue::where('emp_code', $emp_code)
+            ->where('ackn_by_user', 'y')
+            ->orderBy('dated', 'desc')
+            ->get();
+        
+        return view('inventory', compact('unacknowledged', 'acknowledged'));
+    }
+    
+    public function acknowledgeItem(Request $request, $doc_no)
+    {
+        // Validate request
+        $request->validate([
+            'remarks' => 'nullable|string|max:255'
+        ]);
+        
+        $authUser = Auth::user();
+        
+        // Find the issue item
+        $issue = Issue::where('doc_no', $doc_no)->first();
+        
+        // Verify the item belongs to the logged-in user
+        if($issue->emp_code != $authUser->emp_code){
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        
+        // Update the issue with acknowledgment
+        $issue->update([
+            'ackn_by_user' => 'y',
+            'dated' => now(),
+            'remarks' => $request->input('remarks', '')
+        ]);
+        
+        return response()->json(['success' => 'Item acknowledged successfully', 'message' => 'Item has been acknowledged']);
     }
 }
