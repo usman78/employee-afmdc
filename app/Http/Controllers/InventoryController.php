@@ -21,14 +21,14 @@ class InventoryController extends Controller
         $unacknowledged = Issue::where('emp_code', $emp_code)
             ->where(function($query) {
                 $query->whereNull('ackn_by_user')
-                      ->orWhere('ackn_by_user', 'n');
+                      ->orWhere('ackn_by_user', 'N');
             })
             ->orderBy('doc_date', 'desc')
             ->get();
         
         // Get acknowledged items
         $acknowledged = Issue::where('emp_code', $emp_code)
-            ->where('ackn_by_user', 'y')
+            ->where('ackn_by_user', 'Y')
             ->orderBy('dated', 'desc')
             ->get();
         
@@ -54,7 +54,7 @@ class InventoryController extends Controller
         
         // Update the issue with acknowledgment
         $issue->update([
-            'ackn_by_user' => 'y',
+            'ackn_by_user' => 'Y',
             'dated' => now(),
             'remarks' => $request->input('remarks', '')
         ]);
