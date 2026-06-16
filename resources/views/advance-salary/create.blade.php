@@ -26,7 +26,7 @@
         <div class="portfolio-info">
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h3 class="mb-0">Advance Salary Application</h3>
-            @if(Auth::user()->isBoss())
+            @if(Auth::user()->isHod())
               <a href="{{ route('advance-salary.hod-index') }}" class="btn btn-primary">
                 <i class="fa-solid fa-list-check"></i> View Subordinate Applications
               </a>

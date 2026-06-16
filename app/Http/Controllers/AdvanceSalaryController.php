@@ -75,6 +75,7 @@ class AdvanceSalaryController extends Controller
             'reason' => $validated['reason'],
             'status' => AdvanceSalaryApplication::STATUS_PENDING,
             'applied_at' => now(),
+            'post_flag' => 'Y',
         ]);
 
         $hodCode = hisBoss($empCode);
@@ -107,7 +108,7 @@ class AdvanceSalaryController extends Controller
         $this->ensureBoss();
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
-        $subordinateCodes = auth()->user()->teamMembers->pluck('emp_code_l')->filter()->values();
+        $subordinateCodes = auth()->user()->teamMembersOfHod()->pluck('emp_code_l')->filter()->values();
 
         $applications = AdvanceSalaryApplication::with(['employee.designation', 'employee.department'])
             ->whereIn('emp_code', $subordinateCodes)
@@ -498,31 +499,61 @@ class AdvanceSalaryController extends Controller
 
     private function restDayDates($empCode, Carbon $start, Carbon $end)
     {
-        $rosterDates = Roster::where('emp_code', $empCode)
-            ->whereBetween('dated', [$start->toDateString(), $end->toDateString()])
-            ->get()
-            ->filter(function ($row) {
-                $day = strtoupper(trim((string) ($row->day ?? '')));
-                $leaveName = strtoupper(trim((string) ($row->leav_name ?? '')));
+        $rosterByDate = Roster::where('r_emp_code', $empCode)
+            ->whereRaw(
+                "TRUNC(r_effective_from) BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD')",
+                [$start->toDateString(), $end->toDateString()]
+            )
+            ->get(['r_effective_from', 'day_type'])
+            ->keyBy(function ($row) {
+                return Carbon::parse($row->r_effective_from)->toDateString();
+            });
 
-                return $day === 'SUN' || $leaveName === 'WR';
-            })
-            ->map(fn ($row) => Carbon::parse($row->dated)->toDateString());
-
-        if ($rosterDates->isNotEmpty()) {
-            return $rosterDates;
-        }
+        $employeeRestDay = User::where('emp_code', $empCode)->value('rest_day') ?: 'SUNDAY';
 
         $dates = collect();
         $date = $start->copy();
+
         while ($date->lte($end)) {
-            if ($date->isSunday()) {
-                $dates->push($date->toDateString());
+            $dateString = $date->toDateString();
+            $roster = $rosterByDate->get($dateString);
+
+            $dayType = $roster && is_numeric($roster->day_type)
+                ? (int) $roster->day_type
+                : null;
+
+            if (in_array($dayType, [0, 1], true)) {
+                if ($dayType === 0) {
+                    $dates->push($dateString);
+                }
+
+                $date->addDay();
+                continue;
             }
+
+            if ($this->matchesEmployeeRestDay($employeeRestDay, $date)) {
+                $dates->push($dateString);
+            }
+
             $date->addDay();
         }
 
         return $dates;
+    }
+
+    private function matchesEmployeeRestDay($restDay, Carbon $date): bool
+    {
+        $restDay = strtoupper(trim((string) $restDay));
+
+        if ($restDay === '') {
+            return false;
+        }
+
+        $restDay = preg_replace('/[^A-Z]/', '', $restDay);
+
+        return $restDay === strtoupper($date->format('l'))
+            || $restDay === strtoupper($date->format('D'))
+            || substr($restDay, 0, 3) === strtoupper($date->format('D'));
     }
 
     private function approvedLeaveDates($empCode, Carbon $start, Carbon $end)

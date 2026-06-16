@@ -105,6 +105,14 @@ class User extends Authenticatable
         }
         return false;
     }
+    public function isHod()
+    {
+        if($this?->leaveAuth?->emp_code_a && $this?->leaveAuth?->type == 'A')
+        {
+            return true;
+        }
+        return false;
+    }
     public function isDGM()
     {
         return in_array($this->emp_code, ['431', '1171', '1045', '291']);
@@ -112,6 +120,11 @@ class User extends Authenticatable
     public function teamMembers()
     {
         return $this->hasMany(LeaveAuth::class, 'emp_code_a', 'emp_code');
+    }
+    public function teamMembersOfHod()
+    {
+        return $this->hasMany(LeaveAuth::class, 'emp_code_a', 'emp_code')
+            ->where('type', 'A');
     }
     public function attendance()
     {
