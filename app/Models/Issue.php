@@ -15,4 +15,9 @@ class Issue extends Model
     {
         return $this->belongsTo('App\Models\Inventory', 'item_code', 'item_code');
     }
+    
+    public function issueMaster()
+    {
+        return $this->belongsTo('App\Models\IssueMaster', 'doc_no', 'doc_no');
+    }
 }

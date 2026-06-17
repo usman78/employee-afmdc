@@ -107,11 +107,9 @@ class User extends Authenticatable
     }
     public function isHod()
     {
-        if($this?->leaveAuth?->emp_code_a && $this?->leaveAuth?->type == 'A')
-        {
-            return true;
-        }
-        return false;
+        return LeaveAuth::where('emp_code_a', $this->emp_code)
+            ->where('type', 'A')
+            ->exists();
     }
     public function isDGM()
     {

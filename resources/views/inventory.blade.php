@@ -35,21 +35,27 @@
 .portfolio-details .portfolio-info ul li {
     margin-top: 10px;
 }
+@media (min-width: 1200px) {
+    .container, .container-sm, .container-md, .container-lg, .container-xl {
+        max-width: 90%;
+    }
+}
 @endpush
 
 @section('content')
-
 <div class="container">
   <div class="row">
     <div class="col-12">
       <div class="portfolio-details mt-5 mb-5">
         <div class="portfolio-info">
           <h3>Store Issuance</h3>
-          
           <!-- Tabs -->
           <ul class="nav nav-tabs mt-4 mb-4" role="tablist">
             <li class="nav-item">
-              <a class="nav-link active" id="issues-tab" data-bs-toggle="tab" href="#issues" role="tab">Issues</a>
+              <a class="nav-link active" id="routine-tab" data-bs-toggle="tab" href="#routine" role="tab">Routine Issues</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="issues-tab" data-bs-toggle="tab" href="#issues" role="tab">Issues</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" id="acknowledged-tab" data-bs-toggle="tab" href="#acknowledged" role="tab">Acknowledged Issues</a>
@@ -58,8 +64,55 @@
 
           <!-- Tab Content -->
           <div class="tab-content">
+            <!-- Routine Issues Tab -->
+            <div class="tab-pane fade show active" id="routine" role="tabpanel">
+              <table class="table mt-3 mb-5">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Issue</th>
+                        <th>Item Code</th>
+                        <th>Item Description</th>
+                        <th>Quantity</th>
+                        <th>Rate</th>
+                        <th>Value</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                  @if ($routineIssues->isEmpty())
+                    <tr>
+                        <td colspan="9" class="text-center">No routine issues found.</td>
+                    </tr>
+                  @else
+                    @foreach ($routineIssues as $inv)
+                        <tr>
+                            <td>{{ date('d-m-Y',strtotime($inv->doc_date)) }}</td>
+                            <td>{{ $inv->doc_no }}</td>
+                            <td>{{ $inv->item_code }}</td>
+                            <td>{{ $inv->inventory ? $inv->inventory->item_desc : '-' }}</td>
+                            <td>{{ $inv->qty }}</td>
+                            <td>{{ $inv->rate }}</td>
+                            <td>{{ $inv->value }}</td>
+                            <td>
+                              @if ($inv->ackn_by_user != 'Y')
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#acknowledgeModal" 
+                                  onclick="setItemId({{ $inv->item_code }}, {{ $inv->doc_no }})">
+                                  Acknowledge
+                                </button>
+                              @else
+                                <span class="text-muted">-</span>
+                              @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                  @endif
+                </tbody>
+              </table>
+            </div>
+
             <!-- Unacknowledged Issues Tab -->
-            <div class="tab-pane fade show active" id="issues" role="tabpanel">
+            <div class="tab-pane fade" id="issues" role="tabpanel">
               <table class="table mt-3 mb-5">
                 <thead>
                     <tr>
@@ -90,7 +143,7 @@
                           <td>{{ $inv->value }}</td>
                           <td>
                             <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#acknowledgeModal" 
-                              onclick="setItemId({{ $inv->doc_no }})">
+                              onclick="setItemId({{ $inv->item_code }}, {{ $inv->doc_no }})">
                               Acknowledge
                             </button>
                           </td>
@@ -118,12 +171,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                  @if ($acknowledged->isEmpty())
+                  @if ($allAcknowledged->isEmpty())
                     <tr>
                         <td colspan="8" class="text-center">No acknowledged issues found.</td>
                     </tr>
                   @else
-                    @foreach ($acknowledged as $inv)
+                    @foreach ($allAcknowledged as $inv)
                       <tr>
                           <td>{{ date('d-m-Y',strtotime($inv->doc_date)) }}</td>
                           <td>{{ $inv->doc_no }}</td>
@@ -182,10 +235,12 @@
 
 @push('scripts')
 
+let issue_item_code = null;
 let issue_doc_no = null;
 
-function setItemId(itemId) {
-    issue_doc_no = itemId;
+function setItemId(itemId, docNo) {
+    issue_item_code = itemId;
+    issue_doc_no = docNo;
     document.getElementById('acknowledgeForm').reset();
 }
 
@@ -195,7 +250,7 @@ document.getElementById('acknowledgeForm').addEventListener('submit', function(e
     const remarks = document.getElementById('remarks').value;
     
     // Make AJAX request to acknowledge the item
-    fetch(`/inventory/acknowledge/${issue_doc_no}`, {
+    fetch(`/inventory/acknowledge/${issue_item_code}/${issue_doc_no}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

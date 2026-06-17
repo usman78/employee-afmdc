@@ -106,7 +106,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notifications/redirect/{notification}', [NotificationsController::class, 'handle'])->name('notifications.redirect');
 
     Route::get('/inventory/{emp_code}', [InventoryController::class, 'inventory'])->name('inventory');
-    Route::post('/inventory/acknowledge/{doc_no}', [InventoryController::class, 'acknowledgeItem'])->name('inventory.acknowledge');
+    Route::post('/inventory/acknowledge/{item_code}/{doc_no}', [InventoryController::class, 'acknowledgeItem'])->name('inventory.acknowledge');
 
     Route::get('/team', [TeamController::class, 'index'])->name('team');
     Route::get('/attendance-filter/{emp_code}/{date_range}', [TeamController::class, 'attendanceFilter'])->name('attendance-filter');
