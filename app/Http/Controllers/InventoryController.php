@@ -73,7 +73,7 @@ class InventoryController extends Controller
         return view('inventory', compact('unacknowledged', 'allAcknowledged', 'routineIssues'));
     }
     
-    public function acknowledgeItem(Request $request, $doc_no)
+    public function acknowledgeItem(Request $request, $item_code, $doc_no)
     {
         // Validate request
         $request->validate([

@@ -55,7 +55,7 @@
               <a class="nav-link active" id="routine-tab" data-bs-toggle="tab" href="#routine" role="tab" data-tab="routine">Routine Issues</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" id="issues-tab" data-bs-toggle="tab" href="#issues" role="tab" data-tab="issues">Issues</a>
+              <a class="nav-link" id="issues-tab" data-bs-toggle="tab" href="#issues" role="tab" data-tab="issues">Named Issues</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" id="acknowledged-tab" data-bs-toggle="tab" href="#acknowledged" role="tab" data-tab="acknowledged">Acknowledged Issues</a>
@@ -76,7 +76,6 @@
                         <th>Quantity</th>
                         <th>Rate</th>
                         <th>Value</th>
-                        <th>Status</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -96,16 +95,9 @@
                             <td>{{ $inv->rate }}</td>
                             <td>{{ $inv->value }}</td>
                             <td>
-                              @if ($inv->ackn_by_user == 'Y')
-                                <span class="acknowledged-badge">Acknowledged</span>
-                              @else
-                                <span class="badge bg-warning">Pending</span>
-                              @endif
-                            </td>
-                            <td>
                               @if ($inv->ackn_by_user != 'Y')
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#acknowledgeModal" 
-                                  onclick="setItemId({{ $inv->doc_no }})">
+                                  onclick="setItemId({{ $inv->item_code }}, {{ $inv->doc_no }})">
                                   Acknowledge
                                 </button>
                               @else
