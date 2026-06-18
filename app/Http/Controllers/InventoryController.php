@@ -7,6 +7,7 @@ use App\Models\Issue;
 use App\Models\Inventory;
 use App\Models\IssueMaster;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Pagination\Paginator;
 
 class InventoryController extends Controller
 {
@@ -18,7 +19,7 @@ class InventoryController extends Controller
             return redirect()->route('home');
         }
         
-        // Get unacknowledged items
+        // Get unacknowledged items with pagination
         $unacknowledged = Issue::where('emp_code', $emp_code)
             ->where(function($query) {
                 $query->whereNull('ackn_by_user')
@@ -26,7 +27,7 @@ class InventoryController extends Controller
             })
             ->with('inventory')
             ->orderBy('doc_date', 'desc')
-            ->get();
+            ->paginate(20, ['*'], 'unack_page');
         
         // Get acknowledged items (regular issues)
         $acknowledged = Issue::where('emp_code', $emp_code)
@@ -42,21 +43,37 @@ class InventoryController extends Controller
             ->get();
         
         // Merge both acknowledged collections and remove duplicates
-        $allAcknowledged = $acknowledged->concat($acknowledgedRoutine)
+        $mergedAcknowledged = $acknowledged->concat($acknowledgedRoutine)
             ->unique(function($item) {
                 return $item->doc_no . '-' . $item->item_code . '-' . $item->emp_code;
             })
-            ->sortByDesc('dated');
+            ->sortByDesc('dated')
+            ->values();
         
-        // Get routine issues requested by the user
+        // Manual pagination for merged acknowledged items
+        $ackPage = request()->get('ack_page', 1);
+        $ackPerPage = 20;
+        $ackOffset = ($ackPage - 1) * $ackPerPage;
+        $allAcknowledged = new Paginator(
+            $mergedAcknowledged->slice($ackOffset, $ackPerPage),
+            $ackPerPage,
+            $ackPage,
+            [
+                'path' => request()->url(),
+                'query' => request()->query(),
+                'pageName' => 'ack_page',
+            ]
+        );
+        
+        // Get routine issues requested by the user with pagination
         $routineIssues = Issue::whereNull('emp_code')->whereNull('ackn_by_user')->whereHas('issueMaster', function($query) use ($emp_code) {
             $query->whereRaw('TRIM(receive_by) = ?', [$emp_code]);
-        })->orderBy('doc_date', 'desc')->get();
+        })->orderBy('doc_date', 'desc')->paginate(20, ['*'], 'routine_page');
 
-        return view('inventory', compact('unacknowledged', 'allAcknowledged', 'routineIssues', 'acknowledged'));
+        return view('inventory', compact('unacknowledged', 'allAcknowledged', 'routineIssues'));
     }
     
-    public function acknowledgeItem(Request $request, $item_code, $doc_no)
+    public function acknowledgeItem(Request $request, $doc_no)
     {
         // Validate request
         $request->validate([

@@ -52,13 +52,13 @@
           <!-- Tabs -->
           <ul class="nav nav-tabs mt-4 mb-4" role="tablist">
             <li class="nav-item">
-              <a class="nav-link active" id="routine-tab" data-bs-toggle="tab" href="#routine" role="tab">Routine Issues</a>
+              <a class="nav-link active" id="routine-tab" data-bs-toggle="tab" href="#routine" role="tab" data-tab="routine">Routine Issues</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" id="issues-tab" data-bs-toggle="tab" href="#issues" role="tab">Issues</a>
+              <a class="nav-link" id="issues-tab" data-bs-toggle="tab" href="#issues" role="tab" data-tab="issues">Issues</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" id="acknowledged-tab" data-bs-toggle="tab" href="#acknowledged" role="tab">Acknowledged Issues</a>
+              <a class="nav-link" id="acknowledged-tab" data-bs-toggle="tab" href="#acknowledged" role="tab" data-tab="acknowledged">Acknowledged Issues</a>
             </li>
           </ul>
 
@@ -76,6 +76,7 @@
                         <th>Quantity</th>
                         <th>Rate</th>
                         <th>Value</th>
+                        <th>Status</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -95,9 +96,16 @@
                             <td>{{ $inv->rate }}</td>
                             <td>{{ $inv->value }}</td>
                             <td>
+                              @if ($inv->ackn_by_user == 'Y')
+                                <span class="acknowledged-badge">Acknowledged</span>
+                              @else
+                                <span class="badge bg-warning">Pending</span>
+                              @endif
+                            </td>
+                            <td>
                               @if ($inv->ackn_by_user != 'Y')
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#acknowledgeModal" 
-                                  onclick="setItemId({{ $inv->item_code }}, {{ $inv->doc_no }})">
+                                  onclick="setItemId({{ $inv->doc_no }})">
                                   Acknowledge
                                 </button>
                               @else
@@ -109,6 +117,10 @@
                   @endif
                 </tbody>
               </table>
+              <!-- Routine Issues Pagination -->
+              <div class="d-flex justify-content-center">
+                {{ $routineIssues->appends(request()->query())->appends(['tab' => 'routine'])->links('pagination::bootstrap-4', ['pageName' => 'routine_page']) }}
+              </div>
             </div>
 
             <!-- Unacknowledged Issues Tab -->
@@ -152,6 +164,10 @@
                   @endif
                 </tbody>
               </table>
+              <!-- Issues Pagination -->
+              <div class="d-flex justify-content-center">
+                {{ $unacknowledged->appends(request()->query())->appends(['tab' => 'issues'])->links('pagination::bootstrap-4', ['pageName' => 'unack_page']) }}
+              </div>
             </div>
 
             <!-- Acknowledged Issues Tab -->
@@ -196,6 +212,10 @@
                   @endif
                 </tbody>
               </table>
+              <!-- Acknowledged Issues Pagination -->
+              <div class="d-flex justify-content-center">
+                {{ $allAcknowledged->appends(request()->query())->appends(['tab' => 'acknowledged'])->links('pagination::bootstrap-4', ['pageName' => 'ack_page']) }}
+              </div>
             </div>
           </div>
 
@@ -249,6 +269,10 @@ document.getElementById('acknowledgeForm').addEventListener('submit', function(e
     
     const remarks = document.getElementById('remarks').value;
     
+    // Get current tab before reload
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentTab = urlParams.get('tab') || 'routine';
+    
     // Make AJAX request to acknowledge the item
     fetch(`/inventory/acknowledge/${issue_item_code}/${issue_doc_no}`, {
         method: 'POST',
@@ -264,7 +288,10 @@ document.getElementById('acknowledgeForm').addEventListener('submit', function(e
     .then(data => {
         if (data.success) {
             alert(data.message);
-            location.reload(); // Reload the page to refresh the data
+            // Reload the page and preserve tab state
+            const reloadUrl = new URL(window.location);
+            reloadUrl.searchParams.set('tab', currentTab);
+            window.location.href = reloadUrl.toString();
         } else {
             alert('Error: ' + (data.error || 'Failed to acknowledge item'));
         }
@@ -277,6 +304,30 @@ document.getElementById('acknowledgeForm').addEventListener('submit', function(e
     // Close the modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('acknowledgeModal'));
     modal.hide();
+});
+
+// Handle tab state preservation
+document.addEventListener('DOMContentLoaded', function() {
+    // Get tab parameter from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('tab') || 'routine'; // Default to 'routine'
+    
+    // Activate the tab based on URL parameter
+    const tabElement = document.querySelector(`[data-tab="${activeTab}"]`);
+    if (tabElement) {
+        const tabInstance = new bootstrap.Tab(tabElement);
+        tabInstance.show();
+    }
+    
+    // Update URL when tab is clicked
+    document.querySelectorAll('[data-tab]').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            const currentUrl = new URL(window.location);
+            currentUrl.searchParams.set('tab', tabName);
+            window.history.pushState({}, '', currentUrl);
+        });
+    });
 });
 
 @endpush
