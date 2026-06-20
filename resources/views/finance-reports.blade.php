@@ -35,13 +35,13 @@
             </div>
           </div>
 
-          <div class="row g-3 justify-content-center">
+          {{-- <div class="row g-3 justify-content-center">
             <div class="col-md-6 col-lg-3">
               <a href="{{ route('advance-salary.accounts-report') }}" class="btn btn-primary w-100 text-nowrap">
                 Advance Salary Report
               </a>
             </div>
-          </div>
+          </div> --}}
         </div>
       </div>
     </div>

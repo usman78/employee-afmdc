@@ -15,6 +15,7 @@ use App\Notifications\AdvanceSalaryHodApprovedNotification;
 use App\Notifications\AdvanceSalaryHodDecisionNotification;
 use App\Notifications\AdvanceSalaryHrApprovedNotification;
 use App\Notifications\AdvanceSalarySubmittedNotification;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -268,6 +269,29 @@ class AdvanceSalaryController extends Controller
             'status' => $status,
             'statuses' => $this->accountsReportStatuses(),
         ]);
+    }
+
+    public function accountsApprovedDownload(Request $request)
+    {
+        $this->ensureAccountsOfficer();
+
+        $month = $request->input('month', Carbon::now()->format('Y-m'));
+        $applications = AdvanceSalaryApplication::with(['employee.designation', 'employee.department', 'hrApprover', 'accountsApprover'])
+            ->where('salary_month', $month)
+            ->where('status', AdvanceSalaryApplication::STATUS_APPROVED)
+            ->orderBy('emp_code')
+            ->get();
+
+        $totalSanctioned = $applications->sum(fn ($application) => (float) $application->sanctioned_amount);
+        $pdf = Pdf::loadView('pdf.advance-salary-approved', [
+            'applications' => $applications,
+            'month' => $month,
+            'totalSanctioned' => $totalSanctioned,
+        ])->setPaper('a4', 'landscape');
+
+        $fileName = 'advance_salary_approved_' . $month . '.pdf';
+
+        return $pdf->stream($fileName);
     }
 
     public function accountsDecision(Request $request, $application)

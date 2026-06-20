@@ -58,12 +58,20 @@
               </select>
             </div>
             <button type="submit" class="btn btn-primary">View Report</button>
+            <a
+              href="{{ route('advance-salary.accounts-approved-download', ['month' => $month]) }}"
+              class="btn btn-success"
+              target="_blank"
+            >
+              <i class="fas fa-download"></i> Download Approved PDF
+            </a>
           </form>
 
           <div class="table-responsive">
             <table class="table accounts-report-table">
               <thead>
                 <tr>
+                  <th>#</th>
                   <th>Name</th>
                   <th>Code</th>
                   <th>Designation</th>
@@ -85,6 +93,7 @@
                     $canAccountsAct = $application->status === AdvanceSalaryApplication::STATUS_HR_APPROVED;
                   @endphp
                   <tr>
+                    <td>{{ $loop->iteration }}</td>
                     <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
                     <td>{{ $application->emp_code }}</td>
                     <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
