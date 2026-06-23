@@ -56,13 +56,19 @@
               </select>
             </div>
             <button type="submit" class="btn btn-primary">View Report</button>
-            <a
-              href="{{ route('advance-salary.accounts-approved-download', ['month' => $month]) }}"
-              class="btn btn-success"
-              target="_blank"
-            >
-              <i class="fas fa-download"></i> Download Approved PDF
-            </a>
+            <div class="dropdown">
+              <button class="btn btn-primary dropdown-toggle" type="button"
+                  id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+                  aria-expanded="false">
+                  Download Report
+              </button>
+              <div class="dropdown-menu animated--fade-in"
+                  aria-labelledby="dropdownMenuButton">
+                  <a class="dropdown-item" href="{{ route('advance-salary.accounts-approved-download', ['month' => $month]) }}" target="_blank">All Approved</a>
+                  <a class="dropdown-item" href="#" data-toggle="modal" data-target="#filterByNameModal">Download By Name</a>
+                  <a class="dropdown-item" href="#" data-toggle="modal" data-target="#filterByDateModal">Download by Finance Approval Date</a>
+              </div>
+            </div>
           </form>
 
           <div class="table-responsive">
@@ -142,6 +148,66 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter By Name Modal -->
+<div class="modal fade" id="filterByNameModal" tabindex="-1" role="dialog" aria-labelledby="filterByNameModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="filterByNameModalLabel">Download Report - Filter by Name</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="{{ route('advance-salary.name-filtered-download') }}" method="GET" target="_blank">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="employeeName" class="form-label">Employee Name</label>
+            <input type="text" id="employeeName" name="employee_name" class="form-control" placeholder="Enter employee name" required>
+          </div>
+          <input type="hidden" name="month" value="{{ $month }}">
+          <input type="hidden" name="status" value="{{ $status ?? '' }}">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Download</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Filter By Approval Date Modal -->
+<div class="modal fade" id="filterByDateModal" tabindex="-1" role="dialog" aria-labelledby="filterByDateModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="filterByDateModalLabel">Download Report - Filter by Approval Date</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="{{ route('advance-salary.date-filtered-download') }}" method="GET" target="_blank">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="approvalDateFrom" class="form-label">From Date</label>
+            <input type="date" id="approvalDateFrom" name="from_date" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="approvalDateTo" class="form-label">To Date</label>
+            <input type="date" id="approvalDateTo" name="to_date" class="form-control" required>
+          </div>
+          <input type="hidden" name="month" value="{{ $month }}">
+          <input type="hidden" name="status" value="{{ $status ?? '' }}">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Download</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

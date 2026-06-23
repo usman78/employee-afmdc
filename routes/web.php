@@ -163,6 +163,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/finance-reports', [AdvanceSalaryController::class, 'financeReports'])->name('finance-reports');
     Route::get('/finance/advance-salary-report', [AdvanceSalaryController::class, 'accountsReport'])->name('advance-salary.accounts-report');
     Route::get('/finance/advance-salary-report/download-approved', [AdvanceSalaryController::class, 'accountsApprovedDownload'])->name('advance-salary.accounts-approved-download');
+    Route::get('/finance/advance-salary-report/download-by-name', [AdvanceSalaryController::class, 'nameFilteredDownload'])->name('advance-salary.name-filtered-download');
+    Route::get('/finance/advance-salary-report/download-by-date', [AdvanceSalaryController::class, 'dateFilteredDownload'])->name('advance-salary.date-filtered-download');
     Route::post('/finance/advance-salary-report/{application}/decision', [AdvanceSalaryController::class, 'accountsDecision'])->name('advance-salary.accounts-decision');
     Route::get('/advance-salary-subordinate-applications', [AdvanceSalaryController::class, 'hodIndex'])->name('advance-salary.hod-index');
     Route::get('/advance-salary-approvals/{application}', [AdvanceSalaryController::class, 'hodShow'])->name('advance-salary.hod-show');

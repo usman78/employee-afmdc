@@ -294,6 +294,95 @@ class AdvanceSalaryController extends Controller
         return $pdf->stream($fileName);
     }
 
+    public function nameFilteredDownload(Request $request)
+    {
+        $this->ensureAccountsOfficer();
+
+        $month = $request->input('month', Carbon::now()->format('Y-m'));
+        $employeeName = $request->input('employee_name');
+
+        if (! $employeeName) {
+            return redirect()
+                ->route('advance-salary.accounts-report', ['month' => $month])
+                ->with('error', 'Please provide an employee name.');
+        }
+
+        $applications = AdvanceSalaryApplication::with(['employee.designation', 'employee.department', 'hrApprover', 'accountsApprover'])
+            ->where('salary_month', $month)
+            ->where('status', AdvanceSalaryApplication::STATUS_APPROVED)
+            ->whereHas('employee', function ($query) use ($employeeName) {
+                $nameParts = explode(' ', trim($employeeName));
+                $query->where(function ($q) use ($nameParts) {
+                    foreach ($nameParts as $part) {
+                        if (! empty($part)) {
+                            $q->orWhereRaw('LOWER(name) LIKE LOWER(?)', ['%' . $part . '%']);
+                        }
+                    }
+                });
+            })
+            ->orderBy('emp_code')
+            ->get();
+
+        if ($applications->isEmpty()) {
+            return redirect()
+                ->route('advance-salary.report', ['month' => $month])
+                ->with('error', 'No approved applications found for the employee: ' . $employeeName);
+        }
+
+        $totalSanctioned = $applications->sum(fn ($application) => (float) $application->sanctioned_amount);
+        $pdf = Pdf::loadView('pdf.advance-salary-approved', [
+            'applications' => $applications,
+            'month' => $month,
+            'totalSanctioned' => $totalSanctioned,
+        ])->setPaper('a4', 'landscape');
+
+        $fileName = 'advance_salary_' . str_replace(' ', '_', $employeeName) . '_' . $month . '.pdf';
+
+        return $pdf->stream($fileName);
+    }
+
+    public function dateFilteredDownload(Request $request)
+    {
+        $this->ensureAccountsOfficer();
+
+        $month = $request->input('month', Carbon::now()->format('Y-m'));
+        $fromDate = $request->input('from_date');
+        $toDate = $request->input('to_date');
+
+        if (! $fromDate || ! $toDate) {
+            return redirect()
+                ->route('advance-salary.accounts-report', ['month' => $month])
+                ->with('error', 'Please provide both from and to dates.');
+        }
+
+        $applications = AdvanceSalaryApplication::with(['employee.designation', 'employee.department', 'hrApprover', 'accountsApprover'])
+            ->where('salary_month', $month)
+            ->where('status', AdvanceSalaryApplication::STATUS_APPROVED)
+            ->whereRaw(
+                "TRUNC(accounts_approved_at) >= TO_DATE(?, 'YYYY-MM-DD') AND TRUNC(accounts_approved_at) <= TO_DATE(?, 'YYYY-MM-DD')",
+                [$fromDate, $toDate]
+            )
+            ->orderBy('emp_code')
+            ->get();
+
+        if ($applications->isEmpty()) {
+            return redirect()
+                ->route('advance-salary.report', ['month' => $month])
+                ->with('error', 'No approved applications found between ' . $fromDate . ' and ' . $toDate);
+        }
+
+        $totalSanctioned = $applications->sum(fn ($application) => (float) $application->sanctioned_amount);
+        $pdf = Pdf::loadView('pdf.advance-salary-approved', [
+            'applications' => $applications,
+            'month' => $month,
+            'totalSanctioned' => $totalSanctioned,
+        ])->setPaper('a4', 'landscape');
+
+        $fileName = 'advance_salary_approved_' . $fromDate . '_to_' . $toDate . '.pdf';
+
+        return $pdf->stream($fileName);
+    }
+
     public function accountsDecision(Request $request, $application)
     {
         $this->ensureAccountsOfficer();
