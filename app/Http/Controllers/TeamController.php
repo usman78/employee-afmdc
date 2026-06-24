@@ -27,6 +27,7 @@ class TeamController extends Controller
             $today = Carbon::now();
             $user->attendance_today = $user->attendance()
                 ->whereDate('at_date', $today->toDateString())
+                ->where('w_hrs', '=', null)
                 ->first();    
         }
         $departments = Department::whereNotIn('dept_code', [61, 60, 64, 48, 54, 11, 13, 17, 18, 19, 31, 32, 58, 65])->get();
