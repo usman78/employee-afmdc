@@ -521,6 +521,7 @@ class LeavesController extends Controller
             $leave->status = $employeeType == 'Regular' ? '1' : '3';
             $leave->dept_code = $deptCode;
             $leave->user_id = $emp_code;
+            $leave->day_half = 5;
             $leave->terminal_id = 'online';
             $leave->moddate = now();
             $leave->remark = $request->input('reason');
