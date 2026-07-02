@@ -1021,6 +1021,19 @@ class AttendanceController extends Controller
                 ->orderBy('timein')
                 ->get();
 
+            $workDate = Carbon::parse($dateString);
+            if ($hasRoster) {
+                $startTimeCarbon = $this->rosterShiftDateTime($workDate, $roster->r_shift_start);
+                $endTimeCarbon = $this->rosterShiftDateTime($workDate, $roster->r_shift_end);
+
+                if ($endTimeCarbon->lte($startTimeCarbon)) {
+                    $endTimeCarbon->addDay();
+                }
+            } else {
+                $startTimeCarbon = $workDate->copy()->setTimeFromTimeString($emp_category->st_time);
+                $endTimeCarbon   = $workDate->copy()->setTimeFromTimeString($emp_category->end_time);
+            }
+
             $isLeave = false;
             $leaveType = null;
             $leaveStart = null;
@@ -1028,32 +1041,36 @@ class AttendanceController extends Controller
             $leaveMins  = 0;
             $isFullDayLeave = false;
 
-            if (ifLeaveExists($emp_code, $dateString)) {
-                $leave = Leave::whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
-                    ->whereRaw("TRUNC(to_date)   >= TO_DATE(?, 'YYYY-MM-DD')", [$dateString])
-                    ->where('emp_code', $emp_code)
-                    ->whereNot('status', 9)
-                    ->first();
+            $leave = Leave::where('emp_code', $emp_code)
+                ->whereNot('status', 9)
+                ->whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$endTimeCarbon->toDateString()])
+                ->whereRaw("TRUNC(to_date)   >= TO_DATE(?, 'YYYY-MM-DD')", [$startTimeCarbon->toDateString()])
+                ->get()
+                ->first(function ($candidate) use ($startTimeCarbon, $endTimeCarbon) {
+                    $from = Carbon::parse($candidate->from_date);
+                    $to   = Carbon::parse($candidate->to_date);
 
-                if ($leave) {
-                    $isLeave = true;
-                    $leaveType = leaveDescription(
-                        $leave->leave_code,
-                        $leave->from_date,
-                        $leave->to_date
-                    );
+                    return leaveOverlapsShift($startTimeCarbon, $endTimeCarbon, $from, $to);
+                });
+            
+            if ($leave) {
+                $isLeave = true;
+                $leaveType = leaveDescription(
+                    $leave->leave_code,
+                    $leave->from_date,
+                    $leave->to_date
+                );
 
-                    $from = Carbon::parse($leave->from_date);
-                    $to   = Carbon::parse($leave->to_date);
+                $from = Carbon::parse($leave->from_date);
+                $to   = Carbon::parse($leave->to_date);
 
-                    if ($from->format('H:i:s') === '00:00:00' &&
-                        $to->format('H:i:s')   === '00:00:00') {
-                        $isFullDayLeave = true;
-                    } else {
-                        $leaveStart = $from;
-                        $leaveEnd   = $to;
-                        $leaveMins  = $from->diffInMinutes($to);
-                    }
+                if ($from->format('H:i:s') === '00:00:00' &&
+                    $to->format('H:i:s')   === '00:00:00') {
+                    $isFullDayLeave = true;
+                } else {
+                    $leaveStart = $from;
+                    $leaveEnd   = $to;
+                    $leaveMins  = $from->diffInMinutes($to);
                 }
             }
 

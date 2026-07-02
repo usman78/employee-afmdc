@@ -161,6 +161,27 @@ function ifLeaveExists($emp_code, $date)
         })
         ->exists();
 }
+
+if (!function_exists('leaveOverlapsShift')) {
+    function leaveOverlapsShift(Carbon $shiftStart, Carbon $shiftEnd, Carbon $leaveStart, Carbon $leaveEnd): bool
+    {
+        $shiftStartCopy = $shiftStart->copy();
+        $shiftEndCopy = $shiftEnd->copy();
+        $leaveStartCopy = $leaveStart->copy();
+        $leaveEndCopy = $leaveEnd->copy();
+
+        if ($shiftEndCopy->lt($shiftStartCopy)) {
+            $shiftEndCopy->addDay();
+        }
+
+        if ($leaveEndCopy->lt($leaveStartCopy)) {
+            $leaveEndCopy->addDay();
+        }
+
+        return $leaveStartCopy->lt($shiftEndCopy) && $leaveEndCopy->gt($shiftStartCopy);
+    }
+}
+
 function allDoctors()
 {
     $doctors = \DB::table('pay_pers')
