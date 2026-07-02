@@ -1043,15 +1043,33 @@ class AttendanceController extends Controller
 
             $leave = Leave::where('emp_code', $emp_code)
                 ->whereNot('status', 9)
-                ->whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$endTimeCarbon->toDateString()])
-                ->whereRaw("TRUNC(to_date)   >= TO_DATE(?, 'YYYY-MM-DD')", [$startTimeCarbon->toDateString()])
-                ->get()
-                ->first(function ($candidate) use ($startTimeCarbon, $endTimeCarbon) {
-                    $from = Carbon::parse($candidate->from_date);
-                    $to   = Carbon::parse($candidate->to_date);
+                ->where(function ($query) use ($startTimeCarbon, $endTimeCarbon) {
 
-                    return leaveOverlapsShift($startTimeCarbon, $endTimeCarbon, $from, $to);
-                });
+                    // Full-day leave
+                    $query->where(function ($q) use ($startTimeCarbon, $endTimeCarbon) {
+                        $q->where('day_half', 0)
+                        ->whereRaw(
+                            "TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')",
+                            [$endTimeCarbon->toDateString()]
+                        )
+                        ->whereRaw(
+                            "TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')",
+                            [$startTimeCarbon->toDateString()]
+                        );
+                    })
+
+                    // OR timed leave
+                    ->orWhere(function ($q) use ($startTimeCarbon, $endTimeCarbon) {
+                        $q->where(function ($sub) {
+                            $sub->whereNull('day_half')
+                                ->orWhere('day_half', '<>', 0);
+                        })
+                        ->where('from_date', '<=', $endTimeCarbon)
+                        ->where('to_date', '>=', $startTimeCarbon);
+                    });
+
+                })
+                ->first();
             
             if ($leave) {
                 $isLeave = true;
