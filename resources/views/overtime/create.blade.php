@@ -118,12 +118,29 @@
                     <td>{{ $row['time_in'] ? Carbon::parse($row['time_in'])->format('H:i') : '-' }}</td>
                     <td>{{ $row['time_out'] ? Carbon::parse($row['time_out'])->format('H:i') : '-' }}</td>
                     <td>{{ $row['shift_end'] ? Carbon::parse($row['shift_end'])->format('H:i') : '-' }}</td>
-                    <td>{{ $row['overtime_minutes'] }}</td>
-                    <td>PKR {{ number_format($row['amount'], 0) }}</td>
+                    <td id="otMinutes{{ $loop->index }}">{{ $row['overtime_minutes'] }}</td>
+                    <td id="otAmount{{ $loop->index }}">PKR {{ number_format($row['amount'], 0) }}</td>
                     <td>
                       <form action="{{ route('overtime.store', $employee->emp_code) }}" method="POST">
                         @csrf
                         <input type="hidden" name="overtime_date" value="{{ $row['date'] }}">
+                        <div class="mb-2">
+                          <input 
+                            type="number" 
+                            name="overtime_minutes" 
+                            class="form-control form-control-sm overtime-minutes-input" 
+                            id="minutes{{ $loop->index }}"
+                            min="60" 
+                            max="{{ $row['overtime_minutes'] }}" 
+                            value="{{ $row['overtime_minutes'] }}"
+                            data-row-index="{{ $loop->index }}"
+                            data-hourly-rate="{{ $row['hourly_rate'] }}"
+                            required
+                          >
+                          <small class="form-text text-muted d-block mt-1">
+                            Max: {{ $row['overtime_minutes'] }} min
+                          </small>
+                        </div>
                         <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks" {{ $summary['gross_salary'] ? '' : 'disabled' }} required></textarea>
                         <button type="submit" class="btn btn-sm btn-success" {{ $summary['gross_salary'] ? '' : 'disabled' }}>
                           <i class="fa-solid fa-paper-plane"></i> Submit
@@ -190,4 +207,40 @@
     </div>
   </div>
 </div>
+
+@push('scripts')
+<script>
+  document.querySelectorAll('.overtime-minutes-input').forEach(input => {
+    input.addEventListener('change', function() {
+      const rowIndex = this.dataset.rowIndex;
+      const hourlyRate = parseFloat(this.dataset.hourlyRate);
+      const minutes = parseInt(this.value) || 0;
+      
+      // Calculate amount based on new minutes
+      const amount = calculateOTAmount(hourlyRate, minutes);
+      
+      // Update the display
+      document.getElementById(`otMinutes${rowIndex}`).textContent = minutes;
+      document.getElementById(`otAmount${rowIndex}`).textContent = `PKR ${Math.round(amount).toLocaleString()}`;
+    });
+  });
+
+  function calculateOTAmount(hourlyRate, minutes) {
+    let hours = Math.floor(minutes / 60);
+    let remainingMinutes = minutes % 60;
+    
+    if (remainingMinutes <= 25) {
+      remainingMinutes = 0;
+    } else if (remainingMinutes <= 45) {
+      remainingMinutes = 30;
+    } else {
+      hours++;
+      remainingMinutes = 0;
+    }
+    
+    const payableMinutes = (hours * 60) + remainingMinutes;
+    return (hourlyRate * payableMinutes) / 60;
+  }
+</script>
+@endpush
 @endsection
