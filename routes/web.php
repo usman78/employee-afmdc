@@ -176,6 +176,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/overtime/{emp_code}', [OvertimeController::class, 'create'])->name('overtime.create');
     Route::post('/overtime/{emp_code}', [OvertimeController::class, 'store'])->name('overtime.store');
+    Route::post('/overtime/{application}/edit-minutes', [OvertimeController::class, 'editMinutes'])->name('overtime.edit-minutes');
     Route::get('/overtime-subordinate-applications', [OvertimeController::class, 'hodIndex'])->name('overtime.hod-index');
     Route::get('/overtime-approvals/{application}', [OvertimeController::class, 'hodShow'])->name('overtime.hod-show');
     Route::post('/overtime-approvals/{application}/decision', [OvertimeController::class, 'hodDecision'])->name('overtime.hod-decision');
