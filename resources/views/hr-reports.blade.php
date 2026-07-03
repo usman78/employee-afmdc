@@ -195,39 +195,33 @@
                     </a>
                 </div>
 
-                <div class="col-md-6 col-lg-2">
+                {{-- <div class="col-md-6 col-lg-2">
                     <a href="{{ route('attendance-late-report') }}" class="btn btn-primary w-100 text-nowrap">
                     Late Report
                     </a>
-                </div>
+                </div> --}}
 
-                <div class="col-md-6 col-lg-2">
+                {{-- <div class="col-md-6 col-lg-2">
                     <a href="{{ route('attendance-absent-report') }}" class="btn btn-primary w-100 text-nowrap">
                     Absent Report
                     </a>
-                </div>
+                </div> --}}
 
-                <div class="col-md-6 col-lg-2">
+                {{-- <div class="col-md-6 col-lg-2">
                     <a href="{{ route('attendance-present-report') }}" class="btn btn-primary w-100 text-nowrap">
                     Present Report
+                    </a>
+                </div> --}}
+
+                <div class="col-md-6 col-lg-3">
+                    <a href="{{ route('manual-attendance-report') }}" class="btn btn-primary w-100 text-nowrap">
+                    Manual Attendance
                     </a>
                 </div>
 
                 <div class="col-md-6 col-lg-2">
                     <a href="{{ route('leave-report') }}" class="btn btn-primary w-100 text-nowrap">
                     Leave Report
-                    </a>
-                </div>
-
-                <div class="col-md-6 col-lg-3">
-                    <a href="{{ route('department-strength-report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Department Strength
-                    </a>
-                </div>
-
-                <div class="col-md-6 col-lg-3">
-                    <a href="{{ route('manual-attendance-report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Manual Attendance
                     </a>
                 </div>
 
@@ -244,8 +238,26 @@
                 </div>
 
                 <div class="col-md-6 col-lg-3">
+                    <a href="{{ route('department-strength-report') }}" class="btn btn-primary w-100 text-nowrap">
+                    Department Strength
+                    </a>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
                     <a href="{{ route('advance-salary.report') }}" class="btn btn-primary w-100 text-nowrap">
                     Advance Salary Report
+                    </a>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <a href="{{ route('exit-interview.report') }}" class="btn btn-primary w-100 text-nowrap">
+                    Exit Interview Report
+                    </a>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <a href="{{ route('overtime.report') }}" class="btn btn-primary w-100 text-nowrap">
+                    Overtime Report
                     </a>
                 </div>
             </div>

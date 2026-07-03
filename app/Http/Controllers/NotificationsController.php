@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\OvertimeApplication;
 
 class NotificationsController extends Controller
 {
@@ -33,6 +34,24 @@ class NotificationsController extends Controller
             case 'App\Notifications\AdvanceSalaryHodDecisionNotification':
             case 'App\Notifications\AdvanceSalaryDecisionNotification':
                 return redirect()->route('advance-salary.create', ['emp_code' => auth()->user()->emp_code]);
+            case 'App\Notifications\OvertimeApplicationNotification':
+                $stage = $data['stage'] ?? '';
+                $application = isset($data['overtime_application_id'])
+                    ? OvertimeApplication::find($data['overtime_application_id'])
+                    : null;
+                $month = $application?->salary_month ?? now()->format('Y-m');
+                $empCode = $application?->emp_code ?? auth()->user()->emp_code;
+
+                return match ($stage) {
+                    'submitted' => $application
+                        ? redirect()->route('overtime.hod-show', ['application' => $application->id])
+                        : redirect()->route('overtime.hod-index'),
+                    'hod_approved' => redirect()->route('overtime.report', ['month' => $month]),
+                    'hr_approved' => redirect()->route('overtime.finance-report', ['month' => $month]),
+                    'hod_rejected', 'hr_rejected', 'finance_rejected', 'finance_approved', 'employee_update'
+                        => redirect()->route('overtime.create', ['emp_code' => $empCode, 'month' => $month]),
+                    default => redirect()->route('home'),
+                };
             default:
                 if (isset($data['notice_id'])) {
                     return redirect()->route('notices.review', ['notice' => $data['notice_id']]);

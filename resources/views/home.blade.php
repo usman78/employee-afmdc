@@ -187,55 +187,6 @@ strong {
       </div>
 
   </div>
-  {{-- <div class="row">
-    <div class="col-lg-8 content">
-
-      <div class="row resume">
-        <div class="col-lg-6">
-          <div class="resume-item pb-0">
-            <p>Date of Joining</p>
-            <h4>{{dateFormat($employee->join_date)}}</h4>
-          </div>
-          <div class="resume-item pb-0">
-            <p>Service Years</p>
-            <h4>
-                @php $diff = Carbon::parse($employee->join_date)->diff(Carbon::now()) @endphp
-                {{ $diff->y }} Years
-                {{ $diff->m }} Months
-                {{ $diff->d }} Days
-            </h4>
-          </div>
-          <div class="resume-item pb-0">
-            <p>Employee Code</p>
-            <h4>{{$employee->emp_code}}</h4>
-          </div>
-          <div class="resume-item pb-0">
-            <p>Department:</p>
-            <h4>{{capitalizeWords($employee->department->dept_desc)}}</h4>
-          </div>
-        </div>
-        <div class="col-lg-6">
-          <div class="resume-item pb-0">
-            <p>Mobile Number:</p>
-            <h4>{{capitalizeWords($employee->phone)}}</h4>
-          </div>
-          <div class="resume-item pb-0">
-            <p>Email Address:</p>
-            <h4>{{strtolower($employee->emp_email)}}</h4>
-          </div>
-          <div class="resume-item pb-0">
-            <p>CNIC Number:</p>
-            <h4>{{capitalizeWords($employee->nic_num)}}</h4>
-          </div>
-          <div class="resume-item pb-0">
-            <p>City:</p>
-            <h4>{{capitalizeWords($employee->nic_iss_plc)}}</h4>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div> --}}
 </div>
 <button id="canvasBtn" class="btn btn-primary side-btn"
         data-bs-toggle="offcanvas"

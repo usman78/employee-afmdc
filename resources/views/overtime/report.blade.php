@@ -1,0 +1,115 @@
+@extends('layouts.app')
+
+@php
+  use App\Models\OvertimeApplication;
+  use Carbon\Carbon;
+@endphp
+
+@push('styles')
+  .table { border: 1px solid #ccc; }
+  .table>:not(caption)>*>* { padding: .5rem .6rem; vertical-align: middle; }
+  .overtime-report-table { font-size: 13px; }
+  .overtime-report-table textarea { min-width: 130px; }
+@endpush
+
+@section('content')
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="portfolio-details mb-5">
+        <div class="portfolio-info">
+          <h3>Overtime Report</h3>
+
+          @if(session('success'))
+            <div class="alert alert-success mt-3">{{ session('success') }}</div>
+          @endif
+          @if(session('error'))
+            <div class="alert alert-warning mt-3">{{ session('error') }}</div>
+          @endif
+
+          <form action="{{ route('overtime.report') }}" method="GET" class="d-flex align-items-end gap-2 flex-wrap mt-4 mb-4">
+            <div>
+              <label for="month" class="form-label">Month</label>
+              <input type="month" id="month" name="month" class="form-control" value="{{ $month }}">
+            </div>
+            <div>
+              <label for="status" class="form-label">Status</label>
+              <select id="status" name="status" class="form-control">
+                <option value="">All Statuses</option>
+                @foreach($statuses as $statusValue => $statusLabel)
+                  <option value="{{ $statusValue }}" @selected(($status ?? '') === $statusValue)>{{ $statusLabel }}</option>
+                @endforeach
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary">View Report</button>
+            {{-- <a href="{{ route('overtime.hod-index') }}" class="btn btn-outline-secondary">HOD Queue</a> --}}
+          </form>
+
+          <div class="table-responsive">
+            <table class="table overtime-report-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Code</th>
+                  <th>Date</th>
+                  <th>OT Minutes</th>
+                  <th>Claimed</th>
+                  <th>Status</th>
+                  <th>Remarks</th>
+                  <th>HOD Remarks</th>
+                  <th>HR Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @forelse($applications as $application)
+                  @php
+                    $canHrAct = $application->status === OvertimeApplication::STATUS_HOD_APPROVED;
+                  @endphp
+                  <tr>
+                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
+                    <td>{{ $application->emp_code }}</td>
+                    <td>{{ Carbon::parse($application->overtime_date)->format('d M Y') }}</td>
+                    <td>{{ $application->overtime_minutes }}</td>
+                    <td>PKR {{ number_format($application->calculated_amount, 2) }}</td>
+                    <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
+                    <td>{{ $application->remarks ?: '-' }}</td>
+                    <td>{{ $application->hod_remarks ?: '-' }}</td>
+                    <td>
+                      @if($canHrAct)
+                        <form action="{{ route('overtime.hr-decision', $application->id) }}" method="POST">
+                          @csrf
+                          <input
+                            type="number"
+                            name="sanctioned_minutes"
+                            class="form-control form-control-sm mb-2"
+                            min="60"
+                            max="{{ (int) $application->overtime_minutes }}"
+                            value="{{ old('sanctioned_minutes', (int) $application->overtime_minutes) }}"
+                          >
+                          <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
+                          <div class="d-flex gap-1">
+                            <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
+                            <button type="submit" name="decision" value="reject" class="btn btn-sm btn-danger">Reject</button>
+                          </div>
+                        </form>
+                      @else
+                        <small class="text-muted">{{ $application->hr_remarks ?: $application->hod_remarks ?: '-' }}</small>
+                      @endif
+                    </td>
+                  </tr>
+                @empty
+                  <tr>
+                    <td colspan="8" class="text-center text-muted">No overtime applications found for this month.</td>
+                  </tr>
+                @endforelse
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+@endsection

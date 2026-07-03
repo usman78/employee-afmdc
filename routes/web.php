@@ -17,6 +17,7 @@ use App\Http\Controllers\AdmissionController;
 use App\Http\Controllers\RosterController;
 use App\Http\Controllers\NoticeController;
 use App\Http\Controllers\AdvanceSalaryController;
+use App\Http\Controllers\OvertimeController;
 use App\Models\Employee;
 
 Auth::routes();
@@ -172,6 +173,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/advance-salary/{emp_code}', [AdvanceSalaryController::class, 'create'])->name('advance-salary.create');
     Route::post('/advance-salary/{emp_code}', [AdvanceSalaryController::class, 'store'])->name('advance-salary.store');
     Route::post('/advance-salary/{emp_code}/{application}/revoke', [AdvanceSalaryController::class, 'revoke'])->name('advance-salary.revoke');
+
+    Route::get('/overtime/{emp_code}', [OvertimeController::class, 'create'])->name('overtime.create');
+    Route::post('/overtime/{emp_code}', [OvertimeController::class, 'store'])->name('overtime.store');
+    Route::get('/overtime-subordinate-applications', [OvertimeController::class, 'hodIndex'])->name('overtime.hod-index');
+    Route::get('/overtime-approvals/{application}', [OvertimeController::class, 'hodShow'])->name('overtime.hod-show');
+    Route::post('/overtime-approvals/{application}/decision', [OvertimeController::class, 'hodDecision'])->name('overtime.hod-decision');
+    Route::get('/overtime-report', [OvertimeController::class, 'report'])->name('overtime.report');
+    Route::post('/overtime-report/{application}/decision', [OvertimeController::class, 'hrDecision'])->name('overtime.hr-decision');
+    Route::get('/finance/overtime-reports', [OvertimeController::class, 'financeReports'])->name('overtime.finance-reports');
+    Route::get('/finance/overtime-report', [OvertimeController::class, 'financeReport'])->name('overtime.finance-report');
+    Route::post('/finance/overtime-report/{application}/decision', [OvertimeController::class, 'financeDecision'])->name('overtime.finance-decision');
 
     Route::prefix('notices')->group(function () {
         Route::get('/', [NoticeController::class, 'index'])->name('notices.index');
