@@ -149,6 +149,8 @@
                   <th>Requested OT</th>
                   <th>Claimed Amount</th>
                   <th>Status</th>
+                  <th>Approved OT Minutes</th>
+                  <th>Approved Amount</th>
                   <th>Remarks</th>
                 </tr>
               </thead>
@@ -159,11 +161,25 @@
                     <td>{{ $application->overtime_minutes }} min</td>
                     <td>PKR {{ number_format($application->calculated_amount, 2) }}</td>
                     <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
+                    <td>
+                      @if($application->status === 'approved' && $application->sanctioned_minutes)
+                        <span class="badge bg-success">{{ $application->sanctioned_minutes }} min</span>
+                      @else
+                        <span class="text-muted">-</span>
+                      @endif
+                    </td>
+                    <td>
+                      @if($application->status === 'approved' && $application->sanctioned_amount)
+                        <strong style="color: #28a745;">PKR {{ number_format($application->sanctioned_amount, 2) }}</strong>
+                      @else
+                        <span class="text-muted">-</span>
+                      @endif
+                    </td>
                     <td>{{ $application->remarks }}</td>
                   </tr>
                 @empty
                   <tr>
-                    <td colspan="5" class="text-center text-muted">No overtime applications submitted for this month.</td>
+                    <td colspan="7" class="text-center text-muted">No overtime applications submitted for this month.</td>
                   </tr>
                 @endforelse
               </tbody>
