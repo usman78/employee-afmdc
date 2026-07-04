@@ -16,6 +16,12 @@
   .table>:not(caption)>*>* { padding: .5rem .7rem; vertical-align: middle; }
   .overtime-create-table textarea { min-width: 180px; }
   .overtime-create-table { font-size: 13px; }
+  .amount-display {
+    font-weight: bold;
+    color: #28a745;
+    font-size: 14px;
+    margin-top: 5px;
+  }
 @endpush
 
 @section('content')
@@ -140,6 +146,9 @@
                           <small class="form-text text-muted d-block mt-1">
                             Max: {{ $row['overtime_minutes'] }} min
                           </small>
+                          <div class="amount-display" id="amountDisplay{{ $loop->index }}">
+                            Amount: PKR {{ number_format($row['amount'], 0) }}
+                          </div>
                         </div>
                         <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks" {{ $summary['gross_salary'] ? '' : 'disabled' }} required></textarea>
                         <button type="submit" class="btn btn-sm btn-success" {{ $summary['gross_salary'] ? '' : 'disabled' }}>
@@ -211,17 +220,20 @@
 @push('scripts')
 <script>
   document.querySelectorAll('.overtime-minutes-input').forEach(input => {
-    input.addEventListener('change', function() {
+    input.addEventListener('input', function() {
       const rowIndex = this.dataset.rowIndex;
       const hourlyRate = parseFloat(this.dataset.hourlyRate);
       const minutes = parseInt(this.value) || 0;
       
-      // Calculate amount based on new minutes
-      const amount = calculateOTAmount(hourlyRate, minutes);
-      
-      // Update the display
-      document.getElementById(`otMinutes${rowIndex}`).textContent = minutes;
-      document.getElementById(`otAmount${rowIndex}`).textContent = `PKR ${Math.round(amount).toLocaleString()}`;
+      if (minutes >= 60) {
+        // Calculate amount based on new minutes
+        const amount = calculateOTAmount(hourlyRate, minutes);
+        
+        // Update the display
+        document.getElementById(`otMinutes${rowIndex}`).textContent = minutes;
+        document.getElementById(`otAmount${rowIndex}`).textContent = `PKR ${Math.round(amount).toLocaleString()}`;
+        document.getElementById(`amountDisplay${rowIndex}`).textContent = `Amount: PKR ${Math.round(amount).toLocaleString()}`;
+      }
     });
   });
 
