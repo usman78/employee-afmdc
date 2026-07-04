@@ -16,6 +16,12 @@
     font-size: 12px;
     margin-top: 5px;
   }
+  .amount-display {
+    font-weight: bold;
+    color: #28a745;
+    font-size: 12px;
+    margin-top: 5px;
+  }
 @endpush
 
 @section('content')
@@ -79,6 +85,8 @@
                     <td>{{ Carbon::parse($application->overtime_date)->format('d M Y') }}</td>
                     <td id="otMinutes{{ $loop->index }}">{{ $application->overtime_minutes }}</td>
                     <td id="otAmount{{ $loop->index }}">PKR {{ number_format($application->calculated_amount, 2) }}</td>
+                    <td id="otMinutes{{ $loop->index }}">{{ $application->overtime_minutes }}</td>
+                    <td id="otAmount{{ $loop->index }}">PKR {{ number_format($application->calculated_amount, 2) }}</td>
                     <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
                     <td>{{ $application->remarks ?: '-' }}</td>
                     <td>{{ $application->hod_remarks ?: '-' }}</td>
@@ -91,9 +99,20 @@
                             name="sanctioned_minutes"
                             class="form-control form-control-sm mb-2 sanctioned-minutes-input"
                             id="minutes{{ $loop->index }}"
+                            class="form-control form-control-sm mb-2 sanctioned-minutes-input"
+                            id="minutes{{ $loop->index }}"
                             min="60"
                             max="{{ (int) $application->overtime_minutes }}"
                             value="{{ old('sanctioned_minutes', (int) $application->overtime_minutes) }}"
+                            data-row-index="{{ $loop->index }}"
+                            data-hourly-rate="{{ $application->hourly_rate }}"
+                          >
+                          <small class="form-text text-muted d-block">
+                            Claimed: {{ $application->overtime_minutes }} min (PKR {{ number_format($application->calculated_amount, 2) }})
+                          </small>
+                          <div class="amount-display" id="amountDisplay{{ $loop->index }}">
+                            Amount: PKR {{ number_format($application->calculated_amount, 2) }}
+                          </div>
                             data-row-index="{{ $loop->index }}"
                             data-hourly-rate="{{ $application->hourly_rate }}"
                           >
@@ -116,6 +135,7 @@
                   </tr>
                 @empty
                   <tr>
+                    <td colspan="10" class="text-center text-muted">No overtime applications found for this month.</td>
                     <td colspan="10" class="text-center text-muted">No overtime applications found for this month.</td>
                   </tr>
                 @endforelse
