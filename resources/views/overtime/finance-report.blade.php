@@ -59,6 +59,7 @@
                   <th>Sanctioned Minutes</th>
                   <th>Sanctioned Amount</th>
                   <th>Status</th>
+                  <th>HR Remarks</th>
                   <th>Finance Action</th>
                 </tr>
               </thead>
@@ -82,6 +83,7 @@
                       @endif
                     </td>
                     <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
+                    <td>{{ $application->hr_remarks ?: '-' }}</td>
                     <td>
                       @if($canAccountsAct)
                         <form action="{{ route('overtime.finance-decision', $application->id) }}" method="POST">

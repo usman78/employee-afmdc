@@ -60,6 +60,7 @@ class OvertimeController extends Controller
 
         $validated = $request->validate([
             'overtime_date' => 'required|date',
+            'overtime_minutes' => 'required|integer|min:60',
             'remarks' => 'required|string|max:1000',
         ]);
 
@@ -73,11 +74,21 @@ class OvertimeController extends Controller
                 ->with('error', 'This overtime date is not eligible for claim.');
         }
 
+        // Validate that overtime_minutes doesn't exceed the detected overtime
+        if ($validated['overtime_minutes'] > $eligibleRow['overtime_minutes']) {
+            return redirect()
+                ->route('overtime.create', ['emp_code' => $empCode, 'month' => $month])
+                ->with('error', 'Claimed OT minutes cannot exceed detected overtime minutes.');
+        }
+
         if ($this->hasActiveApplication($empCode, $eligibleRow['date'])) {
             return redirect()
                 ->route('overtime.create', ['emp_code' => $empCode, 'month' => $month])
                 ->with('error', 'An active overtime application already exists for this date.');
         }
+
+        // Calculate amount based on user-entered overtime minutes
+        $claimedAmount = $this->calculateAmount($eligibleRow['hourly_rate'], $validated['overtime_minutes']);
 
         $application = OvertimeApplication::create([
             'id' => getIncrementedId('OVERTIME_APPLICATIONS', 'ID'),
@@ -85,9 +96,9 @@ class OvertimeController extends Controller
             'salary_month' => $month,
             'overtime_date' => $eligibleRow['date'],
             'gross_salary' => $summary['gross_salary'],
-            'overtime_minutes' => $eligibleRow['overtime_minutes'],
+            'overtime_minutes' => $validated['overtime_minutes'],
             'hourly_rate' => $eligibleRow['hourly_rate'],
-            'calculated_amount' => $eligibleRow['amount'],
+            'calculated_amount' => $claimedAmount,
             'sanctioned_minutes' => null,
             'sanctioned_amount' => null,
             'shift_start' => $eligibleRow['shift_start'],
@@ -110,6 +121,46 @@ class OvertimeController extends Controller
         return redirect()
             ->route('overtime.create', ['emp_code' => $empCode, 'month' => $month])
             ->with('success', 'Overtime application submitted successfully and sent to HOD.');
+    }
+
+    public function editMinutes(Request $request, $applicationId)
+    {
+        $application = OvertimeApplication::findOrFail($applicationId);
+        
+        // Ensure only the employee can edit their own pending application
+        $this->ensureOwnEmployee($application->emp_code);
+
+        if ($application->status !== OvertimeApplication::STATUS_PENDING) {
+            return redirect()
+                ->route('overtime.create', ['emp_code' => $application->emp_code, 'month' => $application->salary_month])
+                ->with('error', 'Only pending applications can be edited.');
+        }
+
+        $validated = $request->validate([
+            'overtime_minutes' => 'required|integer|min:60',
+        ]);
+
+        $newMinutes = $validated['overtime_minutes'];
+
+        // Validate that new minutes don't exceed original detected overtime
+        if ($newMinutes > $application->overtime_minutes) {
+            return redirect()
+                ->route('overtime.create', ['emp_code' => $application->emp_code, 'month' => $application->salary_month])
+                ->with('error', 'Cannot exceed the originally detected overtime minutes.');
+        }
+
+        // Recalculate the amount based on new minutes
+        $newAmount = $this->calculateAmount($application->hourly_rate, $newMinutes);
+
+        // Update the application
+        $application->update([
+            'overtime_minutes' => $newMinutes,
+            'calculated_amount' => $newAmount,
+        ]);
+
+        return redirect()
+            ->route('overtime.create', ['emp_code' => $application->emp_code, 'month' => $application->salary_month])
+            ->with('success', 'Overtime minutes updated successfully. New amount: PKR ' . number_format($newAmount, 2));
     }
 
     public function hodIndex(Request $request)
@@ -454,10 +505,6 @@ class OvertimeController extends Controller
         ];
     }
 
-    // private function calculateAmount(float $hourlyRate, int $minutes): float
-    // {
-    //     return round(($hourlyRate * $minutes) / 60, 2);
-    // }
     public function calculateAmount(float $hourlyRate, int $minutes): float
     {
         $hours = intdiv($minutes, 60);

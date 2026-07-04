@@ -16,6 +16,12 @@
   .table>:not(caption)>*>* { padding: .5rem .7rem; vertical-align: middle; }
   .overtime-create-table textarea { min-width: 180px; }
   .overtime-create-table { font-size: 13px; }
+  .amount-display {
+    font-weight: bold;
+    color: #28a745;
+    font-size: 14px;
+    margin-top: 5px;
+  }
 @endpush
 
 @section('content')
@@ -118,12 +124,32 @@
                     <td>{{ $row['time_in'] ? Carbon::parse($row['time_in'])->format('H:i') : '-' }}</td>
                     <td>{{ $row['time_out'] ? Carbon::parse($row['time_out'])->format('H:i') : '-' }}</td>
                     <td>{{ $row['shift_end'] ? Carbon::parse($row['shift_end'])->format('H:i') : '-' }}</td>
-                    <td>{{ $row['overtime_minutes'] }}</td>
-                    <td>PKR {{ number_format($row['amount'], 0) }}</td>
+                    <td id="otMinutes{{ $loop->index }}">{{ $row['overtime_minutes'] }}</td>
+                    <td id="otAmount{{ $loop->index }}">PKR {{ number_format($row['amount'], 0) }}</td>
                     <td>
                       <form action="{{ route('overtime.store', $employee->emp_code) }}" method="POST">
                         @csrf
                         <input type="hidden" name="overtime_date" value="{{ $row['date'] }}">
+                        <div class="mb-2">
+                          <input 
+                            type="number" 
+                            name="overtime_minutes" 
+                            class="form-control form-control-sm overtime-minutes-input" 
+                            id="minutes{{ $loop->index }}"
+                            min="60" 
+                            max="{{ $row['overtime_minutes'] }}" 
+                            value="{{ $row['overtime_minutes'] }}"
+                            data-row-index="{{ $loop->index }}"
+                            data-hourly-rate="{{ $row['hourly_rate'] }}"
+                            required
+                          >
+                          <small class="form-text text-muted d-block mt-1">
+                            Max: {{ $row['overtime_minutes'] }} min
+                          </small>
+                          <div class="amount-display" id="amountDisplay{{ $loop->index }}">
+                            Amount: PKR {{ number_format($row['amount'], 0) }}
+                          </div>
+                        </div>
                         <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks" {{ $summary['gross_salary'] ? '' : 'disabled' }} required></textarea>
                         <button type="submit" class="btn btn-sm btn-success" {{ $summary['gross_salary'] ? '' : 'disabled' }}>
                           <i class="fa-solid fa-paper-plane"></i> Submit
@@ -149,6 +175,8 @@
                   <th>Requested OT</th>
                   <th>Claimed Amount</th>
                   <th>Status</th>
+                  <th>Approved OT Minutes</th>
+                  <th>Approved Amount</th>
                   <th>Remarks</th>
                 </tr>
               </thead>
@@ -159,11 +187,25 @@
                     <td>{{ $application->overtime_minutes }} min</td>
                     <td>PKR {{ number_format($application->calculated_amount, 2) }}</td>
                     <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
+                    <td>
+                      @if($application->status === 'approved' && $application->sanctioned_minutes)
+                        <span class="badge bg-success">{{ $application->sanctioned_minutes }} min</span>
+                      @else
+                        <span class="text-muted">-</span>
+                      @endif
+                    </td>
+                    <td>
+                      @if($application->status === 'approved' && $application->sanctioned_amount)
+                        <strong style="color: #28a745;">PKR {{ number_format($application->sanctioned_amount, 2) }}</strong>
+                      @else
+                        <span class="text-muted">-</span>
+                      @endif
+                    </td>
                     <td>{{ $application->remarks }}</td>
                   </tr>
                 @empty
                   <tr>
-                    <td colspan="5" class="text-center text-muted">No overtime applications submitted for this month.</td>
+                    <td colspan="7" class="text-center text-muted">No overtime applications submitted for this month.</td>
                   </tr>
                 @endforelse
               </tbody>
@@ -174,4 +216,43 @@
     </div>
   </div>
 </div>
+
+@push('scripts')
+
+  document.querySelectorAll('.overtime-minutes-input').forEach(input => {
+    input.addEventListener('input', function() {
+      const rowIndex = this.dataset.rowIndex;
+      const hourlyRate = parseFloat(this.dataset.hourlyRate);
+      const minutes = parseInt(this.value) || 0;
+      
+      if (minutes >= 60) {
+        // Calculate amount based on new minutes
+        const amount = calculateOTAmount(hourlyRate, minutes);
+        
+        // Update the display
+        document.getElementById(`otMinutes${rowIndex}`).textContent = minutes;
+        document.getElementById(`otAmount${rowIndex}`).textContent = `PKR ${Math.round(amount).toLocaleString()}`;
+        document.getElementById(`amountDisplay${rowIndex}`).textContent = `Amount: PKR ${Math.round(amount).toLocaleString()}`;
+      }
+    });
+  });
+
+  function calculateOTAmount(hourlyRate, minutes) {
+    let hours = Math.floor(minutes / 60);
+    let remainingMinutes = minutes % 60;
+    
+    if (remainingMinutes <= 25) {
+      remainingMinutes = 0;
+    } else if (remainingMinutes <= 45) {
+      remainingMinutes = 30;
+    } else {
+      hours++;
+      remainingMinutes = 0;
+    }
+    
+    const payableMinutes = (hours * 60) + remainingMinutes;
+    return (hourlyRate * payableMinutes) / 60;
+  }
+
+@endpush
 @endsection
