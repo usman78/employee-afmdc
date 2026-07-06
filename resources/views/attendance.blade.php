@@ -149,7 +149,7 @@
             </div>
           </div>
           <div class="row gy-4 stats">
-            <div class="col-md-3">
+            <div class="col-md-2">
               <div class="stats-item text-center w-100 h-100">
                 <span data-purecounter-start="0" data-purecounter-end="232" data-purecounter-duration="0" class="purecounter late-days"></span>
                 <p>Late Coming Days</p>
@@ -161,18 +161,23 @@
                 <p>Late Coming Mins</p>
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
               <div class="stats-item text-center w-100 h-100">
                 <span data-purecounter-start="0" data-purecounter-end="521" data-purecounter-duration="0" class="purecounter early-mins"></span>
                 <p>Early Off Mins</p>
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
               <div class="stats-item text-center w-100 h-100">
                 <span data-purecounter-start="0" data-purecounter-end="521" data-purecounter-duration="0" class="purecounter total-mins"></span>
                 <p>Total Mins Effect</p>
               </div>
             </div>
+            <div class="col-md-3">
+              <div class="stats-item text-center w-100 h-100">
+                <span data-purecounter-start="0" data-purecounter-end="521" data-purecounter-duration="0" class="purecounter">{{ $total_leave_days_deducted ?? 0 }}</span>
+                <p>Leave Days Deducted</p>
+              </div>
           </div>
           <ul>
           @if(session('success'))

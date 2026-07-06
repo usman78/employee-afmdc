@@ -979,6 +979,11 @@ class AttendanceController extends Controller
         }
 
         /* -------------------------
+        Total leave days deducted
+        -------------------------- */
+        $totalLeaveDaysDeducted = 0;
+
+        /* -------------------------
         Holidays
         -------------------------- */
         $holidays = $this->getHolidayDates();
@@ -1072,23 +1077,28 @@ class AttendanceController extends Controller
                 ->first();
             
             if ($leave) {
-                $isLeave = true;
-                $leaveType = leaveDescription(
-                    $leave->leave_code,
-                    $leave->from_date,
-                    $leave->to_date
-                );
-
-                $from = Carbon::parse($leave->from_date);
-                $to   = Carbon::parse($leave->to_date);
-
-                if ($from->format('H:i:s') === '00:00:00' &&
-                    $to->format('H:i:s')   === '00:00:00') {
-                    $isFullDayLeave = true;
+                if ($leave->status == 10) {
+                    $totalLeaveDaysDeducted += $leave->l_day;
+                    // \Log::info("Leave deducted for {$emp_code} on {$dateString}: {$leave->l_day} day(s) for leave code {$leave->leave_code}");
                 } else {
-                    $leaveStart = $from;
-                    $leaveEnd   = $to;
-                    $leaveMins  = $from->diffInMinutes($to);
+                    $isLeave = true;
+                    $leaveType = leaveDescription(
+                        $leave->leave_code,
+                        $leave->from_date,
+                        $leave->to_date
+                    );
+
+                    $from = Carbon::parse($leave->from_date);
+                    $to   = Carbon::parse($leave->to_date);
+
+                    if ($from->format('H:i:s') === '00:00:00' &&
+                        $to->format('H:i:s')   === '00:00:00') {
+                        $isFullDayLeave = true;
+                    } else {
+                        $leaveStart = $from;
+                        $leaveEnd   = $to;
+                        $leaveMins  = $from->diffInMinutes($to);
+                    }
                 }
             }
 
@@ -1238,7 +1248,7 @@ class AttendanceController extends Controller
                 'has_roster'        => $hasRoster,
                 'is_leave'          => $isLeave,
                 'leave_type'        => $isLeave ? $leaveType : null,
-                'short_duty_status' => $leaveRemark
+                'short_duty_status' => $leaveRemark,
             ]);
 
             $tempDate->addDay();
@@ -1252,7 +1262,7 @@ class AttendanceController extends Controller
             $hodEmail = Employee::where('emp_code', $hodCode)->value('afmdcemail');
         }
         $leaves = Leave::where('emp_code', $emp_code)
-            ->whereNot('status', 9)
+            ->whereNotIn('status', [9, 10])
             ->where('from_date', '>=', $start_date)
             ->where('to_date', '<=', $end_date)
             ->get();
@@ -1268,6 +1278,7 @@ class AttendanceController extends Controller
             'attendance' => $attendance,
             'leaves'     => $leaves,
             'leave_counts' => $leaveCounts,
+            'total_leave_days_deducted' => $totalLeaveDaysDeducted ?? 0,
             'emp_name'   => $employee ? ucfirst($employee->name) : 'Unknown Employee',
             'emp_code'   => $employee ? $employee->emp_code : $emp_code,
             'emp_department' => $employee && $employee->department ? $employee->department->dept_desc : '--',
