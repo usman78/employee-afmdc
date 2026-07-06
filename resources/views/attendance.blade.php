@@ -208,11 +208,11 @@
                   <td>{{ Carbon::parse($record['at_date'])->format('D, j M') }}</td>
                   {{-- Time In / Out --}}
                   <td>
-                      @if ($record['is_sunday'] || $record['is_holiday'] || ($record['is_weekly_rest'] ?? false))
+                      {{-- @if ($record['is_sunday'] || $record['is_holiday'] || ($record['is_weekly_rest'] ?? false))
                            <span class="badge badge-info">
                               {{ $record['is_holiday'] ? 'Holiday' : (($record['is_weekly_rest'] ?? false) ? 'Weekly Rest' : 'Sunday') }}
                            </span>
-                      @else
+                      @else --}}
                           @if (!empty($record['time_logs']))
                               @foreach ($record['time_logs'] as $log)
                                   @if ($log['timein'] && $log['timeout'])
@@ -231,7 +231,7 @@
                           @else
                               <span class="badge badge-danger">Not timed in</span>
                           @endif
-                      @endif
+                      {{-- @endif --}}
                   </td>
                   {{-- Late Minutes (DAY LEVEL) --}}
                   <td>

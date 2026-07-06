@@ -1243,7 +1243,7 @@ class AttendanceController extends Controller
                 'late_minutes'      => $lateMins,
                 'early_minutes'     => $earlyMins,
                 'is_sunday'         => false,
-                'is_holiday'        => !$hasRoster && $isHoliday,
+                'is_holiday'        => $isHoliday,
                 'is_weekly_rest'    => false,
                 'has_roster'        => $hasRoster,
                 'is_leave'          => $isLeave,
