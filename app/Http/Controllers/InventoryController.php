@@ -37,11 +37,24 @@ class InventoryController extends Controller
             ->get();
         
         // Get acknowledged routine issues
-        $acknowledgedRoutine = Issue::whereRaw('TRIM((SELECT receive_by FROM invent.inv_issues WHERE invent.inv_issues.doc_no = invent.inv_issue_sub.doc_no)) = ? AND ackn_by_user = ?', [$emp_code, 'Y'])
-            ->with('inventory')
-            ->orderBy('dated', 'desc')
-            ->get();
-        
+        // $acknowledgedRoutine = Issue::whereRaw('TRIM((SELECT receive_by FROM invent.inv_issues WHERE invent.inv_issues.doc_no = invent.inv_issue_sub.doc_no)) = ? AND ackn_by_user = ?', [$emp_code, 'Y'])
+        //     ->with('inventory')
+        //     ->orderBy('dated', 'desc')
+        //     ->get();
+        $acknowledgedRoutine = Issue::whereRaw(
+            "TRIM((
+                SELECT receive_by
+                FROM invent.inv_issues
+                WHERE invent.inv_issues.doc_no = invent.inv_issue_sub.doc_no
+                AND TO_NUMBER(invent.inv_issues.yr_code) = TO_NUMBER(TO_CHAR(SYSDATE, 'YYYY'))
+            )) = ?
+            AND ackn_by_user = ?",
+            [$emp_code, 'Y']
+        )
+        ->with('inventory')
+        ->orderBy('dated', 'desc')
+        ->get();
+
         // Merge both acknowledged collections and remove duplicates
         $mergedAcknowledged = $acknowledged->concat($acknowledgedRoutine)
             ->unique(function($item) {
@@ -85,11 +98,6 @@ class InventoryController extends Controller
         // Find the issue item
         $issue = Issue::where('item_code', $item_code)->where('doc_no', $doc_no)->first();
         
-        // Verify the item belongs to the logged-in user
-        // if($issue->emp_code != $authUser->emp_code){
-        //     return response()->json(['error' => 'Unauthorized'], 403);
-        // }
-        \Log::info('Acknowledging item for emp_code: ' . $authUser->emp_code . ' - item_code: ' . $item_code);
         // Update the issue with acknowledgment
         $issue->update([
             'ackn_by_user' => 'Y',
@@ -97,7 +105,6 @@ class InventoryController extends Controller
             'remarks' => $request->input('remarks', '')
         ]);
         
-        \Log::info('Item acknowledged for emp_code: ' . $authUser->emp_code . ' - item_code: ' . $item_code);
         return response()->json(['success' => 'Item acknowledged successfully', 'message' => 'Item has been acknowledged']);
     }
 }

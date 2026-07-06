@@ -181,7 +181,7 @@
                 <tbody>
                   @if ($allAcknowledged->isEmpty())
                     <tr>
-                        <td colspan="8" class="text-center">No acknowledged issues found.</td>
+                        <td colspan="8" class="text-center">No acknowledged issues found in the current year.</td>
                     </tr>
                   @else
                     @foreach ($allAcknowledged as $inv)
