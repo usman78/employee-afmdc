@@ -119,7 +119,9 @@
                   <th>Shift End</th>
                   <th>OT Minutes</th>
                   <th>Amount</th>
-                  <th>Claim</th>
+                  {{-- <th>Claim</th>
+                  <th>Claim Amount</th> --}}
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -132,32 +134,12 @@
                     <td>{{ $row['shift_end'] ? Carbon::parse($row['shift_end'])->format('H:i') : '-' }}</td>
                     <td id="otMinutes{{ $loop->index }}">{{ $row['overtime_minutes'] }}</td>
                     <td id="otAmount{{ $loop->index }}">PKR {{ number_format($row['amount'], 0) }}</td>
-                    <td id="otMinutes{{ $loop->index }}">{{ $row['overtime_minutes'] }}</td>
-                    <td id="otAmount{{ $loop->index }}">PKR {{ number_format($row['amount'], 0) }}</td>
+                    {{-- <td id="otMinutes{{ $loop->index }}">{{ $row['overtime_minutes'] }}</td>
+                    <td id="otAmount{{ $loop->index }}">PKR {{ number_format($row['amount'], 0) }}</td> --}}
                     <td>
                       <form action="{{ route('overtime.store', $employee->emp_code) }}" method="POST">
                         @csrf
                         <input type="hidden" name="overtime_date" value="{{ $row['date'] }}">
-                        <div class="mb-2">
-                          <input 
-                            type="number" 
-                            name="overtime_minutes" 
-                            class="form-control form-control-sm overtime-minutes-input" 
-                            id="minutes{{ $loop->index }}"
-                            min="60" 
-                            max="{{ $row['overtime_minutes'] }}" 
-                            value="{{ $row['overtime_minutes'] }}"
-                            data-row-index="{{ $loop->index }}"
-                            data-hourly-rate="{{ $row['hourly_rate'] }}"
-                            required
-                          >
-                          <small class="form-text text-muted d-block mt-1">
-                            Max: {{ $row['overtime_minutes'] }} min
-                          </small>
-                          <div class="amount-display" id="amountDisplay{{ $loop->index }}">
-                            Amount: PKR {{ number_format($row['amount'], 0) }}
-                          </div>
-                        </div>
                         <div class="mb-2">
                           <input 
                             type="number" 
