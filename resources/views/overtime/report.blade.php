@@ -85,8 +85,6 @@
                     <td>{{ Carbon::parse($application->overtime_date)->format('d M Y') }}</td>
                     <td id="otMinutes{{ $loop->index }}">{{ $application->overtime_minutes }}</td>
                     <td id="otAmount{{ $loop->index }}">PKR {{ number_format($application->calculated_amount, 2) }}</td>
-                    <td id="otMinutes{{ $loop->index }}">{{ $application->overtime_minutes }}</td>
-                    <td id="otAmount{{ $loop->index }}">PKR {{ number_format($application->calculated_amount, 2) }}</td>
                     <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
                     <td>{{ $application->remarks ?: '-' }}</td>
                     <td>{{ $application->hod_remarks ?: '-' }}</td>
