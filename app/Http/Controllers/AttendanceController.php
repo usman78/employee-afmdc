@@ -1048,18 +1048,18 @@ class AttendanceController extends Controller
 
             $leave = Leave::where('emp_code', $emp_code)
                 ->whereNot('status', 9)
-                ->where(function ($query) use ($startTimeCarbon, $endTimeCarbon) {
+                ->where(function ($query) use ($startTimeCarbon, $endTimeCarbon, $dateString) {
 
                     // Full-day leave
-                    $query->where(function ($q) use ($startTimeCarbon, $endTimeCarbon) {
+                    $query->where(function ($q) use ($dateString) {
                         $q->where('day_half', 0)
                         ->whereRaw(
                             "TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')",
-                            [$endTimeCarbon->toDateString()]
+                            [$dateString]
                         )
                         ->whereRaw(
                             "TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')",
-                            [$startTimeCarbon->toDateString()]
+                            [$dateString]
                         );
                     })
 
