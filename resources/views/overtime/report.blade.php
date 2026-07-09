@@ -97,20 +97,9 @@
                             name="sanctioned_minutes"
                             class="form-control form-control-sm mb-2 sanctioned-minutes-input"
                             id="minutes{{ $loop->index }}"
-                            class="form-control form-control-sm mb-2 sanctioned-minutes-input"
-                            id="minutes{{ $loop->index }}"
                             min="60"
                             max="{{ (int) $application->overtime_minutes }}"
                             value="{{ old('sanctioned_minutes', (int) $application->overtime_minutes) }}"
-                            data-row-index="{{ $loop->index }}"
-                            data-hourly-rate="{{ $application->hourly_rate }}"
-                          >
-                          <small class="form-text text-muted d-block">
-                            Claimed: {{ $application->overtime_minutes }} min (PKR {{ number_format($application->calculated_amount, 2) }})
-                          </small>
-                          <div class="amount-display" id="amountDisplay{{ $loop->index }}">
-                            Amount: PKR {{ number_format($application->calculated_amount, 2) }}
-                          </div>
                             data-row-index="{{ $loop->index }}"
                             data-hourly-rate="{{ $application->hourly_rate }}"
                           >
