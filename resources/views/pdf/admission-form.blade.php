@@ -271,6 +271,13 @@
 
     @php
         $weightSum = 0;
+        $calculatePercentage = function ($obtained, $total) {
+            if ($total > 0 && $obtained !== null && $obtained >= 0) {
+                return round(($obtained / $total) * 100);
+            }
+
+            return 0;
+        };
     @endphp
     @foreach ($profile->detail as $detail)
         @if($detail->sr_no == 1)
@@ -292,13 +299,15 @@
                         <td class="value">Matric</td>
                         <td class="value">{{ $detail->obt_marks }}</td>
                         <td class="value">{{ $detail->total_marks }}</td>
-                        <td class="value">{{ round($detail->obt_marks / $detail->total_marks * 100) }}%</td>
-                        <td class="value">{{ round((round($detail->obt_marks / $detail->total_marks * 100) * 0.1), 2) }}</td>
+                        <td class="value">
+                            {{ $calculatePercentage($detail->obt_marks, $detail->total_marks) }}%
+                        </td>
+                        <td class="value">{{ round(($calculatePercentage($detail->obt_marks, $detail->total_marks) * 0.1), 2) }}</td>
                     </tr>
                 </tbody>
             </table>
             @php
-                $weightSum += round($detail->obt_marks / $detail->total_marks * 100) * 0.1;
+                $weightSum += $calculatePercentage($detail->obt_marks, $detail->total_marks) * 0.1;
             @endphp
         @elseif($detail->sr_no == 2)
             <table class="education-table">
@@ -307,13 +316,13 @@
                         <td class="value">Intermediate</td>
                         <td class="value">{{ $detail->obt_marks }}</td>
                         <td class="value">{{ $detail->total_marks }}</td>
-                        <td class="value">{{ round($detail->obt_marks / $detail->total_marks * 100) }}%</td>
-                        <td class="value">{{ round((round($detail->obt_marks / $detail->total_marks * 100) * 0.4), 2) }}</td>
+                        <td class="value">{{ $calculatePercentage($detail->obt_marks, $detail->total_marks) }}%</td>
+                        <td class="value">{{ round(($calculatePercentage($detail->obt_marks, $detail->total_marks) * 0.4), 2) }}</td>
                     </tr>
                 </tbody>
             </table>
             @php
-                $weightSum += round($detail->obt_marks / $detail->total_marks * 100) * 0.4;
+                $weightSum += $calculatePercentage($detail->obt_marks, $detail->total_marks) * 0.4;
             @endphp
         @elseif($detail->sr_no == 3)
             <table class="education-table">
@@ -322,13 +331,13 @@
                         <td class="value">MCAT</td>
                         <td class="value">{{ $detail->obt_marks }}</td>
                         <td class="value">{{ $detail->total_marks }}</td>
-                        <td class="value">{{ round($detail->obt_marks / $detail->total_marks * 100) }}%</td>
-                        <td class="value">{{ round((round($detail->obt_marks / $detail->total_marks * 100) * 0.5), 2) }}</td>
+                        <td class="value">{{ $calculatePercentage($detail->obt_marks, $detail->total_marks) }}%</td>
+                        <td class="value">{{ round(($calculatePercentage($detail->obt_marks, $detail->total_marks) * 0.5), 2) }}</td>
                     </tr>
                 </tbody>
             </table>
             @php
-                $weightSum += round($detail->obt_marks / $detail->total_marks * 100) * 0.5;
+                $weightSum += $calculatePercentage($detail->obt_marks, $detail->total_marks) * 0.5;
             @endphp
         @endif
     @endforeach
