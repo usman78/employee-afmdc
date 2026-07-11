@@ -94,16 +94,16 @@
                             <td>{{ $inv->qty }}</td>
                             <td>{{ $inv->rate }}</td>
                             <td>{{ $inv->value }}</td>
+                            @if ($inv->ackn_by_user != 'Y')
                             <td>
-                              @if ($inv->ackn_by_user != 'Y')
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#acknowledgeModal" 
                                   onclick="setItemId({{ $inv->item_code }}, {{ $inv->doc_no }})">
                                   Acknowledge
                                 </button>
-                              @else
-                                <span class="text-muted">-</span>
-                              @endif
                             </td>
+                            @else
+                            <td><span class="text-success fw-bold"><span class="fas fa-fw fa-check"></span> Acknowledged</span></td>
+                            @endif
                         </tr>
                     @endforeach
                   @endif
@@ -115,7 +115,7 @@
               </div>
             </div>
 
-            <!-- Unacknowledged Issues Tab -->
+            <!-- Named Issues Tab -->
             <div class="tab-pane fade" id="issues" role="tabpanel">
               <table class="table mt-3 mb-5">
                 <thead>
@@ -145,18 +145,22 @@
                           <td>{{ $inv->qty }}</td>
                           <td>{{ $inv->rate }}</td>
                           <td>{{ $inv->value }}</td>
+                          @if($inv->ackn_by_user == 'Y')
+                            <td><span class="text-success fw-bold"><span class="fas fa-fw fa-check"></span> Acknowledged</span></td>
+                          @else
                           <td>
                             <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#acknowledgeModal" 
                               onclick="setItemId({{ $inv->item_code }}, {{ $inv->doc_no }})">
                               Acknowledge
                             </button>
                           </td>
+                          @endif
                       </tr>
                     @endforeach
                   @endif
                 </tbody>
               </table>
-              <!-- Issues Pagination -->
+              <!-- Named Issues Pagination -->
               <div class="d-flex justify-content-center">
                 {{ $unacknowledged->appends(request()->query())->appends(['tab' => 'issues'])->links('pagination::bootstrap-4', ['pageName' => 'unack_page']) }}
               </div>
