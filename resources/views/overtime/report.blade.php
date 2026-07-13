@@ -54,7 +54,19 @@
               </select>
             </div>
             <button type="submit" class="btn btn-primary">View Report</button>
-            {{-- <a href="{{ route('overtime.hod-index') }}" class="btn btn-outline-secondary">HOD Queue</a> --}}
+            <div class="dropdown">
+              <button class="btn btn-primary dropdown-toggle" type="button"
+                  id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+                  aria-expanded="false">
+                  Download Report
+              </button>
+              <div class="dropdown-menu animated--fade-in"
+                  aria-labelledby="dropdownMenuButton">
+                  <a class="dropdown-item" href="{{ route('overtime.approved-download', ['month' => $month]) }}" target="_blank">All Approved</a>
+                  {{-- <a class="dropdown-item" href="#" data-toggle="modal" data-target="#filterByNameModal">Download By Name</a>
+                  <a class="dropdown-item" href="#" data-toggle="modal" data-target="#filterByDateModal">Download by Finance Approval Date</a> --}}
+              </div>
+            </div>
           </form>
 
           <div class="table-responsive">

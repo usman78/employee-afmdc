@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class OvertimeController extends Controller
 {
@@ -798,5 +799,24 @@ class OvertimeController extends Controller
             ->whereNull('quit_stat')
             ->get()
             ->each(fn ($user) => $user->notify(new OvertimeApplicationNotification($application, 'hod_approved')));
+    }
+    public function downloadApprovedReport(Request $request)
+    {
+        $this->ensureHr();
+
+        $month = $request->input('month', Carbon::now()->format('Y-m'));
+
+        $applications = OvertimeApplication::with(['employee.designation', 'employee.department'])
+            ->where('salary_month', $month)
+            ->where('status', OvertimeApplication::STATUS_APPROVED)
+            ->orderByDesc('applied_at')
+            ->get();
+
+        $pdf = Pdf::loadView('pdf.overtime-approved-report', [
+            'applications' => $applications,
+            'month' => $month,
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream("approved_overtime_report_{$month}.pdf");
     }
 }

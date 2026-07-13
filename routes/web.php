@@ -181,6 +181,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/overtime-approvals/{application}', [OvertimeController::class, 'hodShow'])->name('overtime.hod-show');
     Route::post('/overtime-approvals/{application}/decision', [OvertimeController::class, 'hodDecision'])->name('overtime.hod-decision');
     Route::get('/overtime-report', [OvertimeController::class, 'report'])->name('overtime.report');
+    Route::get('/overtime-report/download-approved', [OvertimeController::class, 'downloadApprovedReport'])->name('overtime.approved-download');
     Route::post('/overtime-report/{application}/decision', [OvertimeController::class, 'hrDecision'])->name('overtime.hr-decision');
     Route::get('/finance/overtime-reports', [OvertimeController::class, 'financeReports'])->name('overtime.finance-reports');
     Route::get('/finance/overtime-report', [OvertimeController::class, 'financeReport'])->name('overtime.finance-report');
