@@ -53,6 +53,11 @@ class AttendanceController extends Controller
 
     public function attendance(Request $request, $emp_code)
     {
+        // check if employee is checking their own attendance
+        if (Auth::user()->emp_code !== $emp_code) {
+            abort(403, 'Unauthorized access to attendance data.');
+        }
+
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
 

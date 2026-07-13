@@ -10,10 +10,14 @@
 @push('styles')
   .stats .stats-item {
     padding: 0;
+    background-color: gainsboro;
+    border-radius: 10px;
+    box-shadow: 1px 2px 4px 1px #a3a3a3;
   }
   .stats .stats-item span {
       margin-bottom: 10px;
       padding-bottom: 0px;
+      font-size: 32px;
   }
   .portfolio .stats .stats-item.text-center.w-100.h-100 {
       background: gainsboro !important;
@@ -87,9 +91,9 @@
               <strong>Code:</strong> {{ $emp_code ?? 'N/A' }}
               <span class="mx-2">|</span>
               <strong>Range:</strong>
-              {{ \Carbon\Carbon::parse($report_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString())->format('j M Y') }}
+              {{ Carbon::parse($report_start_date ?? Carbon::now()->startOfMonth()->toDateString())->format('j M Y') }}
               to
-              {{ \Carbon\Carbon::parse($report_end_date ?? \Carbon\Carbon::today()->toDateString())->format('j M Y') }}
+              {{ Carbon::parse($report_end_date ?? Carbon::today()->toDateString())->format('j M Y') }}
             </p>
             <form action="{{ route('attendance', ['emp_code' => $emp_code ?? '']) }}" method="GET" class="d-flex align-items-end flex-wrap gap-2">
               <div>
@@ -99,7 +103,7 @@
                   id="start_date"
                   name="start_date"
                   class="form-control form-control-sm"
-                  value="{{ $report_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString() }}"
+                  value="{{ $report_start_date ?? Carbon::now()->startOfMonth()->toDateString() }}"
                   required
                 >
               </div>
@@ -110,7 +114,7 @@
                   id="end_date"
                   name="end_date"
                   class="form-control form-control-sm"
-                  value="{{ $report_end_date ?? \Carbon\Carbon::today()->toDateString() }}"
+                  value="{{ $report_end_date ?? Carbon::today()->toDateString() }}"
                   required
                 >
               </div>
@@ -125,9 +129,9 @@
               <ul class="dropdown-menu" aria-labelledby="downloadDropdownAttendance">
                 <li>
                   <form action="{{ route('attendance-report-download', ['emp_code' => $emp_code ?? '']) }}" method="POST" target="_blank" style="display: inline;">
-                    <input type="hidden" name="start_date" value="{{ $report_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString() }}">
+                    <input type="hidden" name="start_date" value="{{ $report_start_date ?? Carbon::now()->startOfMonth()->toDateString() }}">
                     @csrf
-                    <input type="hidden" name="end_date" value="{{ $report_end_date ?? \Carbon\Carbon::today()->toDateString() }}">
+                    <input type="hidden" name="end_date" value="{{ $report_end_date ?? Carbon::today()->toDateString() }}">
                     <input type="hidden" name="include_signatures" value="1">
                     <button type="submit" class="dropdown-item">
                       <i class="fas fa-pen"></i> With Signatures
@@ -136,9 +140,9 @@
                 </li>
                 <li>
                   <form action="{{ route('attendance-report-download', ['emp_code' => $emp_code ?? '']) }}" method="POST" target="_blank" style="display: inline;">
-                    <input type="hidden" name="start_date" value="{{ $report_start_date ?? \Carbon\Carbon::now()->startOfMonth()->toDateString() }}">
+                    <input type="hidden" name="start_date" value="{{ $report_start_date ?? Carbon::now()->startOfMonth()->toDateString() }}">
                     @csrf
-                    <input type="hidden" name="end_date" value="{{ $report_end_date ?? \Carbon\Carbon::today()->toDateString() }}">
+                    <input type="hidden" name="end_date" value="{{ $report_end_date ?? Carbon::today()->toDateString() }}">
                     <input type="hidden" name="include_signatures" value="0">
                     <button type="submit" class="dropdown-item">
                       <i class="fas fa-file"></i> Without Signatures
@@ -149,7 +153,7 @@
             </div>
           </div>
           <div class="row gy-4 stats">
-            <div class="col-md-2">
+            <div class="col-md-3">
               <div class="stats-item text-center w-100 h-100">
                 <span data-purecounter-start="0" data-purecounter-end="232" data-purecounter-duration="0" class="purecounter late-days"></span>
                 <p>Late Coming Days</p>
@@ -161,24 +165,36 @@
                 <p>Late Coming Mins</p>
               </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
               <div class="stats-item text-center w-100 h-100">
                 <span data-purecounter-start="0" data-purecounter-end="521" data-purecounter-duration="0" class="purecounter early-mins"></span>
                 <p>Early Off Mins</p>
               </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
               <div class="stats-item text-center w-100 h-100">
                 <span data-purecounter-start="0" data-purecounter-end="521" data-purecounter-duration="0" class="purecounter total-mins"></span>
                 <p>Total Mins Effect</p>
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
               <div class="stats-item text-center w-100 h-100">
                 <span data-purecounter-start="0" data-purecounter-end="521" data-purecounter-duration="0" class="purecounter">{{ $total_leave_days_deducted ?? 0 }}</span>
                 <p>Leave Days Deducted</p>
               </div>
-          </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stats-item text-center w-100 h-100">
+                <span data-purecounter-start="0" data-purecounter-end="521" data-purecounter-duration="0" class="purecounter present-days">{{ $total_present_days ?? 0 }}</span>
+                <p>Total Present Days</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stats-item text-center w-100 h-100">
+                <span data-purecounter-start="0" data-purecounter-end="521" data-purecounter-duration="0" class="purecounter absent-days">{{ $total_absent_days ?? 0 }}</span>
+                <p>Total Absent Days</p>
+              </div>
+            </div>
           <ul>
           @if(session('success'))
             <li class="mt-5">
@@ -295,6 +311,32 @@
 @endsection
 
 @push('scripts')
+  function calculatePresentDays() {
+      let presentDays = 0;
+      document.querySelectorAll("table tbody tr").forEach(row => {
+          const statusCell = row.cells[4]; // Status column
+          if (statusCell) {
+              const statusText = statusCell.innerText.trim();
+              if (statusText !== "Absent") {
+                  presentDays += 1;
+              }
+          }
+      });
+      return presentDays;
+  }
+  function calculateAbsentDays() {
+      let absentDays = 0;
+      document.querySelectorAll("table tbody tr").forEach(row => {
+          const statusCell = row.cells[4]; // Status column
+          if (statusCell) {
+              const statusText = statusCell.innerText.trim();
+              if (statusText === "Absent") {
+                  absentDays += 1;
+              }
+          }
+      });
+      return absentDays;
+  }
 
   function sumLateAndEarlyMinutes() {
       let totalLate = 0;
@@ -343,6 +385,8 @@
   const lateDaysEl = document.querySelector('.late-days');
   const earlyEl = document.querySelector('.early-mins');
   const totalEl = document.querySelector('.total-mins');
+  const presentDaysEl = document.querySelector('.present-days');
+  const absentDaysEl = document.querySelector('.absent-days');
 
   if (lateEl) {
     lateEl.textContent = totals.lateMinutes;
@@ -355,5 +399,11 @@
   }
   if (totalEl) {
     totalEl.textContent = totals.totalMins;
+  }
+  if (presentDaysEl) {
+    presentDaysEl.textContent = calculatePresentDays();
+  }
+  if (absentDaysEl) {
+    absentDaysEl.textContent = calculateAbsentDays();
   }
 @endpush
