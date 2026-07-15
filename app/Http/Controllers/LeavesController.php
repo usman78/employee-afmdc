@@ -799,27 +799,46 @@ class LeavesController extends Controller
 
         return false; // No sandwich leave
     }
-
     public function checkConsecutiveLeave($emp_code, $leave_code, $from_date, $to_date)
     {
-        // check if leave_code is 3,4,5,8,12 then no need to check for consecutive leave as these leaves can be taken without break 
-        if(in_array($leave_code, [3, 4, 5, 8, 12])) {
+        // Leave types that are exempt from consecutive leave check
+        if (in_array($leave_code, [3, 4, 5, 8, 12])) {
             return true;
         }
-        $from = Carbon::parse($from_date);
-        $to = Carbon::parse($to_date);
-        $yesterday = Carbon::parse($from)->copy()->subDay();
-        $tomorrow = Carbon::parse($to)->copy()->addDay();
-        $leave = Leave::where('emp_code', $emp_code)
-        ->whereIn('leave_code', [1, 2])  // restricted leave codes
-        ->where('leave_code', '!=', $leave_code) // different leave type
-        ->whereNot('l_day', 0.5) // exclude half day leaves
-        ->where(function ($query) use ($yesterday, $tomorrow) {
-            $query->whereDate('to_date', $yesterday) // ends right before new leave
-                  ->orWhereDate('from_date', $tomorrow); // starts right after new leave
-        })->exists();
 
-        return !$leave;    
+        $from = Carbon::parse($from_date)->startOfDay();
+        $to = Carbon::parse($to_date)->startOfDay();
+
+        $yesterday = $from->copy()->subDay();
+        $tomorrow = $to->copy()->addDay();
+
+        $leaveExists = Leave::where('emp_code', $emp_code)
+            ->whereIn('leave_code', [1, 2])
+            ->where('leave_code', '!=', $leave_code)
+            ->where('status', '!=', 9)
+            ->where(function ($query) use ($from, $yesterday, $tomorrow) {
+
+                // Existing leave covers the previous day
+                $query->where(function ($q) use ($yesterday) {
+                    $q->whereDate('from_date', '<=', $yesterday)
+                    ->whereDate('to_date', '>=', $yesterday);
+                })
+
+                // Existing leave covers the next day
+                ->orWhere(function ($q) use ($tomorrow) {
+                    $q->whereDate('from_date', '<=', $tomorrow)
+                    ->whereDate('to_date', '>=', $tomorrow);
+                })
+
+                // Existing leave exists on the same day
+                ->orWhere(function ($q) use ($from) {
+                    $q->whereDate('from_date', '<=', $from)
+                    ->whereDate('to_date', '>=', $from);
+                });
+            })
+            ->exists();
+
+        return !$leaveExists;
     }
     
     public function rejectLeave(Request $request, $leave_id)
