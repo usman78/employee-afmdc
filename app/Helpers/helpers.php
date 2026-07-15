@@ -293,24 +293,67 @@ function checkTimetableAccess($emp_code)
 }
 function checkMultipleLeaves($emp_code, $fromDate, $toDate, $leaveCode)
 {
-    if (! in_array((int) $leaveCode, [1, 2], true)) {
-        return false;
-    }
-
+    $newLeave = null;
     $query = \DB::table('pre_leave_tran')
         ->where('emp_code', $emp_code)
-        ->whereIn('leave_code', [1, 2])
         ->where(function ($q) use ($fromDate, $toDate) {
-            $q->whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$fromDate])
-              ->whereRaw("TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')", [$fromDate]);
-            $q->orWhereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$toDate])
-              ->whereRaw("TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')", [$toDate]);
-            $q->orWhereRaw("TRUNC(from_date) >= TO_DATE(?, 'YYYY-MM-DD')", [$fromDate])
-              ->whereRaw("TRUNC(to_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$toDate]);
+            $q->whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [Carbon::parse($fromDate)->format('Y-m-d')])
+              ->whereRaw("TRUNC(to_date) >= TO_DATE(?, 'YYYY-MM-DD')", [Carbon::parse($toDate)->format('Y-m-d')]);
         })
         ->where('status','!=', 9);
-    $leave = $query->first();
-    return $leave ? true : false;
+    $leave = $query->get();
+
+    if ($leave->isEmpty()) {
+        // Log::info("No overlapping leaves found.");
+        return false;
+    } else {
+        // Log::info("Overlapping leaves found:", $leave->toArray());
+        foreach ($leave as $l) {
+            if (fullLeaveCheck($l)) {
+                return true;
+            }
+            else {
+                $leaveStart = Carbon::parse($l->from_date);
+                $leaveEnd = Carbon::parse($l->to_date);
+                $fromDateTime = Carbon::parse($fromDate);
+                $toDateTime = Carbon::parse($toDate);
+    
+                $newLeave = new \stdClass();
+                $newLeave->from_date = $fromDateTime;
+                $newLeave->to_date = $toDateTime;
+                if(fullLeavecheck($newLeave)){
+                    $newLeave->to_date = $newLeave->from_date->copy()->endOfDay();
+                }
+
+                if (leaveOverlap($newLeave->from_date, $newLeave->to_date, $leaveStart, $leaveEnd)) {
+                    return true;
+                }
+            }
+        }
+    }
+}
+function leaveOverlap($newStart, $newEnd, $existingStart, $existingEnd)
+{
+    return
+        $existingStart->lt($newEnd) &&
+        $existingEnd->gt($newStart);
+}
+function hasTime($date)
+{
+    $date = Carbon::parse($date);
+
+    return !(
+        $date->hour === 0 &&
+        $date->minute === 0 &&
+        $date->second === 0
+    );
+}
+function fullLeaveCheck($leave)
+{
+    if (!hasTime($leave->from_date) && !hasTime($leave->to_date)) {
+        return true;
+    }
+    return false;
 }
 function getProfilePicName($emp_code)
 {

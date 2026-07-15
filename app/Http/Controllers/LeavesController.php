@@ -393,14 +393,6 @@ class LeavesController extends Controller
             if(! $this->checkBalance($emp_code, $request->input('leave_type'), 0.5)){
                 return response()->json(['error' => 'You do not have the leave balance.']);
             }
-            if(checkMultipleLeaves(
-                $emp_code,
-                date('Y-m-d', strtotime($request->input('single_leave_date'))),
-                date('Y-m-d', strtotime($request->input('single_leave_date'))),
-                $request->input('leave_type')
-            )){
-                return response()->json(['error' => 'You have already applied for leave on the selected date.']);
-            }
             $leave = new Leave();
             $leave->leave_id = self::getNextLeaveId();
             $leave->leave_date = Carbon::today();
@@ -445,6 +437,15 @@ class LeavesController extends Controller
                     return response()->json(['error' => 'Custom OD end time must be after start time.']);
                 }
 
+                if(checkMultipleLeaves(
+                    $emp_code,
+                    $customStart,
+                    $customEnd,
+                    $request->input('leave_type')
+                )){
+                    return response()->json(['error' => 'You have already applied for leave on the selected date.']);
+                }
+
                 $leave->from_date = $customStart;
                 $leave->to_date = $customEnd;
             } elseif((int) $request->input('leave_interval') === 3){
@@ -460,12 +461,37 @@ class LeavesController extends Controller
                     return response()->json(['error' => 'Custom half leave must end within office timing.']);
                 }
 
+                if(checkMultipleLeaves(
+                    $emp_code,
+                    $customStart,
+                    $customEnd,
+                    $request->input('leave_type')
+                )){
+                    return response()->json(['error' => 'You have already applied for leave on the selected date.']);
+                }
+
                 $leave->from_date = $customStart;
                 $leave->to_date = $customEnd;
             } elseif((int) $request->input('leave_interval') === 1){
+                if(checkMultipleLeaves(
+                    $emp_code,
+                    $startTime,
+                    $midPoint,
+                    $request->input('leave_type')
+                )){
+                    return response()->json(['error' => 'You have already applied for leave on the selected date.']);
+                }
                 $leave->from_date = $startTime;
                 $leave->to_date = $midPoint;
             } else {
+                if(checkMultipleLeaves(
+                    $emp_code,
+                    $midPoint,
+                    $endTime,
+                    $request->input('leave_type')
+                )){
+                    return response()->json(['error' => 'You have already applied for leave on the selected date.']);
+                }
                 $leave->from_date = $midPoint;
                 $leave->to_date = $endTime;
             }
@@ -492,14 +518,6 @@ class LeavesController extends Controller
             if(! $this->checkShortBalance($emp_code)){
                 return response()->json(['error' => 'You already availed your short leave.']);
             }
-            if(checkMultipleLeaves(
-                $emp_code,
-                date('Y-m-d', strtotime($request->input('single_leave_date'))),
-                date('Y-m-d', strtotime($request->input('single_leave_date'))),
-                8
-            )){
-                return response()->json(['error' => 'You have already applied for leave on the selected date.']);
-            }
             $leave = new Leave();
             $leave->leave_id = self::getNextLeaveId();
             $leave->leave_date = Carbon::today();
@@ -514,6 +532,14 @@ class LeavesController extends Controller
             }
             $fromTime = Carbon::parse("$leaveDate $fromTime");
             $toTime = Carbon::parse("$leaveDate $toTime");
+            if(checkMultipleLeaves(
+                $emp_code,
+                $fromTime,
+                $toTime,
+                8
+            )){
+                return response()->json(['error' => 'You have already applied for leave on the selected date.']);
+            }
             $leave->from_date = $fromTime;
             $leave->to_date = $toTime;
             $leave->l_day = 1;
