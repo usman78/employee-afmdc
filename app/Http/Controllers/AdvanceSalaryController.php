@@ -47,15 +47,24 @@ class AdvanceSalaryController extends Controller
     {
         $this->ensureOwnEmployee($empCode);
 
-        $summary = $this->buildSummary($empCode);
-
-        if (! $summary['is_eligible']) {
+        if (session()->has('advance_salary_submit_in_progress')) {
             return back()
                 ->withInput()
-                ->with('error', $summary['message']);
+                ->with('error', 'Your application is already being processed. Please wait a moment and try again.');
         }
 
-        $validated = $request->validate([
+        session()->put('advance_salary_submit_in_progress', true);
+
+        try {
+            $summary = $this->buildSummary($empCode);
+
+            if (! $summary['is_eligible']) {
+                return back()
+                    ->withInput()
+                    ->with('error', $summary['message']);
+            }
+
+            $validated = $request->validate([
             'requested_amount' => [
                 'required',
                 'integer',
@@ -65,29 +74,32 @@ class AdvanceSalaryController extends Controller
             'reason' => 'required|string|max:1000',
         ]);
 
-        $application = AdvanceSalaryApplication::create([
-            'id' => getIncrementedId('ADVANCE_SALARY_APPLICATIONS', 'ID'),
-            'emp_code' => $empCode,
-            'salary_month' => $summary['salary_month'],
-            'gross_salary' => $summary['gross_salary'],
-            'max_amount' => $summary['max_amount'],
-            'requested_amount' => (int) $validated['requested_amount'],
-            'eligible_days' => $summary['eligible_days'],
-            'reason' => $validated['reason'],
-            'status' => AdvanceSalaryApplication::STATUS_PENDING,
-            'applied_at' => now(),
-            'post_flag' => 'Y',
-        ]);
+            $application = AdvanceSalaryApplication::create([
+                'id' => getIncrementedId('ADVANCE_SALARY_APPLICATIONS', 'ID'),
+                'emp_code' => $empCode,
+                'salary_month' => $summary['salary_month'],
+                'gross_salary' => $summary['gross_salary'],
+                'max_amount' => $summary['max_amount'],
+                'requested_amount' => (int) $validated['requested_amount'],
+                'eligible_days' => $summary['eligible_days'],
+                'reason' => $validated['reason'],
+                'status' => AdvanceSalaryApplication::STATUS_PENDING,
+                'applied_at' => now(),
+                'post_flag' => 'Y',
+            ]);
 
-        $hodCode = hisBoss($empCode);
-        if ($hodCode) {
-            $hod = User::where('emp_code', $hodCode)->first();
-            $hod?->notify(new AdvanceSalarySubmittedNotification($application));
+            $hodCode = hisBoss($empCode);
+            if ($hodCode) {
+                $hod = User::where('emp_code', $hodCode)->first();
+                $hod?->notify(new AdvanceSalarySubmittedNotification($application));
+            }
+
+            return redirect()
+                ->route('advance-salary.create', $empCode)
+                ->with('success', 'Advance salary application submitted successfully and sent to HOD for approval.');
+        } finally {
+            session()->forget('advance_salary_submit_in_progress');
         }
-
-        return redirect()
-            ->route('advance-salary.create', $empCode)
-            ->with('success', 'Advance salary application submitted successfully and sent to HOD for approval.');
     }
 
     public function hodShow($application)

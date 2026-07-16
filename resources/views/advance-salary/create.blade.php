@@ -80,7 +80,7 @@
             {{ $summary['message'] }}
           </div>
 
-          <form action="{{ route('advance-salary.store', $employee->emp_code) }}" method="POST" class="mt-4">
+          <form id="advance-salary-form" action="{{ route('advance-salary.store', $employee->emp_code) }}" method="POST" class="mt-4">
             @csrf
             <div class="row">
               <div class="col-md-4 mb-3">
@@ -113,7 +113,7 @@
               <a href="{{ route('home') }}" class="btn btn-primary">
                 <i class="fa-solid fa-backward"></i> Back
               </a>
-              <button type="submit" class="btn btn-success" {{ $summary['is_eligible'] ? '' : 'disabled' }}>
+              <button id="advance-salary-submit" type="submit" class="btn btn-success" {{ $summary['is_eligible'] ? '' : 'disabled' }}>
                 <i class="fa-solid fa-money-bill-transfer"></i> Submit Application
               </button>
             </div>
@@ -170,4 +170,27 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('advance-salary-form');
+    const submitButton = document.getElementById('advance-salary-submit');
+
+    if (!form || !submitButton) {
+      return;
+    }
+
+    form.addEventListener('submit', function () {
+      if (submitButton.disabled) {
+        return false;
+      }
+
+      submitButton.disabled = true;
+      const originalText = submitButton.innerHTML;
+      submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+
+      submitButton.dataset.originalText = originalText;
+    });
+  });
+</script>
 @endsection
