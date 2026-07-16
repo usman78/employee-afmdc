@@ -482,12 +482,13 @@ class AdvanceSalaryController extends Controller
         $today = Carbon::today();
         $start = $today->copy()->startOfMonth();
         $salaryMonth = $today->format('Y-m');
+        $daysInMonth = Carbon::createFromFormat('Y-m', $salaryMonth)->daysInMonth;
         $eligibleDays = $this->eligibleDays($empCode, $start, $today);
         $grossSalary = Salary::grossSalaryFor($empCode);
 
         $maxAmount = $grossSalary === null
             ? 0
-            : min(self::ABSOLUTE_MAX_AMOUNT, (int) floor(($grossSalary / 30) * self::MIN_ELIGIBLE_DAYS));
+            : min(self::ABSOLUTE_MAX_AMOUNT, (int) floor(($grossSalary / $daysInMonth) * self::MIN_ELIGIBLE_DAYS));
 
         $alreadyRequested = (float) AdvanceSalaryApplication::where('emp_code', $empCode)
             ->where('salary_month', $salaryMonth)
@@ -574,7 +575,9 @@ class AdvanceSalaryController extends Controller
 
     public function salaryPayableAtApplication(AdvanceSalaryApplication $application): int
     {
-        return (int) floor(((float) $application->gross_salary / 30) * (int) $application->eligible_days);
+        $daysInMonth = Carbon::createFromFormat('Y-m', (string) $application->salary_month)->daysInMonth;
+
+        return (int) floor(((float) $application->gross_salary / $daysInMonth) * (int) $application->eligible_days);
     }
 
     private function eligibleDays($empCode, Carbon $start, Carbon $end): int
