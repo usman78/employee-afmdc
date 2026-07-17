@@ -45,33 +45,21 @@
 
           <div class="advance-summary mt-4 mb-4">
             <div class="row gy-3">
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <div>Employee</div>
                 <strong>{{ capitalizeWords($employee->name) }} ({{ $employee->emp_code }})</strong>
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <div>Application Month</div>
                 <strong>{{ \Carbon\Carbon::createFromFormat('Y-m', $summary['salary_month'])->format('F Y') }}</strong>
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <div>Eligible Days</div>
                 <strong>{{ $summary['eligible_days'] }} / {{ $summary['required_days'] }}</strong>
               </div>
-              <div class="col-md-4">
-                <div>Gross Salary</div>
-                <strong>
-                  {{-- {{ $summary['gross_salary'] === null ? 'Not found' : 'PKR ' . number_format($summary['gross_salary']) }} --}}
-                  {{ $summary['gross_salary'] === null ? 'Not found' : 'PKR ' . str_repeat('*', strlen(number_format($summary['gross_salary']))) }}
-                </strong>
-              </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <div>Monthly Advance Limit</div>
                 <strong>PKR {{ number_format($summary['max_amount']) }}</strong>
-              </div>
-              <div class="col-md-4">
-                <div>Remaining Limit</div>
-                {{-- <strong>PKR {{ number_format($summary['remaining_limit']) }}</strong> --}}
-                <strong>PKR {{ str_repeat('*', strlen(number_format($summary['remaining_limit']))) }}</strong>
               </div>
             </div>
           </div>
@@ -91,11 +79,11 @@
                   name="requested_amount"
                   class="form-control"
                   min="1"
-                  max="{{ (int) $summary['remaining_limit'] }}"
+                  max="{{ (int) $summary['max_amount'] }}"
                   value="{{ old('requested_amount') }}"
                   {{ $summary['is_eligible'] ? 'required' : 'disabled' }}
                 >
-                <small class="text-muted">Maximum allowed: PKR {{ number_format($summary['remaining_limit']) }}</small>
+                <small class="text-muted">Maximum allowed: PKR {{ number_format($summary['max_amount']) }}</small>
               </div>
               <div class="col-md-8 mb-3">
                 <label for="reason" class="form-label">Reason</label>

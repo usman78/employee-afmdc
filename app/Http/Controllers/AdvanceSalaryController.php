@@ -69,7 +69,7 @@ class AdvanceSalaryController extends Controller
                 'required',
                 'integer',
                 'min:1',
-                'max:' . $summary['remaining_limit'],
+                'max:' . $summary['max_amount'],
             ],
             'reason' => 'required|string|max:1000',
         ]);
@@ -524,16 +524,16 @@ class AdvanceSalaryController extends Controller
             ? 0
             : min(self::ABSOLUTE_MAX_AMOUNT, (int) floor(($grossSalary / $daysInMonth) * self::MIN_ELIGIBLE_DAYS));
 
-        $alreadyRequested = (float) AdvanceSalaryApplication::where('emp_code', $empCode)
+        $alreadyRequested = (bool) AdvanceSalaryApplication::where('emp_code', $empCode)
             ->where('salary_month', $salaryMonth)
             ->whereIn('status', AdvanceSalaryApplication::activeStatuses())
-            ->selectRaw('NVL(SUM(NVL(SANCTIONED_AMOUNT, REQUESTED_AMOUNT)), 0) AS total')
-            ->value('total');
+            // ->selectRaw('NVL(SUM(NVL(SANCTIONED_AMOUNT, REQUESTED_AMOUNT)), 0) AS total')
+            ->exists();
 
-        $remainingLimit = max(0, $maxAmount - $alreadyRequested);
+        // $remainingLimit = max(0, $maxAmount - $alreadyRequested);
         $isEligible = $eligibleDays >= self::MIN_ELIGIBLE_DAYS
             && $grossSalary !== null
-            && $remainingLimit > 0;
+            && $alreadyRequested === false;
 
         return [
             'salary_month' => $salaryMonth,
@@ -545,13 +545,13 @@ class AdvanceSalaryController extends Controller
             'absolute_max_amount' => self::ABSOLUTE_MAX_AMOUNT,
             'max_amount' => $maxAmount,
             'already_requested' => $alreadyRequested,
-            'remaining_limit' => $remainingLimit,
+            // 'remaining_limit' => $remainingLimit,
             'is_eligible' => $isEligible,
-            'message' => $this->eligibilityMessage($eligibleDays, $grossSalary, $remainingLimit),
+            'message' => $this->eligibilityMessage($eligibleDays, $grossSalary, $alreadyRequested),
         ];
     }
 
-    private function eligibilityMessage(int $eligibleDays, ?float $grossSalary, float $remainingLimit): string
+    private function eligibilityMessage(int $eligibleDays, ?float $grossSalary, bool $alreadyRequested): string
     {
         if ($eligibleDays < self::MIN_ELIGIBLE_DAYS) {
             return 'Advance salary is enabled after 15 eligible days in the current month.';
@@ -561,8 +561,8 @@ class AdvanceSalaryController extends Controller
             return 'Gross salary record was not found, so the advance limit cannot be calculated.';
         }
 
-        if ($remainingLimit <= 0) {
-            return 'Your current month advance salary limit has already been used.';
+        if ($alreadyRequested) {
+            return 'You have already applied for advance salary for the current month. You cannot apply again.';
         }
 
         return 'You are eligible to apply for advance salary for the current month.';
