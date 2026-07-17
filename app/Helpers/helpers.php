@@ -286,6 +286,14 @@ function getEmployeeNameAndPicture($emp_code)
 
     return $nameAndPic;
 }
+function getEmployeeName($emp_code)
+{
+    $name = \DB::table('pay_pers')
+        ->where('emp_code', $emp_code)
+        ->value('name');
+
+    return $name;
+}
 function checkTimetableAccess($emp_code)
 {
     $access = [851, 199, 883, 856, 1045, 1171];

@@ -56,19 +56,16 @@
         <th>Designation</th>
         <th>Department</th>
         <th>Days Worked</th>
-        <th>Requested</th>
-        <th>Monthly Salary</th>
-        <th>Salary Payable</th>
-        <th>Sanctioned Amount</th>
-        <th>HR Approved By</th>
-        <th>Accounts Approved By</th>
-      </tr>
+        <th>Requested (PKR)</th>
+        <th>Monthly Salary (PKR)</th>
+        <th>Sanctioned Amount (PKR)</th>
+        <th>HOD Approval By</th>
+        <th>HR Approval By</th>
+        <th>Accounts Approval By</th>
+      </tr> 
     </thead>
     <tbody>
       @forelse($applications as $application)
-        @php
-          $salaryPayable = (int) floor(((float) $application->gross_salary / 30) * (int) $application->eligible_days);
-        @endphp
         <tr>
           <td>{{ $loop->iteration }}</td> 
           <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
@@ -78,10 +75,10 @@
           <td class="text-right">{{ $application->eligible_days }}</td>
           <td class="text-right">{{ number_format($application->requested_amount) }}</td>
           <td class="text-right">{{ number_format($application->gross_salary) }}</td>
-          <td class="text-right">{{ number_format($salaryPayable) }}</td>
           <td class="text-right">{{ number_format($application->sanctioned_amount) }}</td>
-          <td>{{ $application->hrApprover ? capitalizeWords($application->hrApprover->name) : '-' }}</td>
-          <td>{{ $application->accountsApprover ? capitalizeWords($application->accountsApprover->name) : '-' }}</td>
+          <td>{{ capitalizeWords(getEmployeeName($application->hod_approved_by)) . ' (' . $application->hod_approved_by . ')' }}</td>
+          <td>{{ $application->hrApprover ? capitalizeWords($application->hrApprover->name) . ' (' . $application->hr_approved_by . ')' : '-' }}</td>
+          <td>{{ $application->accountsApprover ? capitalizeWords($application->accountsApprover->name) . ' (' . $application->accounts_approved_by . ')' : '-' }}</td>
         </tr>
       @empty
         <tr>
@@ -90,9 +87,9 @@
       @endforelse
 
       <tr class="total-row">
-        <td colspan="9" class="text-right">Total Sanctioned Amount</td>
+        <td colspan="8" class="text-right">Total Sanctioned Amount</td>
         <td class="text-right">{{ number_format($totalSanctioned) }}</td>
-        <td colspan="2"></td>
+        <td colspan="3"></td>
       </tr>
     </tbody>
   </table>

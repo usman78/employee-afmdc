@@ -190,8 +190,20 @@ class AdvanceSalaryController extends Controller
             ->orderByDesc('applied_at')
             ->get();
 
+        $onRollApplications = $applications->filter(function ($application) {
+            return $application->emp_type === '1';
+        })->values();
+
+        $dailyWagerApplications = $applications->filter(function ($application) {
+            return $application->emp_type === '2';
+        })->values();
+
+        // dd($onRollApplications, $dailyWagerApplications);
+
         return view('advance-salary.report', [
             'applications' => $applications,
+            'onRollApplications' => $onRollApplications,
+            'dailyWagerApplications' => $dailyWagerApplications,
             'month' => $month,
             'status' => $status,
             'statuses' => $this->hrReportStatuses(),
@@ -275,8 +287,18 @@ class AdvanceSalaryController extends Controller
             ->orderByDesc('hr_approved_at')
             ->get();
 
+        $onRollApplications = $applications->filter(function ($application) {
+            return $application->emp_type === '1';
+        })->values();
+
+        $dailyWagerApplications = $applications->filter(function ($application) {
+            return $application->employee->emp_type === '2';
+        })->values();
+
         return view('advance-salary.accounts-report', [
             'applications' => $applications,
+            'onRollApplications' => $onRollApplications,
+            'dailyWagerApplications' => $dailyWagerApplications,
             'month' => $month,
             'status' => $status,
             'statuses' => $this->accountsReportStatuses(),

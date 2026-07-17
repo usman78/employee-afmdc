@@ -18,6 +18,9 @@
   .accounts-report-table textarea {
     min-width: 130px;
   }
+  .portfolio-details .portfolio-info ul li {
+    margin-top: 10px;
+  }
 @endpush
 
 @section('content')
@@ -73,66 +76,141 @@
             </div>
           </form>
 
-          <div class="table-responsive">
-            <table class="table accounts-report-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Name</th>
-                  <th>Code</th>
-                  <th>Designation</th>
-                  <th>Department</th>
-                  <th>Days Worked</th>
-                  <th>Requested</th>
-                  <th>Monthly Salary</th>
-                  <th>Salary Payable</th>
-                  <th>Sanctioned by HR</th>
-                  <th>HR Approved By</th>
-                  <th>Status</th>
-                  <th>Accounts Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                @forelse($applications as $application)
-                  @php
-                    $salaryPayable = (int) floor(((float) $application->gross_salary / 30) * (int) $application->eligible_days);
-                    $canAccountsAct = $application->status === AdvanceSalaryApplication::STATUS_HR_APPROVED;
-                  @endphp
-                  <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
-                    <td>{{ $application->emp_code }}</td>
-                    <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
-                    <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
-                    <td>{{ $application->eligible_days }}</td>
-                    <td>PKR {{ number_format($application->requested_amount) }}</td>
-                    <td>PKR {{ number_format($application->gross_salary) }}</td>
-                    <td>PKR {{ number_format($salaryPayable) }}</td>
-                    <td>PKR {{ number_format($application->sanctioned_amount) }}</td>
-                    <td>{{ $application->hrApprover ? capitalizeWords($application->hrApprover->name) : '-' }}</td>
-                    <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
-                    <td>
-                      @if($canAccountsAct)
-                        <form action="{{ route('advance-salary.accounts-decision', $application->id) }}" method="POST">
-                          @csrf
-                          <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
-                          <div class="d-flex gap-1">
-                            <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
-                            <button type="submit" name="decision" value="reject" class="btn btn-sm btn-danger">Reject</button>
-                          </div>
-                        </form>
-                      @else
-                        <small class="text-muted">{{ $application->accounts_remarks ?: $application->hr_remarks ?: '-' }}</small>
-                      @endif
-                    </td>
-                  </tr>
-                @empty
-                  <tr>
-                    <td colspan="12" class="text-center text-muted">No HR approved advance salary applications found for this month.</td>
-                  </tr>
-                @endforelse
-              </tbody>
-            </table>
+          <ul class="nav nav-tabs mt-4 mb-3" id="advanceSalaryAccountsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <a class="nav-link active" id="accounts-on-roll-tab" data-toggle="tab" href="#accounts-on-roll" role="tab" aria-controls="accounts-on-roll" aria-selected="true">
+                On Roll Applications
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="accounts-daily-wager-tab" data-toggle="tab" href="#accounts-daily-wager" role="tab" aria-controls="accounts-daily-wager" aria-selected="false">
+                Daily Wager Applications
+              </a>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+            <div class="tab-pane fade show active" id="accounts-on-roll" role="tabpanel" aria-labelledby="accounts-on-roll-tab">
+              <div class="table-responsive">
+                <table class="table accounts-report-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Name</th>
+                      <th>Code</th>
+                      <th>Designation</th>
+                      <th>Department</th>
+                      <th>Days Worked</th>
+                      <th>Requested (PKR)</th>
+                      <th>Monthly Salary (PKR)</th>
+                      <th>Sanctioned by HR (PKR)</th>
+                      <th>HR Approved By</th>
+                      <th>Status</th>
+                      <th>Accounts Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @forelse($onRollApplications as $application)
+                      @php
+                        $canAccountsAct = $application->status === AdvanceSalaryApplication::STATUS_HR_APPROVED;
+                      @endphp
+                      <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
+                        <td>{{ $application->emp_code }}</td>
+                        <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
+                        <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
+                        <td>{{ $application->eligible_days }}</td>
+                        <td>{{ number_format($application->requested_amount) }}</td>
+                        <td>{{ number_format($application->gross_salary) }}</td>
+                        <td>{{ number_format($application->sanctioned_amount) }}</td>
+                        <td>{{ $application->hrApprover ? capitalizeWords($application->hrApprover->name) : '-' }}</td>
+                        <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
+                        <td>
+                          @if($canAccountsAct)
+                            <form action="{{ route('advance-salary.accounts-decision', $application->id) }}" method="POST">
+                              @csrf
+                              <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
+                              <div class="d-flex gap-1">
+                                <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
+                                <button type="submit" name="decision" value="reject" class="btn btn-sm btn-danger">Reject</button>
+                              </div>
+                            </form>
+                          @else
+                            <small class="text-muted">{{ $application->accounts_remarks ?: $application->hr_remarks ?: '-' }}</small>
+                          @endif
+                        </td>
+                      </tr>
+                    @empty
+                      <tr>
+                        <td colspan="12" class="text-center text-muted">No on-roll HR approved advance salary applications found for this month.</td>
+                      </tr>
+                    @endforelse
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="tab-pane fade" id="accounts-daily-wager" role="tabpanel" aria-labelledby="accounts-daily-wager-tab">
+              <div class="table-responsive">
+                <table class="table accounts-report-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Name</th>
+                      <th>Code</th>
+                      <th>Designation</th>
+                      <th>Department</th>
+                      <th>Days Worked</th>
+                      <th>Requested (PKR)</th>
+                      <th>Monthly Salary (PKR)</th>
+                      <th>Sanctioned by HR (PKR)</th>
+                      <th>HR Approved By</th>
+                      <th>Status</th>
+                      <th>Accounts Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @forelse($dailyWagerApplications as $application)
+                      @php
+                        $canAccountsAct = $application->status === AdvanceSalaryApplication::STATUS_HR_APPROVED;
+                      @endphp
+                      <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
+                        <td>{{ $application->emp_code }}</td>
+                        <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
+                        <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
+                        <td>{{ $application->eligible_days }}</td>
+                        <td>{{ number_format($application->requested_amount) }}</td>
+                        <td>{{ number_format($application->gross_salary) }}</td>
+                        <td>{{ number_format($application->sanctioned_amount) }}</td>
+                        <td>{{ $application->hrApprover ? capitalizeWords($application->hrApprover->name) : '-' }}</td>
+                        <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
+                        <td>
+                          @if($canAccountsAct)
+                            <form action="{{ route('advance-salary.accounts-decision', $application->id) }}" method="POST">
+                              @csrf
+                              <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
+                              <div class="d-flex gap-1">
+                                <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
+                                <button type="submit" name="decision" value="reject" class="btn btn-sm btn-danger">Reject</button>
+                              </div>
+                            </form>
+                          @else
+                            <small class="text-muted">{{ $application->accounts_remarks ?: $application->hr_remarks ?: '-' }}</small>
+                          @endif
+                        </td>
+                      </tr>
+                    @empty
+                      <tr>
+                        <td colspan="12" class="text-center text-muted">No daily-wager HR approved advance salary applications found for this month.</td>
+                      </tr>
+                    @endforelse
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>

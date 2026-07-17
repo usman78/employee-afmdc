@@ -19,6 +19,9 @@
   .advance-report-table textarea {
     min-width: 130px;
   }
+  .portfolio-details .portfolio-info ul li {
+    margin-top: 10px;
+  }
 @endpush
 
 @section('content')
@@ -71,80 +74,169 @@
             </div>
           </form>
 
-          <div class="table-responsive">
-            <table class="table advance-report-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Name</th>
-                  <th>Code</th>
-                  <th>Designation</th>
-                  <th>Department</th>
-                  <th>Days Worked</th>
-                  <th>Requested</th>
-                  <th>Monthly Salary</th>
-                  <th>Salary Payable</th>
-                  <th>Advance Limit</th>
-                  <th>Sanctioned</th>
-                  <th>Status</th>
-                  <th>HR Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                @forelse($applications as $application)
-                  @php
-                    $salaryPayable = (int) floor(((float) $application->gross_salary / 30) * (int) $application->eligible_days);
-                    $canHrAct = $application->status === AdvanceSalaryApplication::STATUS_HOD_APPROVED;
-                  @endphp
-                  <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
-                    <td>{{ $application->emp_code }}</td>
-                    <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
-                    <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
-                    <td>{{ $application->eligible_days }}</td>
-                    <td>PKR {{ number_format($application->requested_amount) }}</td>
-                    <td>PKR {{ number_format($application->gross_salary) }}</td>
-                    <td>PKR {{ number_format($salaryPayable) }}</td>
-                    <td>PKR {{ number_format($application->max_amount) }}</td>
-                    <td>
-                      @if($application->sanctioned_amount)
-                        PKR {{ number_format($application->sanctioned_amount) }}
-                      @else
-                        -
-                      @endif
-                    </td>
-                    <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
-                    <td>
-                      @if($canHrAct)
-                        <form action="{{ route('advance-salary.hr-decision', $application->id) }}" method="POST">
-                          @csrf
-                          <input
-                            type="number"
-                            name="sanctioned_amount"
-                            class="form-control form-control-sm mb-2"
-                            min="1"
-                            max="{{ (int) $application->max_amount }}"
-                            value="{{ old('sanctioned_amount', (int) min($application->requested_amount, $application->max_amount)) }}"
-                          >
-                          <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
-                          <div class="d-flex gap-1">
-                            <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
-                            <button type="submit" name="decision" value="reject" class="btn btn-sm btn-danger">Reject</button>
-                          </div>
-                        </form>
-                      @else
-                        <small class="text-muted">{{ $application->hr_remarks ?: $application->hod_remarks ?: '-' }}</small>
-                      @endif
-                    </td>
-                  </tr>
-                @empty
-                  <tr>
-                    <td colspan="12" class="text-center text-muted">No advance salary applications found for this month.</td>
-                  </tr>
-                @endforelse
-              </tbody>
-            </table>
+          <ul class="nav nav-tabs mt-4 mb-3" id="advanceSalaryTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <a class="nav-link active" id="on-roll-tab" data-toggle="tab" href="#on-roll" role="tab" aria-controls="on-roll" aria-selected="true">
+                On Roll Applications
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="daily-wager-tab" data-toggle="tab" href="#daily-wager" role="tab" aria-controls="daily-wager" aria-selected="false">
+                Daily Wager Applications
+              </a>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+            <div class="tab-pane fade show active" id="on-roll" role="tabpanel" aria-labelledby="on-roll-tab">
+              <div class="table-responsive">
+                <table class="table advance-report-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Name</th>
+                      <th>Code</th>
+                      <th>Designation</th>
+                      <th>Department</th>
+                      <th>Days Worked</th>
+                      <th>Requested (PKR)</th>
+                      <th>Monthly Salary (PKR)</th>
+                      <th>Advance Limit (PKR)</th>
+                      <th>Sanctioned (PKR)</th>
+                      <th>Status</th>
+                      <th>HR Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @forelse($onRollApplications as $application)
+                      @php
+                        $canHrAct = $application->status === AdvanceSalaryApplication::STATUS_HOD_APPROVED;
+                      @endphp
+                      <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
+                        <td>{{ $application->emp_code }}</td>
+                        <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
+                        <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
+                        <td>{{ $application->eligible_days }}</td>
+                        <td>{{ number_format($application->requested_amount) }}</td>
+                        <td>{{ number_format($application->gross_salary) }}</td>
+                        <td>{{ number_format($application->max_amount) }}</td>
+                        <td>
+                          @if($application->sanctioned_amount)
+                            {{ number_format($application->sanctioned_amount) }}
+                          @else
+                            -
+                          @endif
+                        </td>
+                        <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
+                        <td>
+                          @if($canHrAct)
+                            <form action="{{ route('advance-salary.hr-decision', $application->id) }}" method="POST">
+                              @csrf
+                              <input
+                                type="number"
+                                name="sanctioned_amount"
+                                class="form-control form-control-sm mb-2"
+                                min="1"
+                                max="{{ (int) $application->max_amount }}"
+                                value="{{ old('sanctioned_amount', (int) min($application->requested_amount, $application->max_amount)) }}"
+                              >
+                              <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
+                              <div class="d-flex gap-1">
+                                <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
+                                <button type="submit" name="decision" value="reject" class="btn btn-sm btn-danger">Reject</button>
+                              </div>
+                            </form>
+                          @else
+                            <small class="text-muted">{{ $application->hr_remarks ?: $application->hod_remarks ?: '-' }}</small>
+                          @endif
+                        </td>
+                      </tr>
+                    @empty
+                      <tr>
+                        <td colspan="12" class="text-center text-muted">No on-roll advance salary applications found for this month.</td>
+                      </tr>
+                    @endforelse
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="tab-pane fade" id="daily-wager" role="tabpanel" aria-labelledby="daily-wager-tab">
+              <div class="table-responsive">
+                <table class="table advance-report-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Name</th>
+                      <th>Code</th>
+                      <th>Designation</th>
+                      <th>Department</th>
+                      <th>Days Worked</th>
+                      <th>Requested (PKR)</th>
+                      <th>Monthly Salary (PKR)</th>
+                      <th>Advance Limit (PKR)</th>
+                      <th>Sanctioned (PKR)</th>
+                      <th>Status</th>
+                      <th>HR Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @forelse($dailyWagerApplications as $application)
+                      @php
+                        $canHrAct = $application->status === AdvanceSalaryApplication::STATUS_HOD_APPROVED;
+                      @endphp
+                      <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
+                        <td>{{ $application->emp_code }}</td>
+                        <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
+                        <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
+                        <td>{{ $application->eligible_days }}</td>
+                        <td>{{ number_format($application->requested_amount) }}</td>
+                        <td>{{ number_format($application->gross_salary) }}</td>
+                        <td>{{ number_format($application->max_amount) }}</td>
+                        <td>
+                          @if($application->sanctioned_amount)
+                            {{ number_format($application->sanctioned_amount) }}
+                          @else
+                            -
+                          @endif
+                        </td>
+                        <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
+                        <td>
+                          @if($canHrAct)
+                            <form action="{{ route('advance-salary.hr-decision', $application->id) }}" method="POST">
+                              @csrf
+                              <input
+                                type="number"
+                                name="sanctioned_amount"
+                                class="form-control form-control-sm mb-2"
+                                min="1"
+                                max="{{ (int) $application->max_amount }}"
+                                value="{{ old('sanctioned_amount', (int) min($application->requested_amount, $application->max_amount)) }}"
+                              >
+                              <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
+                              <div class="d-flex gap-1">
+                                <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
+                                <button type="submit" name="decision" value="reject" class="btn btn-sm btn-danger">Reject</button>
+                              </div>
+                            </form>
+                          @else
+                            <small class="text-muted">{{ $application->hr_remarks ?: $application->hod_remarks ?: '-' }}</small>
+                          @endif
+                        </td>
+                      </tr>
+                    @empty
+                      <tr>
+                        <td colspan="12" class="text-center text-muted">No daily-wager advance salary applications found for this month.</td>
+                      </tr>
+                    @endforelse
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
