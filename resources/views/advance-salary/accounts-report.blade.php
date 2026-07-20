@@ -103,6 +103,7 @@
                       <th>Days Worked</th>
                       <th>Requested (PKR)</th>
                       <th>Monthly Salary (PKR)</th>
+                      <th>Advance Limit (PKR)</th>
                       <th>Sanctioned by HR (PKR)</th>
                       <th>HR Approved By</th>
                       <th>Status</th>
@@ -123,6 +124,7 @@
                         <td>{{ $application->eligible_days }}</td>
                         <td>{{ number_format($application->requested_amount) }}</td>
                         <td>{{ number_format($application->gross_salary) }}</td>
+                        <td>{{ number_format($application->max_amount) }}</td>
                         <td>{{ number_format($application->sanctioned_amount) }}</td>
                         <td>{{ $application->hrApprover ? capitalizeWords($application->hrApprover->name) : '-' }}</td>
                         <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
@@ -164,6 +166,7 @@
                       <th>Days Worked</th>
                       <th>Requested (PKR)</th>
                       <th>Monthly Salary (PKR)</th>
+                      <th>Advance Limit (PKR)</th>
                       <th>Sanctioned by HR (PKR)</th>
                       <th>HR Approved By</th>
                       <th>Status</th>
@@ -177,13 +180,14 @@
                       @endphp
                       <tr>
                         <td>{{ $loop->iteration }}</td>
-                        <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
+                        <td>{{ capitalizeWords($application->dailyWager->name ?? '') }}</td>
                         <td>{{ $application->emp_code }}</td>
-                        <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
-                        <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
+                        <td>{{ $application->dailyWager->designation->desg_short ?? '-' }}</td>
+                        <td>{{ $application->dailyWager->department->dept_desc ?? '-' }}</td>
                         <td>{{ $application->eligible_days }}</td>
                         <td>{{ number_format($application->requested_amount) }}</td>
                         <td>{{ number_format($application->gross_salary) }}</td>
+                        <td>{{ number_format($application->max_amount) }}</td>
                         <td>{{ number_format($application->sanctioned_amount) }}</td>
                         <td>{{ $application->hrApprover ? capitalizeWords($application->hrApprover->name) : '-' }}</td>
                         <td><span class="badge bg-secondary">{{ $application->status }}</span></td>

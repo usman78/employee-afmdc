@@ -130,6 +130,16 @@ class AdvanceSalaryController extends Controller
             ->orderByDesc('applied_at')
             ->get();
 
+        if (auth()->user()->isDailyWagerHod()) {
+            // include the application of daily wager employee (emp_code 1226) for the same month
+            $dailyWagerApplication = AdvanceSalaryApplication::with(['employee.designation', 'employee.department'])
+                ->where('emp_type', '2') // daily wager
+                ->where('salary_month', $month)
+                ->get();
+            // merge the daily wager application with the existing applications
+            $applications = $applications->merge($dailyWagerApplication);    
+        }
+
         return view('advance-salary.hod-index', [
             'applications' => $applications,
             'month' => $month,
@@ -283,8 +293,8 @@ class AdvanceSalaryController extends Controller
             ->when($status, function ($query) use ($status) {
                 $query->where('status', $status);
             })
-            ->orderByRaw("CASE WHEN STATUS = 'HR approved' THEN 1 WHEN STATUS = 'approved' THEN 2 ELSE 3 END")
-            ->orderByDesc('hr_approved_at')
+            // ->orderByRaw("CASE WHEN STATUS = 'HR approved' THEN 1 WHEN STATUS = 'approved' THEN 2 ELSE 3 END")
+            ->orderByRaw('CAST(emp_code AS NUMBER)')
             ->get();
 
         $onRollApplications = $applications->filter(function ($application) {
@@ -292,7 +302,7 @@ class AdvanceSalaryController extends Controller
         })->values();
 
         $dailyWagerApplications = $applications->filter(function ($application) {
-            return $application->employee->emp_type === '2';
+            return $application->emp_type === '2';
         })->values();
 
         return view('advance-salary.accounts-report', [
@@ -313,7 +323,7 @@ class AdvanceSalaryController extends Controller
         $applications = AdvanceSalaryApplication::with(['employee.designation', 'employee.department', 'hrApprover', 'accountsApprover'])
             ->where('salary_month', $month)
             ->where('status', AdvanceSalaryApplication::STATUS_APPROVED)
-            ->orderBy('emp_code')
+            ->orderByRaw('CAST(emp_code AS NUMBER)')
             ->get();
 
         $totalSanctioned = $applications->sum(fn ($application) => (float) $application->sanctioned_amount);
@@ -354,7 +364,7 @@ class AdvanceSalaryController extends Controller
                     }
                 });
             })
-            ->orderBy('emp_code')
+            ->orderByRaw('CAST(emp_code AS NUMBER)')
             ->get();
 
         if ($applications->isEmpty()) {
@@ -396,7 +406,7 @@ class AdvanceSalaryController extends Controller
                 "TRUNC(accounts_approved_at) >= TO_DATE(?, 'YYYY-MM-DD') AND TRUNC(accounts_approved_at) <= TO_DATE(?, 'YYYY-MM-DD')",
                 [$fromDate, $toDate]
             )
-            ->orderBy('emp_code')
+            ->orderByRaw('CAST(emp_code AS NUMBER)')
             ->get();
 
         if ($applications->isEmpty()) {
@@ -485,7 +495,10 @@ class AdvanceSalaryController extends Controller
 
     private function ensureHodCanApprove(AdvanceSalaryApplication $application): void
     {
-        if ((string) hisBoss($application->emp_code) !== (string) auth()->user()->emp_code) {
+        if (auth()->user()->isDailyWagerHod() && (string) $application->emp_type === '2') {
+            return; 
+        }
+        if ((string) hisBoss($application->emp_code) !== (string) auth()->user()->emp_code ) {
             abort(403);
         }
     }

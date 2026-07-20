@@ -70,7 +70,10 @@ class AdvanceSalaryApplication extends Model
     {
         return $this->belongsTo(Employee::class, 'emp_code', 'emp_code');
     }
-
+    public function dailyWager()
+    {
+        return $this->belongsTo(DailyWager::class, 'emp_code', 'emp_code');
+    }
     public function hodApprover()
     {
         return $this->belongsTo(User::class, 'hod_approved_by', 'emp_code');

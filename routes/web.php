@@ -207,10 +207,6 @@ Route::get('applications/{id}/{fileName}', [App\Http\Controllers\FilesController
     ->name('download-file');
 Route::get('admissions/{id}/{fileName}/{fileFormat}', [App\Http\Controllers\FilesController::class, 'downloadAdmissionFile'])->name('download-admission-file');    
 
-Route::get('/query', [HomeController::class, 'query'])
-    ->name('query.get');
-Route::post('/query', [HomeController::class, 'queryDown'])
-    ->name('query.post');
 Route::get('/testing', [TaskController::class, 'testing']);    
 
 Route::fallback(function () {

@@ -85,22 +85,4 @@ class HomeController extends Controller
         numberOfLeaveDays($attendanceRecords->from_date, $attendanceRecords->to_date);
         return response()->json(numberOfLeaveDays($attendanceRecords->from_date, $attendanceRecords->to_date));
     }
-
-    public function query(Request $request)
-    {
-        return view('query');
-    }
-
-    public function queryDown(Request $request)
-    {
-        $query = $request->input('query');
-        
-        $test = DB::select($query);
-        // dd($test);
-        // make the json response and send it to the view
-        $jsonResponse = json_encode($test);
-        // return response()->json($jsonResponse);
-
-        return view('testing', compact('jsonResponse'));
-    }
 }

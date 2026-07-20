@@ -189,10 +189,10 @@
                       @endphp
                       <tr>
                         <td>{{ $loop->iteration }}</td>
-                        <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
+                        <td>{{ capitalizeWords($application->dailyWager->name ?? '') }}</td>
                         <td>{{ $application->emp_code }}</td>
-                        <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
-                        <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
+                        <td>{{ $application->dailyWager->designation->desg_short ?? '-' }}</td>
+                        <td>{{ $application->dailyWager->department->dept_desc ?? '-' }}</td>
                         <td>{{ $application->eligible_days }}</td>
                         <td>{{ number_format($application->requested_amount) }}</td>
                         <td>{{ number_format($application->gross_salary) }}</td>

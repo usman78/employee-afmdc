@@ -68,10 +68,10 @@
       @forelse($applications as $application)
         <tr>
           <td>{{ $loop->iteration }}</td> 
-          <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
+          <td>{{ capitalizeWords($application->employee->name ?? $application->dailyWager->name ?? '') }}</td>
           <td>{{ $application->emp_code }}</td>
-          <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
-          <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
+          <td>{{ $application->employee->designation->desg_short ?? $application->dailyWager->designation->desg_short ?? '-' }}</td>
+          <td>{{ $application->employee->department->dept_desc ?? $application->dailyWager->department->dept_desc ?? '-' }}</td>
           <td class="text-right">{{ $application->eligible_days }}</td>
           <td class="text-right">{{ number_format($application->requested_amount) }}</td>
           <td class="text-right">{{ number_format($application->gross_salary) }}</td>
