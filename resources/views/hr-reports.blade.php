@@ -260,6 +260,12 @@
                     Overtime Report
                     </a>
                 </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <a href="{{ route('overtime.eligibility-report') }}" class="btn btn-primary w-100 text-nowrap">
+                    Overtime Eligibility
+                    </a>
+                </div>
             </div>
         </div>
       </div>

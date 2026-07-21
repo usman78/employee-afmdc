@@ -174,15 +174,17 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/advance-salary/{emp_code}', [AdvanceSalaryController::class, 'store'])->name('advance-salary.store');
     Route::post('/advance-salary/{emp_code}/{application}/revoke', [AdvanceSalaryController::class, 'revoke'])->name('advance-salary.revoke');
 
-    Route::get('/overtime/{emp_code}', [OvertimeController::class, 'create'])->name('overtime.create');
-    Route::post('/overtime/{emp_code}', [OvertimeController::class, 'store'])->name('overtime.store');
-    Route::post('/overtime/{application}/edit-minutes', [OvertimeController::class, 'editMinutes'])->name('overtime.edit-minutes');
     Route::get('/overtime-subordinate-applications', [OvertimeController::class, 'hodIndex'])->name('overtime.hod-index');
     Route::get('/overtime-approvals/{application}', [OvertimeController::class, 'hodShow'])->name('overtime.hod-show');
     Route::post('/overtime-approvals/{application}/decision', [OvertimeController::class, 'hodDecision'])->name('overtime.hod-decision');
     Route::get('/overtime-report', [OvertimeController::class, 'report'])->name('overtime.report');
+    Route::get('/overtime-eligibility-report', [OvertimeController::class, 'eligibilityReport'])->name('overtime.eligibility-report');
+    Route::get('/overtime-eligibility-report/download', [OvertimeController::class, 'downloadEligibilityReport'])->name('overtime.eligibility-download');
     Route::get('/overtime-report/download-approved', [OvertimeController::class, 'downloadApprovedReport'])->name('overtime.approved-download');
     Route::post('/overtime-report/{application}/decision', [OvertimeController::class, 'hrDecision'])->name('overtime.hr-decision');
+    Route::get('/overtime/{emp_code}', [OvertimeController::class, 'create'])->name('overtime.create');
+    Route::post('/overtime/{emp_code}', [OvertimeController::class, 'store'])->name('overtime.store');
+    Route::post('/overtime/{application}/edit-minutes', [OvertimeController::class, 'editMinutes'])->name('overtime.edit-minutes');
     Route::get('/finance/overtime-reports', [OvertimeController::class, 'financeReports'])->name('overtime.finance-reports');
     Route::get('/finance/overtime-report', [OvertimeController::class, 'financeReport'])->name('overtime.finance-report');
     Route::post('/finance/overtime-report/{application}/decision', [OvertimeController::class, 'financeDecision'])->name('overtime.finance-decision');

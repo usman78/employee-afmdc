@@ -259,6 +259,42 @@ class OvertimeController extends Controller
         ]);
     }
 
+    public function eligibilityReport(Request $request)
+    {
+        $this->ensureHr();
+
+        $month = $request->input('month', Carbon::now()->format('Y-m'));
+        $reportRows = $this->buildEligibilityReportRows($month);
+
+        return view('overtime.eligibility-report', [
+            'month' => $month,
+            'reportRows' => $reportRows,
+            'employeeCount' => $reportRows->count(),
+            'eligibleDateCount' => $reportRows->sum(fn ($row) => $row['eligible_rows']->count()),
+            'totalMinutes' => $reportRows->sum('total_minutes'),
+            'totalAmount' => $reportRows->sum('total_amount'),
+        ]);
+    }
+
+    public function downloadEligibilityReport(Request $request)
+    {
+        $this->ensureHr();
+
+        $month = $request->input('month', Carbon::now()->format('Y-m'));
+        $reportRows = $this->buildEligibilityReportRows($month);
+
+        $pdf = Pdf::loadView('pdf.overtime-eligibility-report', [
+            'month' => $month,
+            'reportRows' => $reportRows,
+            'employeeCount' => $reportRows->count(),
+            'eligibleDateCount' => $reportRows->sum(fn ($row) => $row['eligible_rows']->count()),
+            'totalMinutes' => $reportRows->sum('total_minutes'),
+            'totalAmount' => $reportRows->sum('total_amount'),
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream("overtime_eligibility_report_{$month}.pdf");
+    }
+
     public function hrDecision(Request $request, $application)
     {
         $this->ensureHr();
@@ -504,6 +540,32 @@ class OvertimeController extends Controller
             'eligible_rows' => $eligibleRows->values(),
             'message' => $this->eligibilityMessage($employee, $eligibleRows->count(), $grossSalary),
         ];
+    }
+
+    private function buildEligibilityReportRows(string $month): Collection
+    {
+        return User::with(['designation', 'department'])
+            ->whereNull('quit_stat')
+            ->whereRaw("UPPER(TRIM(NVL(over_time_allowed, 'N'))) = 'Y'")
+            ->orderBy('name')
+            ->get()
+            ->map(function (User $employee) use ($month) {
+                $summary = $this->buildSummary($employee, $month);
+
+                if (! $summary['gross_salary'] || $summary['eligible_rows']->isEmpty()) {
+                    return null;
+                }
+
+                return [
+                    'employee' => $employee,
+                    'gross_salary' => $summary['gross_salary'],
+                    'eligible_rows' => $summary['eligible_rows'],
+                    'total_minutes' => $summary['total_eligible_minutes'],
+                    'total_amount' => $summary['total_eligible_amount'],
+                ];
+            })
+            ->filter()
+            ->values();
     }
 
     public function calculateAmount(float $hourlyRate, int $minutes): float
