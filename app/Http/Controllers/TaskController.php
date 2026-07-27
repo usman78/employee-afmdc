@@ -169,7 +169,7 @@ class TaskController extends Controller
 
     public function sops()
     {
-        $depts = Department::all();
+        $depts = Department::whereNot('dept_code', '=', '37')->get();
         
         return view('tasks.sops', [
             'sops' => $depts->map(function ($dept) {
