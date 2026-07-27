@@ -1191,6 +1191,9 @@ class LeavesController extends Controller
                 case 3:
                     $leave->leave_type = 'Annual';
                     break;
+                case 4:
+                    $leave->leave_type =  'CPL';
+                    break;   
                 case 5:
                     $leave->leave_type = 'Unpaid';
                     break;
