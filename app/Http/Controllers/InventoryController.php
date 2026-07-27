@@ -21,10 +21,6 @@ class InventoryController extends Controller
         
         // Get unacknowledged items with pagination
         $unacknowledged = Issue::where('emp_code', $emp_code)
-            // ->where(function($query) {
-            //     $query->whereNull('ackn_by_user')
-            //           ->orWhere('ackn_by_user', 'N');
-            // })
             ->with('inventory')
             ->orderBy('doc_date', 'desc')
             ->paginate(20, ['*'], 'unack_page');
@@ -36,11 +32,6 @@ class InventoryController extends Controller
             ->orderBy('dated', 'desc')
             ->get();
         
-        // Get acknowledged routine issues
-        // $acknowledgedRoutine = Issue::whereRaw('TRIM((SELECT receive_by FROM invent.inv_issues WHERE invent.inv_issues.doc_no = invent.inv_issue_sub.doc_no)) = ? AND ackn_by_user = ?', [$emp_code, 'Y'])
-        //     ->with('inventory')
-        //     ->orderBy('dated', 'desc')
-        //     ->get();
         $acknowledgedRoutine = Issue::whereRaw(
             "TRIM((
                 SELECT receive_by
@@ -54,7 +45,7 @@ class InventoryController extends Controller
         ->with('inventory')
         ->orderBy('doc_date', 'desc')
         ->get();
-        // dd($acknowledgedRoutine);
+
         // Merge both acknowledged collections and remove duplicates
         $mergedAcknowledged = $acknowledged->concat($acknowledgedRoutine)
             ->unique(function($item) {
@@ -79,32 +70,24 @@ class InventoryController extends Controller
         );
         
         // Get routine issues requested by the user with pagination
-        // $routineIssues = Issue::whereNull('emp_code')->whereHas('issueMaster', function($query) use ($emp_code) {
-        //     $query->whereRaw('TRIM(receive_by) = ?', [$emp_code]);
-        // })->orderBy('doc_date', 'desc')->paginate(20, ['*'], 'routine_page');
-
-        // writing a raw query to get routine issues requested by the user with pagination
-        // $routineIssues = Issue::join('invent.inv_issues as i', function ($join) {
-        //     $join->on('invent.inv_issue_sub.doc_no', '=', 'i.doc_no')
-        //         ->on('invent.inv_issue_sub.doc_date', '=', 'i.doc_date');
-        // })
-        // ->where('i.receive_by', $emp_code)
-        // ->select('invent.inv_issue_sub.*')
-        // ->with('inventory')
-        // ->orderBy('invent.inv_issue_sub.dated', 'desc')
-        // ->paginate(20, ['*'], 'routine_page');
-        $routineIssues = Issue::whereRaw(
-            "TRIM((
-                SELECT receive_by
-                FROM invent.inv_issues
-                WHERE invent.inv_issues.doc_no = invent.inv_issue_sub.doc_no
-                AND invent.inv_issues.doc_date = invent.inv_issue_sub.doc_date
-            )) = ?",
-            [$emp_code]
-        )
-        ->with('inventory')
-        ->orderBy('doc_date', 'desc')
-        ->paginate(20, ['*'], 'routine_page');
+        $routineIssues = Issue::query()
+            ->join('invent.inv_issues', function ($join) {
+                $join->on(
+                    'invent.inv_issues.doc_no',
+                    '=',
+                    'invent.inv_issue_sub.doc_no'
+                )
+                ->on(
+                    'invent.inv_issues.doc_date',
+                    '=',
+                    'invent.inv_issue_sub.doc_date'
+                );
+            })
+            ->whereRaw('TRIM(invent.inv_issues.receive_by) = ?', [$emp_code])
+            ->with('inventory')
+            ->select('invent.inv_issue_sub.*')
+            ->orderBy('invent.inv_issue_sub.doc_date', 'desc')
+            ->paginate(20, ['*'], 'routine_page');
 
         return view('inventory', compact('unacknowledged', 'allAcknowledged', 'routineIssues'));
     }
