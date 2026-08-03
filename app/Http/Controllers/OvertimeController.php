@@ -478,7 +478,16 @@ class OvertimeController extends Controller
                     return null;
                 }
 
-                if (($row['is_sunday'] ?? false) || ($row['is_weekly_rest'] ?? false)) {
+                $isHoliday = in_array($dateString, $holidayDates, true);
+                $isSecurity = strtoupper(trim((string) ($employee->department->dept_desc ?? ''))) === 'SECURITY DEPARTMENT';
+                $isSunday = (bool) ($row['is_sunday'] ?? false);
+                $isWeeklyRest = (bool) ($row['is_weekly_rest'] ?? false);
+
+                if ($isSecurity && ! $isWeeklyRest) {
+                    return null;
+                }
+
+                if (! $isSecurity && ($isSunday || $isWeeklyRest)) {
                     if (! in_array($dateString, $holidayDates, true)) {
                         return null;
                     }
@@ -490,13 +499,11 @@ class OvertimeController extends Controller
                     return null;
                 }
 
-                $isHoliday = in_array($dateString, $holidayDates, true);
-                $isSecurity = strtoupper(trim((string) ($employee->department->dept_desc ?? ''))) === 'SECURITY DEPARTMENT';
                 $overtimeMinutes = $this->calculateEligibleOvertimeMinutes(
                     $row['time_logs'],
                     $shiftStart,
                     $shiftEnd,
-                    $isHoliday,
+                    $isHoliday || ($isSecurity && $isWeeklyRest),
                     $isSecurity
                 );
 
@@ -520,6 +527,7 @@ class OvertimeController extends Controller
                     'time_in' => $timeInOut['time_in'],
                     'time_out' => $timeInOut['time_out'],
                     'is_holiday' => $isHoliday,
+                    'is_weekly_rest' => $isWeeklyRest,
                     'is_security' => $isSecurity,
                 ];
             })

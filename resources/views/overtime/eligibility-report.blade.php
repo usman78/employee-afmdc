@@ -1,5 +1,9 @@
 @extends('layouts.app')
-
+@push('styles')
+    .thead {
+        --bs-table-bg: #4e73df !important;
+    }
+@endpush
 @section('content')
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -7,44 +11,73 @@
             <h4 class="mb-0">Overtime Eligibility Report</h4>
             <small class="text-muted">Employees with eligible overtime dates that have not been applied for.</small>
         </div>
-        <a href="{{ route('hr-reports') }}" class="btn btn-outline-secondary btn-sm">Back to HR Reports</a>
+        <a href="{{ route('hr-reports') }}" class="btn btn-outline-secondary btn-sm">
+            <span class="fas fa-arrow-left"></span>
+            Back to HR Reports
+        </a>
     </div>
 
-    <div class="card shadow mb-4">
+    <div class="card shadow mb-3">
         <div class="card-body">
             <form method="GET" action="{{ route('overtime.eligibility-report') }}" class="form-inline">
                 <label for="month" class="mr-2 font-weight-bold">Month</label>
                 <input type="month" name="month" id="month" value="{{ $month }}" class="form-control mr-2">
-                <button type="submit" class="btn btn-primary mr-2">View Report</button>
+                <button type="submit" class="btn btn-primary mr-2">
+                    <span class="fas fa-eye"></span>
+                    View Report
+                </button>
                 <a href="{{ route('overtime.eligibility-download', ['month' => $month]) }}" class="btn btn-success" target="_blank">
+                    <span class="fas fa-download"></span>
                     Download PDF
                 </a>
             </form>
         </div>
     </div>
 
-    <div class="row mb-4">
+    <div class="row">
         <div class="col-md-4 mb-3">
             <div class="card border-left-primary shadow h-100 py-2">
                 <div class="card-body">
-                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Employees</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $employeeCount }}</div>
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Employees</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $employeeCount }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-md-4 mb-3">
             <div class="card border-left-info shadow h-100 py-2">
                 <div class="card-body">
-                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Eligible Dates</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $eligibleDateCount }}</div>
+                    <div class="row no-gutter align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Eligible Dates</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $eligibleDateCount }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-md-4 mb-3">
             <div class="card border-left-success shadow h-100 py-2">
                 <div class="card-body">
-                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Estimated Amount</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ number_format($totalAmount, 2) }}</div>
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Estimated Amount</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ number_format($totalAmount, 2) }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-rupee-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -53,8 +86,8 @@
     <div class="card shadow mb-4">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered table-sm">
-                    <thead class="thead-light">
+                <table class="table table-bordered table-md">
+                    <thead class="thead">
                         <tr>
                             <th>Emp Code</th>
                             <th>Employee</th>
@@ -93,7 +126,9 @@
                                     <td class="text-right">{{ $eligibleRow['overtime_minutes'] }}</td>
                                     <td class="text-right">{{ number_format($eligibleRow['amount'], 2) }}</td>
                                     <td>
-                                        @if ($eligibleRow['is_holiday'])
+                                        @if ($eligibleRow['is_weekly_rest'] ?? false)
+                                            <span class="badge badge-primary">Weekly Rest</span>
+                                        @elseif ($eligibleRow['is_holiday'])
                                             <span class="badge badge-info">Holiday</span>
                                         @else
                                             <span class="badge badge-secondary">Working Day</span>

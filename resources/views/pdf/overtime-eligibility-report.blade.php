@@ -65,7 +65,13 @@
                         <td class="right">{{ $eligibleRow['overtime_minutes'] }}</td>
                         <td class="right">{{ number_format($eligibleRow['amount'], 2) }}</td>
                         <td>
-                            {{ $eligibleRow['is_holiday'] ? 'Holiday' : 'Working Day' }}
+                            @if ($eligibleRow['is_weekly_rest'] ?? false)
+                                Weekly Rest
+                            @elseif ($eligibleRow['is_holiday'])
+                                Holiday
+                            @else
+                                Working Day
+                            @endif
                             {{ $eligibleRow['is_security'] ? '/ Security' : '' }}
                         </td>
                     </tr>
