@@ -89,6 +89,10 @@ class User extends Authenticatable
     {
         return in_array($this->desg_code, ['716']);
     }
+    public function isStoreOfficer()
+    {
+        return in_array($this->emp_code, ['163','264', '1045', '1171']);
+    }
     public function isAllowedToSeeAdmissions()
     {
         return in_array($this->emp_code, ['685', '1045', '1171', '569', '199', '987', '823']);

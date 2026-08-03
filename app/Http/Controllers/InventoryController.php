@@ -6,7 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Issue;
 use App\Models\Inventory;
 use App\Models\IssueMaster;
+use App\Models\Department;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\Paginator;
 
 class InventoryController extends Controller
@@ -112,5 +114,71 @@ class InventoryController extends Controller
         ]);
         
         return response()->json(['success' => 'Item acknowledged successfully', 'message' => 'Item has been acknowledged']);
+    }
+
+    public function storeReport(Request $request)
+    {
+        // Check if the user is a store officer
+        if (!Auth::user()->isStoreOfficer()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $startDate = $request->input('start_date', date('Y-m-d'));
+        $endDate = $request->input('end_date', date('Y-m-d'));
+        $selectedDept = $request->input('department');
+        $selectedAcknowledged = $request->input('acknowledged');
+
+        // Fetch departments for dropdown
+        $departments = Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']);
+
+        // Build report query
+        $query = Issue::query()
+            ->join('invent.inv_issues', function ($join) {
+                $join->on('invent.inv_issues.doc_no', '=', 'invent.inv_issue_sub.doc_no')
+                     ->on('invent.inv_issues.doc_date', '=', 'invent.inv_issue_sub.doc_date');
+            })
+            ->leftJoin('pay_pers', function ($join) {
+                $join->on(
+                    DB::raw('TRIM(pay_pers.emp_code)'),
+                    '=',
+                    DB::raw('TRIM(COALESCE(invent.inv_issue_sub.emp_code, invent.inv_issues.receive_by))')
+                );
+            })
+            ->with('inventory')
+            ->select(
+                'invent.inv_issue_sub.*',
+                'invent.inv_issues.receive_by',
+                'pay_pers.name as emp_name',
+                'pay_pers.dept_code'
+            );
+
+        // Date Filter
+        $query->whereBetween('invent.inv_issue_sub.doc_date', [$startDate, $endDate]);
+
+        // Department Filter
+        if ($selectedDept) {
+            $query->whereRaw('TRIM(pay_pers.dept_code) = ?', [$selectedDept]);
+        }
+
+        // Acknowledged Status Filter
+        if ($selectedAcknowledged === 'Y') {
+            $query->where('invent.inv_issue_sub.ackn_by_user', 'Y');
+        } elseif ($selectedAcknowledged === 'N') {
+            $query->where(function($q) {
+                $q->whereNull('invent.inv_issue_sub.ackn_by_user')
+                  ->orWhere('invent.inv_issue_sub.ackn_by_user', 'N');
+            });
+        }
+
+        $reportIssues = $query->orderBy('invent.inv_issue_sub.doc_date', 'desc')->get();
+
+        return view('inventory.store_report', compact(
+            'departments',
+            'reportIssues',
+            'startDate',
+            'endDate',
+            'selectedDept',
+            'selectedAcknowledged'
+        ));
     }
 }

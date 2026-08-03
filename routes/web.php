@@ -108,6 +108,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/inventory/{emp_code}', [InventoryController::class, 'inventory'])->name('inventory');
     Route::post('/inventory/acknowledge/{item_code}/{doc_no}', [InventoryController::class, 'acknowledgeItem'])->name('inventory.acknowledge');
+    Route::get('/inventory-report', [InventoryController::class, 'storeReport'])->name('inventory.store_report');
 
     Route::get('/team', [TeamController::class, 'index'])->name('team');
     Route::get('/attendance-filter/{emp_code}/{date_range}', [TeamController::class, 'attendanceFilter'])->name('attendance-filter');

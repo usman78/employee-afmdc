@@ -239,7 +239,8 @@
                         'overtime.finance-report',
                         'overtime.finance-decision',
                         'admissions', 
-                        'inventory'
+                        'inventory',
+                        'inventory.store_report'
                         ])
                 ])>
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseReports">
@@ -259,18 +260,18 @@
                                 'leave-report',
                                 'leave-report-data', 
                                 'attendance-report-data',
-                                 'attendance-present-report', 
-                                 'attendance-late-report-data', 
-                                 'attendance-absent-report-data', 
-                                 'attendance-present-report-data',
-                                 'manual-attendance-report',
-                                 'manual-attendance-report-data',
-                                 'advance-salary.report',
-                                 'advance-salary.hr-decision',
-                                 'exit-interview.report',
-                                 'overtime.report',
-                                 'overtime.eligibility-report',
-                                 'overtime.hr-decision']) ? 'active' : '' }}" href="{{ route('hr-reports') }}">HR Reports</a>
+                                'attendance-present-report', 
+                                'attendance-late-report-data', 
+                                'attendance-absent-report-data', 
+                                'attendance-present-report-data',
+                                'manual-attendance-report',
+                                'manual-attendance-report-data',
+                                'advance-salary.report',
+                                'advance-salary.hr-decision',
+                                'exit-interview.report',
+                                'overtime.report',
+                                'overtime.eligibility-report',
+                                'overtime.hr-decision']) ? 'active' : '' }}" href="{{ route('hr-reports') }}">HR Reports</a>
                             @endif
                             @if (Auth::user()->isAccountsOfficer())
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['finance-reports', 'advance-salary.accounts-report', 'advance-salary.accounts-decision', 'overtime.finance-report', 'overtime.finance-decision']) ? 'active' : '' }}" href="{{ route('finance-reports') }}">Finance Reports</a>
@@ -282,7 +283,9 @@
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['admissions']) ? 'active' : '' }}" href="{{ route('admissions') }}">Admissions Report</a>
                             @endif
                             <a class="collapse-item {{ in_array(request()->route()->getName(), ['inventory']) ? 'active' : '' }}" href="{{ route('inventory', $emp_code) }}">Store Issuance Report</a>
-                            
+                            @if (Auth::user()->isStoreOfficer())
+                                <a class="collapse-item {{ in_array(request()->route()->getName(), ['inventory.store_report']) ? 'active' : '' }}" href="{{ route('inventory.store_report') }}">Store Report</a>
+                            @endif
                         </div>
                     </div>
                 </li>
