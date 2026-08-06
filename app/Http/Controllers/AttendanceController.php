@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Department;
-use App\Models\DepartmentStrength;
+use App\Models\User;
 use App\Models\Roster;
 use App\Jobs\SendAttendanceReportToHodJob;
 use App\Jobs\SendDepartmentAttendanceReportJob;
@@ -79,6 +79,45 @@ class AttendanceController extends Controller
         }
 
         return view('attendance', $this->buildAttendanceData($emp_code, $startDate, $endDate));
+    }
+    public function attDiscrepency(Request $request)
+    {
+        $emp_code = $request->emp_code;
+        $empCode = User::where('emp_code', $emp_code)->first();
+        $dept = $empCode->department;
+        $desg = $empCode->designation;
+
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        if($request->hasAny(['start_date', 'end_date'])) {
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
+        } else {
+            $startDate = Carbon::now()->startOfMonth()->toDateString();
+            $endDate = Carbon::today()->toDateString();
+        }
+
+        if ($startDate || $endDate) {
+            if (!$startDate || !$endDate) {
+                return redirect()
+                    ->route('att-discrepency', ['emp_code' => $emp_code])
+                    ->with('error', 'Both start and end dates are required.');
+            }
+
+            $start = Carbon::parse($startDate);
+            $end = Carbon::parse($endDate);
+
+            if ($end->lt($start)) {
+                return redirect()
+                    ->route('att-discrepency', ['emp_code' => $emp_code])
+                    ->with('error', 'End date must be on or after start date.');
+            }
+        }
+
+        return view('att-discrepency', $this->buildAttendanceData($emp_code, $startDate, $endDate), [
+            'dept' => $dept,
+            'desg' => $desg,
+        ]);
     }
 
     public function attendanceReport()
@@ -856,6 +895,67 @@ class AttendanceController extends Controller
         $now = Carbon::now()->format('Ymd_His');
         return $pdf->stream("attendance_report_{$emp_code}_{$now}.pdf");
     }
+    public function attDiscrepancyDownload(Request $request, $emp_code)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'include_signatures' => 'nullable|in:0,1',
+        ]);
+
+        $startDate = Carbon::parse($request->input('start_date'))->toDateString();
+        $endDate = Carbon::parse($request->input('end_date'))->toDateString();
+        $includeSignatures = (bool) $request->input('include_signatures', 1);
+        $employee = Employee::with(['department', 'designation'])
+            ->where('emp_code', $emp_code)
+            ->first();
+
+        if (!$employee) {
+            return redirect()->route('attendance-report')
+                ->with('error', 'Employee code not found.');
+        }
+
+        $reportData = $this->buildAttendanceData($emp_code, $startDate, $endDate);
+        $attendance = $reportData['attendance'] ?? collect();
+
+        $lateMinutes = $attendance->sum(function ($record) {
+            $late = intval($record['late_minutes'] ?? 0);
+            return $late >= 10 ? $late : 0;
+        });
+
+        $earlyMinutes = $attendance->sum(function ($record) {
+            return max(0, intval(round($record['early_minutes'] ?? 0)));
+        });
+
+        $lateDays = $attendance->filter(function ($record) {
+            return intval($record['late_minutes'] ?? 0) >= 10;
+        })->count();
+
+        $periodStart = $startDate;
+        $periodEnd   = $endDate;
+
+        $pdf = Pdf::loadView('pdf.att-discrepancy', [
+            'attendance' => $attendance,
+            'emp_name' => $reportData['emp_name'] ?? ucfirst($employee->name),
+            'emp_code' => $emp_code,
+            'emp_department' => $reportData['emp_department'] ?? '--',
+            'emp_designation' => $reportData['emp_designation'] ?? '--',
+            'late_minutes' => $lateMinutes,
+            'early_minutes' => $earlyMinutes,
+            'total_minutes' => $lateMinutes + $earlyMinutes,
+            'late_days' => $lateDays,
+            'leave_counts' => $reportData['leave_counts'] ?? [],
+            'period_start' => $periodStart,
+            'period_end' => $periodEnd,
+            'duty_start' => $reportData['duty_start'] ?? '--:--',
+            'duty_end' => $reportData['duty_end'] ?? '--:--',
+            'include_signatures' => $includeSignatures,
+            'download_date_time' => Carbon::now(),
+        ]);
+
+        $now = Carbon::now()->format('Ymd_His');
+        return $pdf->stream("attendance_discrepancy_report_{$emp_code}_{$now}.pdf");
+    }    
 
     public function attendanceReportEmail(Request $request, $emp_code)
     {
@@ -1116,7 +1216,9 @@ class AttendanceController extends Controller
                     'is_weekly_rest' => false,
                     'has_roster' => $hasRoster,
                     'is_leave'  => $isLeave,
-                    'leave_type'=> $isLeave ? $leaveType : null
+                    'leave_type'=> $isLeave ? $leaveType : null,
+                    'duty_start' => $startTimeCarbon->format('H:i'),
+                    'duty_end' => $endTimeCarbon->format('H:i'),
                 ]);
 
                 $tempDate->addDay();
@@ -1254,6 +1356,8 @@ class AttendanceController extends Controller
                 'is_leave'          => $isLeave,
                 'leave_type'        => $isLeave ? $leaveType : null,
                 'short_duty_status' => $leaveRemark,
+                'duty_start'        => $startTimeCarbon->format('H:i'),
+                'duty_end'          => $endTimeCarbon->format('H:i'),
             ]);
 
             $tempDate->addDay();

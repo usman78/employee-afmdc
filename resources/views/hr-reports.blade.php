@@ -266,6 +266,11 @@
                     Overtime Eligibility
                     </a>
                 </div>
+                <div class="col-md-6 col-lg-3">
+                    <a href="{{ route('att-discrepancy-report') }}" class="btn btn-primary w-100 text-nowrap">
+                    Attendance Discrepancy Report
+                    </a>
+                </div>
             </div>
         </div>
       </div>
