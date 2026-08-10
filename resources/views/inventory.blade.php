@@ -97,7 +97,7 @@
                             @if ($inv->ackn_by_user != 'Y')
                             <td>
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#acknowledgeModal" 
-                                  onclick="setItemId({{ $inv->item_code }}, {{ $inv->doc_no }})">
+                                  onclick="setItemId({{ json_encode($inv->item_code) }}, {{ json_encode($inv->doc_no) }})">
                                   Acknowledge
                                 </button>
                             </td>
@@ -150,7 +150,7 @@
                           @else
                           <td>
                             <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#acknowledgeModal" 
-                              onclick="setItemId({{ $inv->item_code }}, {{ $inv->doc_no }})">
+                              onclick="setItemId({{ json_encode($inv->item_code) }}, {{ json_encode($inv->doc_no) }})">
                               Acknowledge
                             </button>
                           </td>
@@ -270,7 +270,7 @@ document.getElementById('acknowledgeForm').addEventListener('submit', function(e
     const currentTab = urlParams.get('tab') || 'routine';
     
     // Make AJAX request to acknowledge the item
-    fetch(`/inventory/acknowledge/${issue_item_code}/${issue_doc_no}`, {
+    fetch(`/inventory/acknowledge/${encodeURIComponent(issue_item_code)}/${encodeURIComponent(issue_doc_no)}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
