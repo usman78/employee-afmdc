@@ -54,8 +54,6 @@
               <div class="dropdown-menu animated--fade-in"
                   aria-labelledby="dropdownMenuButton">
                   <a class="dropdown-item" href="{{ route('overtime.approved-download', ['month' => $month]) }}" target="_blank">All Approved</a>
-                  {{-- <a class="dropdown-item" href="#" data-toggle="modal" data-target="#filterByNameModal">Download By Name</a>
-                  <a class="dropdown-item" href="#" data-toggle="modal" data-target="#filterByDateModal">Download by Finance Approval Date</a> --}}
               </div>
             </div>
           </form>
