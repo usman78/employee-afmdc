@@ -135,7 +135,6 @@
                 @empty
                   <tr>
                     <td colspan="10" class="text-center text-muted">No overtime applications found for this month.</td>
-                    <td colspan="10" class="text-center text-muted">No overtime applications found for this month.</td>
                   </tr>
                 @endforelse
               </tbody>
