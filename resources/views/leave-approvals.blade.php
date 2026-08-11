@@ -126,6 +126,7 @@ td {
                 <th>Leave type</th>
                 <th>Leave Date</th>
                 <th>Stage</th>
+                <th>Remarks</th>
                 <th>Approve/Reject</th>
               </tr>
             </thead>
@@ -178,6 +179,7 @@ td {
                             <span class="badge badge-info">HOD</span>
                         @endif        
                     </td>
+                    <td>{{ $leave->remark }}</td>
                     <td>
                         <label class="switch">
                             <input type="checkbox" class="approve-leave" data-url="{{ route('approve-leave', $leave->leave_id) }}" data-urlreject="{{route('reject-leave', $leave->leave_id)}}" data-status="{{$leave->status}}" data-id="{{$leave->leave_id}}">
@@ -188,7 +190,7 @@ td {
                 @endforeach
               @else
                 <tr>
-                  <td colspan="6" class="text-center">No leave approvals available.</td>
+                  <td colspan="7" class="text-center">No leave approvals available.</td>
                 </tr>  
               @endif  
             </tbody>
@@ -231,6 +233,7 @@ td {
                   <th>Leave type</th>
                   <th>Leave Date</th>
                   <th>Stage</th>
+                  <th>Remarks</th>
                   <th>Approve/Reject</th>
                 </tr>
               </thead>
@@ -280,6 +283,7 @@ td {
                                   <span class="badge badge-info">HR</span>
                               @endif        
                           </td>
+                          <td>{{ $leave->remark }}</td>
                           <td>
                               <label class="switch">
                                   <input type="checkbox" class="approve-leave" data-url="{{ route('approve-leave', $leave->leave_id)}}" data-urlreject="{{route('reject-leave', $leave->leave_id)}}" data-status="{{$leave->status}}" data-id="{{$leave->leave_id}}">
@@ -317,7 +321,7 @@ td {
               <table class="table mt-5 mb-5">
                 <tbody>
                   <tr>
-                    <td colspan="6" class="text-center">No HR leave approvals available.</td>
+                    <td colspan="7" class="text-center">No HR leave approvals available.</td>
                   </tr>  
                 </tbody>
               </table>
