@@ -65,7 +65,24 @@ function parseDateToRange(string $range): array
         'numberOfDays' => $numberOfDays,
     ];
 }
+function formatMinutes($minutes)
+{
+    $hours = intdiv($minutes, 60);
+    $remainingMinutes = $minutes % 60;
 
+    $result = [];
+
+    if ($hours > 0) {
+        $result[] = $hours . ' ' . ($hours === 1 ? 'hour' : 'hours');
+    }
+
+    if ($remainingMinutes > 0) {
+        $result[] = $remainingMinutes . ' ' .
+                    ($remainingMinutes === 1 ? 'minute' : 'minutes');
+    }
+
+    return $result ? implode(' ', $result) : '0 minutes';
+}
 function numberOfLeaveDays($fromDate, $toDate)
 {
     $fromDate = Carbon::createFromFormat('d-m-Y', date('d-m-Y', strtotime($fromDate)));
@@ -123,7 +140,6 @@ function designationAtJoining($emp_code)
 
     return $designation;    
 }
-
 function getItManagerCode()
 {
     $itManager = \DB::table('pay_pers')
@@ -132,6 +148,22 @@ function getItManagerCode()
         ->value('emp_code');
     
     return $itManager;    
+}
+
+function getPrincipalCode()
+{
+    return \DB::table('pay_pers')
+        ->where('desg_code', 3)
+        ->where('quit_stat', null)
+        ->value('emp_code');
+}
+
+function getCooCode()
+{
+    return \DB::table('pay_pers')
+        ->where('desg_code', 889)
+        ->where('quit_stat', null)
+        ->value('emp_code');
 }
 
 function getIncrementedId($tableName, $columnName)
@@ -199,7 +231,6 @@ function getSessionYear($classYear)
     $sessionYear = $currentYear - $classYear;
     return $sessionYear;
 }
-
 function employeeStatus($emp_code)
 {
     $status = \DB::table('pay_pers')

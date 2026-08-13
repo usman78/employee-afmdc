@@ -875,18 +875,35 @@ class OvertimeController extends Controller
         $this->ensureHr();
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
+        $status = $request->input('status');
 
-        $applications = OvertimeApplication::with(['employee.designation', 'employee.department'])
-            ->where('salary_month', $month)
-            ->where('status', OvertimeApplication::STATUS_APPROVED)
-            ->orderByDesc('applied_at')
-            ->get();
+        $query = OvertimeApplication::with(['employee.designation', 'employee.department'])
+            ->where('salary_month', $month);
+
+        if ($status === 'all' || ! $status) {
+            $query->whereIn('status', [
+                OvertimeApplication::STATUS_HOD_APPROVED,
+                OvertimeApplication::STATUS_HR_APPROVED,
+                OvertimeApplication::STATUS_APPROVED,
+            ]);
+        } else {
+            $query->where('status', $status);
+        }
+
+        $applications = $query->orderByDesc('applied_at')->get();
+        $totalAmount = $applications->reduce(function ($carry, $application) {
+            $amount = number_format($application->sanctioned_amount ?? $application->calculated_amount, 2, '.', '');
+            return bcadd($carry, $amount, 2);
+        }, '0.00');
+        $filenameStatus = $status ? str_replace(' ', '_', strtolower($status)) : 'approved';
 
         $pdf = Pdf::loadView('pdf.overtime-approved-report', [
             'applications' => $applications,
             'month' => $month,
+            'status' => $status,
+            'totalAmount' => $totalAmount,
         ])->setPaper('a4', 'landscape');
 
-        return $pdf->stream("approved_overtime_report_{$month}.pdf");
+        return $pdf->stream("overtime_report_{$month}_{$filenameStatus}.pdf");
     }
 }

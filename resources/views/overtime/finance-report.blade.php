@@ -84,8 +84,8 @@
                     <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
                     <td>{{ $application->emp_code }}</td>
                     <td>{{ Carbon::parse($application->overtime_date)->format('d M Y') }}</td>
-                    <td>{{ $application->overtime_minutes }}</td>
-                    <td>{{ $application->sanctioned_minutes ?? '-' }}</td>
+                    <td>{{ formatMinutes($application->overtime_minutes) }}</td>
+                    <td>{{ formatMinutes($application->sanctioned_minutes) ?? '-' }}</td>
                     <td>
                       @if($application->sanctioned_amount)
                         PKR {{ number_format($application->sanctioned_amount, 2) }}

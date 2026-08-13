@@ -1,3 +1,6 @@
+@php
+use App\Models\OvertimeApplication;
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
@@ -44,7 +47,12 @@
   </style>
 </head>
 <body>
-  <h2>Approved Overtime Report</h2>
+  @php
+    $reportTitle = $status === OvertimeApplication::STATUS_HR_APPROVED ? 'HR Approved Overtime Report' : 'Approved Overtime Report';
+    $totalAmount = $totalAmount ?? $applications->sum(fn ($application) => $application->sanctioned_amount ?? $application->calculated_amount);
+  @endphp
+
+  <h2>{{ $reportTitle }}</h2>
   <div class="subtitle">{{ \Carbon\Carbon::createFromFormat('Y-m', $month)->format('F Y') }}</div>
 
   <table>
@@ -66,29 +74,31 @@
     <tbody>
       @forelse($applications as $application)
         <tr>
-          <td>{{ $loop->iteration }}</td> 
+          <td>{{ $loop->iteration }}</td>
           <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
           <td>{{ $application->emp_code }}</td>
           <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
           <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
-          <td>{{ dateFormat($application->overtime_date) }}</tdlass=>
-          <td class="text-right">{{ number_format($application->sanctioned_minutes ?? $application->overtime_minutes) }}</td>
-          <td class="text-right">{{ number_format($application->sanctioned_amount ?? $application->calculated_amount) }}</td>
+          <td>{{ dateFormat($application->overtime_date) }}</td>
+          <td class="text-right">{{ formatMinutes($application->sanctioned_minutes ?? $application->overtime_minutes) }}</td>
+          <td class="text-right">{{ number_format($application->sanctioned_amount ?? $application->calculated_amount, 2) }}</td>
           <td>{{ $application->remarks ?? '-' }}</td>
-          <td>{{ $application->hr_remarks ?? '-' }}</tdclass=>
-          <td>{{ $application->finance_remarks ?? '-' }}</tdlass=>
+          <td>{{ $application->hr_remarks ?? '-' }}</td>
+          <td>{{ $application->finance_remarks ?? '-' }}</td>
         </tr>
       @empty
         <tr>
-          <td colspan="12" style="text-align: center;">No approved overtime applications found yet in this month.</td>
+          <td colspan="11" style="text-align: center;">No approved overtime applications found yet in this month.</td>
         </tr>
       @endforelse
 
-      {{-- <tr class="total-row">
-        <td colspan="9" class="text-right">Total Sanctioned Amount</td>
-        <td class="text-right">{{ number_format($totalSanctioned) }}</td>
-        <td colspan="2"></td>
-      </tr> --}}
+      @if($applications->count())
+        <tr class="total-row">
+          <td colspan="7" class="text-right">Grand Total</td>
+          <td class="text-right">{{ number_format($totalAmount, 2) }}</td>
+          <td colspan="3"></td>
+        </tr>
+      @endif
     </tbody>
   </table>
 </body>
