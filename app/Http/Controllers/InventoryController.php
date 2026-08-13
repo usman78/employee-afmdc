@@ -7,6 +7,7 @@ use App\Models\Issue;
 use App\Models\Inventory;
 use App\Models\IssueMaster;
 use App\Models\Department;
+use App\Models\DeptInventory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\Paginator;
@@ -129,7 +130,7 @@ class InventoryController extends Controller
         $selectedAcknowledged = $request->input('acknowledged');
 
         // Fetch departments for dropdown
-        $departments = Department::orderBy('dept_desc')->get(['dept_code', 'dept_desc']);
+        $departments = DeptInventory::orderBy('dept_desc')->get(['dept_code', 'dept_desc']);
 
         // Build report query
         $query = Issue::query()
@@ -137,9 +138,9 @@ class InventoryController extends Controller
                 $join->on('invent.inv_issues.doc_no', '=', 'invent.inv_issue_sub.doc_no')
                      ->on('invent.inv_issues.doc_date', '=', 'invent.inv_issue_sub.doc_date');
             })
-            ->leftJoin('pay_pers', function ($join) {
+            ->leftJoin('invent.inv_employee', function ($join) {
                 $join->on(
-                    DB::raw('TRIM(pay_pers.emp_code)'),
+                    DB::raw('TRIM(invent.inv_employee.emp_code)'),
                     '=',
                     DB::raw('TRIM(COALESCE(invent.inv_issue_sub.emp_code, invent.inv_issues.receive_by))')
                 );
@@ -148,17 +149,22 @@ class InventoryController extends Controller
             ->select(
                 'invent.inv_issue_sub.*',
                 'invent.inv_issues.receive_by',
-                'pay_pers.name as emp_name',
-                'pay_pers.dept_code'
-            );
+                'invent.inv_employee.name as emp_name',
+                'invent.inv_issues.dept_code'
+            );    
 
         // Date Filter
         $query->whereBetween('invent.inv_issue_sub.doc_date', [$startDate, $endDate]);
 
+        
+
         // Department Filter
         if ($selectedDept) {
-            $query->whereRaw('TRIM(pay_pers.dept_code) = ?', [$selectedDept]);
+            $query->whereRaw('TRIM(invent.inv_issues.dept_code) = ?', [$selectedDept]);
         }
+
+
+        // dd($query->toSql(), $query->getBindings()); 
 
         // Acknowledged Status Filter
         if ($selectedAcknowledged === 'Y') {
@@ -171,6 +177,8 @@ class InventoryController extends Controller
         }
 
         $reportIssues = $query->orderBy('invent.inv_issue_sub.doc_date', 'desc')->get();
+
+        // dd($reportIssues);
 
         return view('inventory.store_report', compact(
             'departments',
