@@ -84,38 +84,93 @@ class ServiceRequestController extends Controller
             'decision' => 'required|in:approved,rejected',
             'remarks' => 'nullable|string|max:1000',
         ]);
+
         $serviceRequest = ServiceRequest::findOrFail($id);
-        if(!$serviceRequest) {
+        if (!$serviceRequest) {
             return redirect()->back()->with('error', 'Service request not found.');
         }
+
+        $requester = User::where('emp_code', $serviceRequest->requester_id)->first();
+        $currentUser = auth()->user();
+        $currentStatus = $serviceRequest->STATUS;
+
+        if ($currentStatus === 'PENDING_HOD_APPROVAL') {
+            if ($currentUser->emp_code !== hisBoss($serviceRequest->requester_id)) {
+                return redirect()->back()->with('error', 'You are not authorized to approve this request.');
+            }
+            $approvalRole = 'HOD';
+        } elseif ($currentStatus === 'PENDING_PRINCIPAL_APPROVAL') {
+            if (!$currentUser->isPrincipal()) {
+                return redirect()->back()->with('error', 'You are not authorized to approve this request.');
+            }
+            $approvalRole = 'PRINCIPAL';
+        } elseif ($currentStatus === 'PENDING_COO_APPROVAL') {
+            if (!$currentUser->isCOO()) {
+                return redirect()->back()->with('error', 'You are not authorized to approve this request.');
+            }
+            $approvalRole = 'COO';
+        } else {
+            return redirect()->back()->with('error', 'This service request is not pending approval.');
+        }
+
         $requestApproval = new RequestApproval;
         $requestApproval->id = getIncrementedId('REQUEST_APPROVALS', 'id');
         $requestApproval->service_request_id = $id;
-        $requestApproval->approved_by = auth()->user()->emp_code;
+        $requestApproval->approved_by = $currentUser->emp_code;
         $requestApproval->status = $validatedData['decision'];
         $requestApproval->remarks = $validatedData['remarks'];
-        $requestApproval->role = 'HOD';
+        $requestApproval->role = $approvalRole;
         $requestApproval->approval_date = now();
         $requestApproval->save();
-        if($validatedData['decision'] === 'approved') {
-            $serviceRequest->status = 'APPROVED_BY_HOD';
+
+        $nextApproverCode = null;
+        $notifyItManager = false;
+
+        if ($validatedData['decision'] === 'approved') {
+            if ($approvalRole === 'HOD') {
+                if ($requester && $requester->isFaculty()) {
+                    $serviceRequest->STATUS = 'PENDING_PRINCIPAL_APPROVAL';
+                    $nextApproverCode = getPrincipalCode();
+                } else {
+                    $serviceRequest->STATUS = 'PENDING_COO_APPROVAL';
+                    $nextApproverCode = getCooCode();
+                }
+            } elseif ($approvalRole === 'PRINCIPAL') {
+                $serviceRequest->STATUS = 'APPROVED_BY_PRINCIPAL';
+                $notifyItManager = true;
+            } elseif ($approvalRole === 'COO') {
+                $serviceRequest->STATUS = 'APPROVED_BY_COO';
+                $notifyItManager = true;
+            }
         } else {
-            $serviceRequest->status = 'REJECTED_BY_HOD';
+            if ($approvalRole === 'HOD') {
+                $serviceRequest->STATUS = 'REJECTED_BY_HOD';
+            } elseif ($approvalRole === 'PRINCIPAL') {
+                $serviceRequest->STATUS = 'REJECTED_BY_PRINCIPAL';
+            } elseif ($approvalRole === 'COO') {
+                $serviceRequest->STATUS = 'REJECTED_BY_COO';
+            }
         }
-        $serviceRequest->updated_at = now();
+
+        $serviceRequest->UPDATED_AT = now();
         $serviceRequest->save();
 
-        // Notify the requester about the approval decision
-        $requester = User::where('emp_code', $serviceRequest->requester_id)->first();
         if ($requester) {
             $requester->notify(new RequestApprovalNotification($serviceRequest));
         }
 
-        $itManager = getItManagerCode();
-        if ($itManager) {
-            $itManagerUser = User::where('emp_code', $itManager)->first();
-            if ($itManagerUser) {
-                $itManagerUser->notify(new ServiceRequestToItNotification($serviceRequest));
+        if ($notifyItManager) {
+            $itManager = getItManagerCode();
+            if ($itManager) {
+                $itManagerUser = User::where('emp_code', $itManager)->first();
+                if ($itManagerUser) {
+                    $itManagerUser->notify(new ServiceRequestToItNotification($serviceRequest));
+                }
+            }
+        } elseif ($nextApproverCode) {
+            $nextApprover = User::where('emp_code', $nextApproverCode)->first();
+            if ($nextApprover) {
+                $nextApprover->notify(new RequestApprovalNotification($serviceRequest));
             }
         }
 

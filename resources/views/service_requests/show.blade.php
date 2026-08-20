@@ -126,10 +126,7 @@
                     </div>
                 </div>            
             </div>
-        @endif
-
-    @if(auth()->user()->emp_code === hisBoss($request->requester_id))
-        @if ($request->status === 'PENDING_HOD_APPROVAL')
+        @if(auth()->user()->emp_code === hisBoss($request->requester_id) && $request->status === 'PENDING_HOD_APPROVAL')
             <form method="POST" action="{{ route('service-requests.approve', $request->id) }}">
                 @csrf
                 <input type="text" name="requester_id" value="{{ $request->requester_id }}" hidden>
@@ -140,9 +137,75 @@
                             <textarea class="form-control" name="remarks" id="remarks" rows="3"></textarea>
                         </div>
                     </div>
-                </div> 
-                <div class="row g-3 shadow-sm px-4 rounded bg-white">   
-                    <div class="col-md-12">           
+                </div>
+                <div class="row g-3 shadow-sm px-4 rounded bg-white">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label class="form-label">Decision</label><br>
+                            <div class="form-check form-check-inline">
+                                <input type="radio" name="decision" id="approve" value="approved" class="form-check-input" required>
+                                <label for="approve" class="form-check-label">Approve</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input type="radio" name="decision" id="reject" value="rejected" class="form-check-input" required>
+                                <label for="reject" class="form-check-label">Reject</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row shadow-sm p-4 rounded bg-white">
+                    <div class="col-md-12 d-flex justify-content-center">
+                        <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-circle-check"></i> Save Decision</button>
+                    </div>
+                </div>
+            </form>
+        @elseif(auth()->user()->isPrincipal() && $request->status === 'PENDING_PRINCIPAL_APPROVAL')
+            <form method="POST" action="{{ route('service-requests.approve', $request->id) }}">
+                @csrf
+                <input type="text" name="requester_id" value="{{ $request->requester_id }}" hidden>
+                <div class="row g-3 shadow-sm px-4 rounded bg-white">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label for="remarks" class="form-label">Remarks</label>
+                            <textarea class="form-control" name="remarks" id="remarks" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 shadow-sm px-4 rounded bg-white">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label class="form-label">Decision</label><br>
+                            <div class="form-check form-check-inline">
+                                <input type="radio" name="decision" id="approve" value="approved" class="form-check-input" required>
+                                <label for="approve" class="form-check-label">Approve</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input type="radio" name="decision" id="reject" value="rejected" class="form-check-input" required>
+                                <label for="reject" class="form-check-label">Reject</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row shadow-sm p-4 rounded bg-white">
+                    <div class="col-md-12 d-flex justify-content-center">
+                        <button type="submit" class="btn btn-outline-primary"><i class="fa-solid fa-circle-check"></i> Save Decision</button>
+                    </div>
+                </div>
+            </form>
+        @elseif(auth()->user()->isCOO() && $request->status === 'PENDING_COO_APPROVAL')
+            <form method="POST" action="{{ route('service-requests.approve', $request->id) }}">
+                @csrf
+                <input type="text" name="requester_id" value="{{ $request->requester_id }}" hidden>
+                <div class="row g-3 shadow-sm px-4 rounded bg-white">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label for="remarks" class="form-label">Remarks</label>
+                            <textarea class="form-control" name="remarks" id="remarks" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 shadow-sm px-4 rounded bg-white">
+                    <div class="col-md-12">
                         <div class="mb-3">
                             <label class="form-label">Decision</label><br>
                             <div class="form-check form-check-inline">
@@ -163,14 +226,13 @@
                 </div>
             </form>
         @else
-        <div class="col-md-12 mt-3">
-            <span class="inline-flex items-center gap-2 px-3 py-1 text-sm font-medium text-white bg-cyan-600 rounded-full">
-                <i class="fa-solid fa-check"></i>
-                This service request has already been reviewed.
-            </span>
-        </div>
+            <div class="col-md-12 mt-3">
+                <span class="inline-flex items-center gap-2 px-3 py-1 text-sm font-medium text-white bg-cyan-600 rounded-full">
+                    <i class="fa-solid fa-check"></i>
+                    This service request has already been reviewed.
+                </span>
+            </div>
         @endif
-    @endif    
 
     {{-- @if($request->approvals && $request->approvals->count())
         <h5>Approval History</h5>
@@ -220,9 +282,8 @@
                     </li>
                 @endforeach
             </ul>
-        @endif
-    @endif --}}
-
+        @endif --}}
+    @endif 
     <a href="{{ route('service-requests.index') }}" class="my-3 btn btn-secondary mt-4"><i class="fa-solid fa-backward"></i> Back to List</a>
 </div>
 @endsection
