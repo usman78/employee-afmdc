@@ -69,7 +69,9 @@
               </div>
             </div>
           </form>
-
+          @php
+            $serialNumber = 1;
+          @endphp
           <div class="table-responsive">
             <table class="table overtime-report-table">
               <thead>
@@ -91,57 +93,68 @@
                 </tr>
               </thead>
               <tbody>
-                @forelse($applications as $application)
+                @forelse($applications->groupBy('emp_code') as $employeeApplications)
                   @php
-                    $canHrAct = $application->status === OvertimeApplication::STATUS_HOD_APPROVED;
-                    $displayAmount = $application->sanctioned_amount ?? $application->calculated_amount;
+                    $employee = $employeeApplications->first();
                   @endphp
-                  <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td>{{ capitalizeWords($application->employee->name ?? '') . ' (' . $application->employee->emp_code . ')' }}</td>
-                    <td>{{ $application->designation->desg_desc ?? '-' }}</td>
-                    <td>{{ $application->department->dept_desc ?? '-' }}</td>
-                    <td>{{ Carbon::parse($application->overtime_date)->format('d M Y') }}</td>
-                    <td>{{ $application->shift_start != null ? timeFormatFromString($application->shift_start) : '-' }} - {{ $application->shift_end != null ? timeFormatFromString($application->shift_end) : '-' }}</td>
-                    <td>{{ $application->time_in != null ? timeFormatFromString($application->time_in) : '-' }} - {{ $application->time_out != null ? timeFormatFromString($application->time_out) : '-' }}</td>
-                    <td id="otMinutes{{ $loop->index }}">{{ formatMinutes(payableMinutes($application->overtime_minutes)) }}</td>
-                    <td>{{ number_format($application->gross_salary ?? 0, 0) }}</td>
-                    <td id="otAmount{{ $loop->index }}">PKR {{ number_format($displayAmount, 2) }}</td>
-                    <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
-                    <td>{{ $application->remarks ?: '-' }}</td>
-                    {{-- <td>{{ $application->hod_remarks ?: '-' }}</td> --}}
-                    <td>
-                      @if($canHrAct)
-                        <form action="{{ route('overtime.hr-decision', $application->id) }}" method="POST">
-                          @csrf
-                          <input
-                            type="number"
-                            name="sanctioned_minutes"
-                            class="form-control form-control-sm mb-2 sanctioned-minutes-input"
-                            id="minutes{{ $loop->index }}"
-                            min="60"
-                            max="{{ (int) $application->overtime_minutes }}"
-                            value="{{ old('sanctioned_minutes', (int) $application->overtime_minutes) }}"
-                            data-row-index="{{ $loop->index }}"
-                            data-hourly-rate="{{ $application->hourly_rate }}"
-                          >
-                          <small class="form-text text-muted d-block">
-                            Claimed: {{ formatMinutes(payableMinutes($application->overtime_minutes)) }} min (PKR {{ number_format($application->calculated_amount, 2) }})
-                          </small>
-                          <div class="amount-display" id="amountDisplay{{ $loop->index }}">
-                            Amount: PKR {{ number_format($application->calculated_amount, 2) }}
-                          </div>
-                          <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
-                          <div class="d-flex gap-1">
-                            <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
-                            <button type="submit" name="decision" value="reject" class="btn btn-sm btn-danger">Reject</button>
-                          </div>
-                        </form>
-                      @else
-                        <small class="text-muted">{{ $application->hr_remarks ?: $application->hod_remarks ?: '-' }}</small>
-                      @endif
-                    </td>
+                  <tr class="table-secondary">
+                    <td></td>
+                    <td><strong>{{ capitalizeWords($employee->employee->name ?? '') . ' (' . $employee->emp_code . ')' }}</strong></td>
+                    <td><strong>{{ $employee->designation->desg_desc ?? '-' }}</strong></td>
+                    <td><strong>{{ $employee->department->dept_desc ?? '-' }}</strong></td>
+                    <td colspan="9"><strong>{{ $employeeApplications->count() }} overtime application(s)</strong></td>
                   </tr>
+                  @foreach($employeeApplications as $application)
+                    @php
+                      $canHrAct = $application->status === OvertimeApplication::STATUS_HOD_APPROVED;
+                      $displayAmount = $application->sanctioned_amount ?? $application->calculated_amount;
+                    @endphp
+                    <tr>
+                      <td>{{ $serialNumber++ }}</td>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                      <td>{{ Carbon::parse($application->overtime_date)->format('d M Y') }}</td>
+                      <td>{{ $application->shift_start != null ? timeFormatFromString($application->shift_start) : '-' }} - {{ $application->shift_end != null ? timeFormatFromString($application->shift_end) : '-' }}</td>
+                      <td>{{ $application->time_in != null ? timeFormatFromString($application->time_in) : '-' }} - {{ $application->time_out != null ? timeFormatFromString($application->time_out) : '-' }}</td>
+                      <td id="otMinutes{{ $loop->parent->index }}-{{ $loop->index }}">{{ formatMinutes(payableMinutes($application->overtime_minutes)) }}</td>
+                      <td>{{ number_format($application->gross_salary ?? 0, 0) }}</td>
+                      <td id="otAmount{{ $loop->parent->index }}-{{ $loop->index }}">PKR {{ number_format($displayAmount, 2) }}</td>
+                      <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
+                      <td>{{ $application->remarks ?: '-' }}</td>
+                      <td>
+                        @if($canHrAct)
+                          <form action="{{ route('overtime.hr-decision', $application->id) }}" method="POST">
+                            @csrf
+                            <input
+                              type="number"
+                              name="sanctioned_minutes"
+                              class="form-control form-control-sm mb-2 sanctioned-minutes-input"
+                              id="minutes{{ $loop->parent->index }}-{{ $loop->index }}"
+                              min="60"
+                              max="{{ (int) $application->overtime_minutes }}"
+                              value="{{ old('sanctioned_minutes', (int) $application->overtime_minutes) }}"
+                              data-row-index="{{ $loop->parent->index }}-{{ $loop->index }}"
+                              data-hourly-rate="{{ $application->hourly_rate }}"
+                            >
+                            <small class="form-text text-muted d-block">
+                              Claimed: {{ formatMinutes(payableMinutes($application->overtime_minutes)) }} min (PKR {{ number_format($application->calculated_amount, 2) }})
+                            </small>
+                            <div class="amount-display" id="amountDisplay{{ $loop->parent->index }}-{{ $loop->index }}">
+                              Amount: PKR {{ number_format($application->calculated_amount, 2) }}
+                            </div>
+                            <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
+                            <div class="d-flex gap-1">
+                              <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
+                              <button type="submit" name="decision" value="reject" class="btn btn-sm btn-danger">Reject</button>
+                            </div>
+                          </form>
+                        @else
+                          <small class="text-muted">{{ $application->hr_remarks ?: $application->hod_remarks ?: '-' }}</small>
+                        @endif
+                      </td>
+                    </tr>
+                  @endforeach
                 @empty
                   <tr>
                     <td colspan="13" class="text-center text-muted">No overtime applications found for this month.</td>
@@ -162,7 +175,7 @@
                   <tr class="table-active">
                     <td colspan="9" class="text-end"><strong>Grand Total</strong></td>
                     <td class="text-right"><strong>PKR {{ number_format($grandTotal, 2) }}</strong></td>
-                    <td colspan="7"></td>
+                    <td colspan="3"></td>
                   </tr>
                 @endif
               </tbody>

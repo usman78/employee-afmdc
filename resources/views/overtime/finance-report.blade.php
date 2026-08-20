@@ -57,7 +57,9 @@
               </div>
             </div>
           </form>
-
+          @php
+            $serialNumber = 1;
+          @endphp
           <div class="table-responsive">
             <table class="table overtime-finance-table">
               <thead>
@@ -66,7 +68,6 @@
                   <th>Name</th>
                   <th>Code</th>
                   <th>Date</th>
-                  {{-- <th>OT Minutes</th> --}}
                   <th>Sanctioned Minutes</th>
                   <th>Salary</th>
                   <th>Hourly Rate</th>
@@ -77,43 +78,54 @@
                 </tr>
               </thead>
               <tbody>
-                @forelse($applications as $application)
+                @forelse($applications->groupBy('emp_code') as $employeeApplications)
                   @php
-                    $canAccountsAct = $application->status === OvertimeApplication::STATUS_HR_APPROVED;
+                    $employee = $employeeApplications->first();
                   @endphp
-                  <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
-                    <td>{{ $application->emp_code }}</td>
-                    <td>{{ Carbon::parse($application->overtime_date)->format('d M Y') }}</td>
-                    {{-- <td>{{ formatMinutes($application->overtime_minutes) }}</td> --}}
-                    <td>{{ formatMinutes(payableMinutes($application->sanctioned_minutes)) ?? formatMinutes(payableMinutes($application->overtime_minutes)) }}</td>
-                    <td>{{ number_format($application->gross_salary ?? 0, 0) }}</td>
-                    <td>{{ $application->hourly_rate ?? '-' }}</td>
-                    <td>
-                      @if($application->sanctioned_amount)
-                        PKR {{ number_format($application->sanctioned_amount, 2) }}
-                      @else
-                        -
-                      @endif
-                    </td>
-                    <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
-                    <td>{{ $application->hr_remarks ?: '-' }}</td>
-                    <td>
-                      @if($canAccountsAct)
-                        <form action="{{ route('overtime.finance-decision', $application->id) }}" method="POST">
-                          @csrf
-                          <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
-                          <div class="d-flex gap-1">
-                            <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
-                            <button type="submit" name="decision" value="reject" class="btn btn-sm btn-danger">Reject</button>
-                          </div>
-                        </form>
-                      @else
-                        <small class="text-muted">{{ $application->finance_remarks ?: $application->hr_remarks ?: '-' }}</small>
-                      @endif
-                    </td>
+                  <tr class="table-secondary">
+                    <td></td>
+                    <td><strong>{{ capitalizeWords($employee->employee->name ?? '') }}</strong></td>
+                    <td><strong>{{ $employee->emp_code }}</strong></td>
+                    <td colspan="8"><strong>{{ $employeeApplications->count() }} overtime application(s)</strong></td>
                   </tr>
+                  @foreach($employeeApplications as $application)
+                    @php
+                      $canAccountsAct = $application->status === OvertimeApplication::STATUS_HR_APPROVED;
+                    @endphp
+                    <tr>
+                      <td>{{ $serialNumber++ }}</td>
+                      <td></td>
+                      <td></td>
+                      <td>{{ Carbon::parse($application->overtime_date)->format('d M Y') }}</td>
+                      {{-- <td>{{ formatMinutes($application->overtime_minutes) }}</td> --}}
+                      <td>{{ formatMinutes(payableMinutes($application->sanctioned_minutes)) ?? formatMinutes(payableMinutes($application->overtime_minutes)) }}</td>
+                      <td>{{ number_format($application->gross_salary ?? 0, 0) }}</td>
+                      <td>{{ $application->hourly_rate ?? '-' }}</td>
+                      <td>
+                        @if($application->sanctioned_amount)
+                          PKR {{ number_format($application->sanctioned_amount, 2) }}
+                        @else
+                          -
+                        @endif
+                      </td>
+                      <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
+                      <td>{{ $application->hr_remarks ?: '-' }}</td>
+                      <td>
+                        @if($canAccountsAct)
+                          <form action="{{ route('overtime.finance-decision', $application->id) }}" method="POST">
+                            @csrf
+                            <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
+                            <div class="d-flex gap-1">
+                              <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
+                              <button type="submit" name="decision" value="reject" class="btn btn-sm btn-danger">Reject</button>
+                            </div>
+                          </form>
+                        @else
+                          <small class="text-muted">{{ $application->finance_remarks ?: $application->hr_remarks ?: '-' }}</small>
+                        @endif
+                      </td>
+                    </tr>
+                  @endforeach
                 @empty
                   <tr>
                     <td colspan="11" class="text-center text-muted">No overtime applications found for this month.</td>

@@ -78,6 +78,7 @@ use App\Models\OvertimeApplication;
   @php
     $reportTitle = $status === OvertimeApplication::STATUS_HR_APPROVED ? 'HR Approved Overtime Report' : 'Approved Overtime Report';
     $totalAmount = $totalAmount ?? $applications->sum(fn ($application) => $application->sanctioned_amount ?? $application->calculated_amount);
+    $serialNumber = 1;
   @endphp
     <table class="header-table">
         <tr>
@@ -102,38 +103,53 @@ use App\Models\OvertimeApplication;
         <th>Department</th>
         <th>Overtime Date</th>
         <th>OT minutes</th>
-        <th>Salary</th>
-        <th>OT Amount</th>
+        <th>Salary (PKR)</th>
+        <th>Hourly Rate (PKR)</th>
+        <th>OT Amount (PKR)</th>
         <th>Remarks</th>
         <th>HR Remarks</th>
         <th>Finance Remarks</th>
       </tr>
     </thead>
     <tbody>
-      @forelse($applications as $application)
-        <tr>
-          <td>{{ $loop->iteration }}</td>
-          <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
-          <td>{{ $application->emp_code }}</td>
-          <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
-          <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
-          <td>{{ dateFormat($application->overtime_date) }}</td>
-          <td class="text-right">{{ formatMinutes(payableMinutes($application->sanctioned_minutes ?? $application->overtime_minutes)) }}</td>
-          <td class="text-right">{{ number_format($application->gross_salary ?? 0, 0) }}</td>
-          <td class="text-right">{{ number_format($application->sanctioned_amount ?? $application->calculated_amount, 2) }}</td>
-          <td>{{ $application->remarks ?? '-' }}</td>
-          <td>{{ $application->hr_remarks ?? '-' }}</td>
-          <td>{{ $application->finance_remarks ?? '-' }}</td>
+      @forelse($applications->groupBy('emp_code') as $employeeApplications)
+        @php
+          $employee = $employeeApplications->first();
+        @endphp
+        <tr class="master-row">
+          <td></td>
+          <td>{{ capitalizeWords($employee->employee->name ?? '') }}</td>
+          <td>{{ $employee->emp_code }}</td>
+          <td>{{ $employee->employee->designation->desg_short ?? '-' }}</td>
+          <td>{{ $employee->employee->department->dept_desc ?? '-' }}</td>
+          <td colspan="7">{{ $employeeApplications->count() }} overtime application(s)</td>
         </tr>
+        @foreach($employeeApplications as $application)
+          <tr>
+            <td>{{ $serialNumber++ }}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>{{ dateFormat($application->overtime_date) }}</td>
+            <td class="text-right">{{ formatMinutes(payableMinutes($application->sanctioned_minutes ?? $application->overtime_minutes)) }}</td>
+            <td class="text-right">{{ number_format($application->gross_salary ?? 0, 0) }}</td>
+            <td class="text-right">{{ $application->hourly_rate ?? '-' }}</td>
+            <td class="text-right">{{ number_format($application->sanctioned_amount ?? $application->calculated_amount, 2) }}</td>
+            <td>{{ $application->remarks ?? '-' }}</td>
+            <td>{{ $application->hr_remarks ?? '-' }}</td>
+            <td>{{ $application->finance_remarks ?? '-' }}</td>
+          </tr>
+        @endforeach
       @empty
         <tr>
-          <td colspan="12" style="text-align: center;">No approved overtime applications found yet in this month.</td>
+          <td colspan="13" style="text-align: center;">No approved overtime applications found yet in this month.</td>
         </tr>
       @endforelse
 
       @if($applications->count())
         <tr class="total-row">
-          <td colspan="8" class="text-right">Grand Total</td>
+          <td colspan="9" class="text-right">Grand Total</td>
           <td class="text-right">{{ number_format($totalAmount, 2) }}</td>
           <td colspan="3"></td>
         </tr>

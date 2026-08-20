@@ -246,7 +246,8 @@ class OvertimeController extends Controller
             ->when($status, function ($query) use ($status) {
                 $query->where('status', $status);
             })
-            ->orderByRaw("CASE WHEN STATUS = 'HOD_approved' THEN 1 WHEN STATUS = 'pending' THEN 2 ELSE 3 END")
+            ->orderBy('emp_code')
+            ->orderBy('overtime_date')
             ->orderByDesc('applied_at')
             ->get();
 
@@ -371,6 +372,8 @@ class OvertimeController extends Controller
             ->when($status, function ($query) use ($status) {
                 $query->where('status', $status);
             })
+            ->orderBy('emp_code')
+            ->orderBy('overtime_date')
             ->orderByRaw("CASE WHEN STATUS = 'HR approved' THEN 1 WHEN STATUS = 'approved' THEN 2 ELSE 3 END")
             ->orderByDesc('hr_approved_at')
             ->get();
@@ -460,7 +463,7 @@ class OvertimeController extends Controller
             ->all();
 
         $eligibleRows = $attendanceRows
-            ->map(function (array $row) use ($employee, $holidayDates, $rostersByDate, $today, $claimedDates, $grossSalary) {
+            ->map(function (array $row) use ($employee, $holidayDates, $rostersByDate, $today, $claimedDates, $grossSalary, $monthStart) {
                 $date = Carbon::parse($row['at_date'])->startOfDay();
                 $dateString = $date->toDateString();
 
@@ -510,7 +513,7 @@ class OvertimeController extends Controller
                 }
 
                 $shiftDurationMinutes = max(1, $shiftStart->diffInMinutes($shiftEnd));
-                $hourlyRate = (float) ($grossSalary ?? 0) / 30 / max(1, ($shiftDurationMinutes / 60));
+                $hourlyRate = (float) ($grossSalary ?? 0) / $monthStart->daysInMonth / max(1, ($shiftDurationMinutes / 60));
                 $amount = $this->calculateAmount($hourlyRate, $overtimeMinutes);
                 $timeInOut = $this->extractFirstLastSwipe($row['time_logs']);
 
@@ -888,7 +891,11 @@ class OvertimeController extends Controller
             $query->where('status', $status);
         }
 
-        $applications = $query->orderByDesc('applied_at')->get();
+        $applications = $query
+            ->orderBy('emp_code')
+            ->orderBy('overtime_date')
+            ->orderByDesc('applied_at')
+            ->get();
         $totalAmount = $applications->reduce(function ($carry, $application) {
             $amount = number_format($application->sanctioned_amount ?? $application->calculated_amount, 2, '.', '');
             return bcadd($carry, $amount, 2);
