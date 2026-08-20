@@ -86,7 +86,28 @@ class OvertimeApplication extends Model
     {
         return $this->belongsTo(Employee::class, 'emp_code', 'emp_code');
     }
-
+    public function designation()
+    {
+        return $this->hasOneThrough(
+            Designation::class,
+            Employee::class,
+            'emp_code', // Foreign key on Employee table
+            'desg_code', // Foreign key on Designation table
+            'emp_code', // Local key on OvertimeApplication table
+            'desg_code' // Local key on Employee table
+        );
+    }
+    public function department()
+    {
+        return $this->hasOneThrough(
+            Department::class,
+            Employee::class,
+            'emp_code', // Foreign key on Employee table
+            'dept_code', // Foreign key on Department table
+            'emp_code', // Local key on OvertimeApplication table
+            'dept_code' // Local key on Employee table
+        );
+    }
     public function hodApprover()
     {
         return $this->belongsTo(User::class, 'hod_approved_by', 'emp_code');

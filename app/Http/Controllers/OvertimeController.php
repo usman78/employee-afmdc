@@ -242,8 +242,7 @@ class OvertimeController extends Controller
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');
 
-        $applications = OvertimeApplication::with(['employee.designation', 'employee.department'])
-            ->where('salary_month', $month)
+        $applications = OvertimeApplication::where('salary_month', $month)
             ->when($status, function ($query) use ($status) {
                 $query->where('status', $status);
             })
@@ -363,8 +362,7 @@ class OvertimeController extends Controller
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');
 
-        $applications = OvertimeApplication::with(['employee.designation', 'employee.department', 'hrApprover'])
-            ->where('salary_month', $month)
+        $applications = OvertimeApplication::where('salary_month', $month)
             ->whereIn('status', [
                 OvertimeApplication::STATUS_HR_APPROVED,
                 OvertimeApplication::STATUS_APPROVED,
@@ -433,7 +431,7 @@ class OvertimeController extends Controller
                 'salary_month' => $month,
                 'period_start' => $monthStart,
                 'period_end' => $today,
-                'gross_salary' => Salary::grossSalaryFor($employee->emp_code),
+                'gross_salary' => Salary::basicSalaryFor($employee->emp_code),
                 'eligible_count' => 0,
                 'total_eligible_minutes' => 0,
                 'total_eligible_amount' => 0,
@@ -443,7 +441,7 @@ class OvertimeController extends Controller
         }
 
         $windowEnd = $monthEnd->lt($today) ? $monthEnd : $today;
-        $grossSalary = Salary::grossSalaryFor($employee->emp_code);
+        $grossSalary = Salary::basicSalaryFor($employee->emp_code);
 
         $attendanceData = app(AttendanceController::class)->buildAttendanceData(
             $employee->emp_code,
@@ -483,7 +481,7 @@ class OvertimeController extends Controller
                 $isSunday = (bool) ($row['is_sunday'] ?? false);
                 $isWeeklyRest = (bool) ($row['is_weekly_rest'] ?? false);
 
-                if ($isSecurity && ! $isWeeklyRest) {
+                if ($isSecurity && ! $isHoliday && ! $isWeeklyRest) {
                     return null;
                 }
 
@@ -872,7 +870,7 @@ class OvertimeController extends Controller
     }
     public function downloadApprovedReport(Request $request)
     {
-        $this->ensureHr();
+        // $this->ensureHr();
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');

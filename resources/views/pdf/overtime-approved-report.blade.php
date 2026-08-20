@@ -44,6 +44,34 @@ use App\Models\OvertimeApplication;
       font-weight: bold;
       background: #eef6ff;
     }
+    body {
+        font-family: "DejaVu Sans", sans-serif;
+        font-size: 8.5px;
+        color: #333;
+        line-height: 1.2;
+        margin: 0;
+    }
+    .header-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 6px;
+    }
+    .header-table td {
+        border: none;
+        text-align: center;
+    }
+    .logo-img {
+        width: 40px;
+        height: auto;
+    }
+    .title {
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    .subtitle {
+        font-size: 9.5px;
+    }
   </style>
 </head>
 <body>
@@ -51,7 +79,16 @@ use App\Models\OvertimeApplication;
     $reportTitle = $status === OvertimeApplication::STATUS_HR_APPROVED ? 'HR Approved Overtime Report' : 'Approved Overtime Report';
     $totalAmount = $totalAmount ?? $applications->sum(fn ($application) => $application->sanctioned_amount ?? $application->calculated_amount);
   @endphp
-
+    <table class="header-table">
+        <tr>
+            <td>
+                <img src="{{ public_path('img/AFMDC-Logo.png') }}" class="logo-img">
+            </td>
+        </tr>
+        <tr>
+            <td class="title">Aziz Fatimah Medical & Dental College</td>
+        </tr>
+    </table>
   <h2>{{ $reportTitle }}</h2>
   <div class="subtitle">{{ \Carbon\Carbon::createFromFormat('Y-m', $month)->format('F Y') }}</div>
 
@@ -65,6 +102,7 @@ use App\Models\OvertimeApplication;
         <th>Department</th>
         <th>Overtime Date</th>
         <th>OT minutes</th>
+        <th>Salary</th>
         <th>OT Amount</th>
         <th>Remarks</th>
         <th>HR Remarks</th>
@@ -80,7 +118,8 @@ use App\Models\OvertimeApplication;
           <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
           <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
           <td>{{ dateFormat($application->overtime_date) }}</td>
-          <td class="text-right">{{ formatMinutes($application->sanctioned_minutes ?? $application->overtime_minutes) }}</td>
+          <td class="text-right">{{ formatMinutes(payableMinutes($application->sanctioned_minutes ?? $application->overtime_minutes)) }}</td>
+          <td class="text-right">{{ number_format($application->gross_salary ?? 0, 0) }}</td>
           <td class="text-right">{{ number_format($application->sanctioned_amount ?? $application->calculated_amount, 2) }}</td>
           <td>{{ $application->remarks ?? '-' }}</td>
           <td>{{ $application->hr_remarks ?? '-' }}</td>
@@ -88,13 +127,13 @@ use App\Models\OvertimeApplication;
         </tr>
       @empty
         <tr>
-          <td colspan="11" style="text-align: center;">No approved overtime applications found yet in this month.</td>
+          <td colspan="12" style="text-align: center;">No approved overtime applications found yet in this month.</td>
         </tr>
       @endforelse
 
       @if($applications->count())
         <tr class="total-row">
-          <td colspan="7" class="text-right">Grand Total</td>
+          <td colspan="8" class="text-right">Grand Total</td>
           <td class="text-right">{{ number_format($totalAmount, 2) }}</td>
           <td colspan="3"></td>
         </tr>

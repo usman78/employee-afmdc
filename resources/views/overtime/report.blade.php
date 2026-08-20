@@ -62,7 +62,7 @@
               </button>
               <div class="dropdown-menu animated--fade-in"
                   aria-labelledby="dropdownMenuButton">
-                  <a class="dropdown-item" href="{{ route('overtime.approved-download', ['month' => $month, 'status' => 'all']) }}" target="_blank">All Approved</a>
+                  <a class="dropdown-item" href="{{ route('overtime.approved-download', ['month' => $month, 'status' => OvertimeApplication::STATUS_APPROVED]) }}" target="_blank">All Approved</a>
                   <a class="dropdown-item" href="{{ route('overtime.approved-download', ['month' => $month, 'status' => OvertimeApplication::STATUS_HR_APPROVED]) }}" target="_blank">All HR Approved</a>
                   {{-- <a class="dropdown-item" href="#" data-toggle="modal" data-target="#filterByNameModal">Download By Name</a>
                   <a class="dropdown-item" href="#" data-toggle="modal" data-target="#filterByDateModal">Download by Finance Approval Date</a> --}}
@@ -76,13 +76,17 @@
                 <tr>
                   <th>#</th>
                   <th>Name</th>
-                  <th>Code</th>
+                  <th>Designation</th>
+                  <th>Department</th>
                   <th>Date</th>
+                  <th>Shift</th>
+                  <th>Time in/out</th>
                   <th>OT Minutes</th>
+                  <th>Salary</th>
                   <th>Claimed</th>
                   <th>Status</th>
                   <th>Remarks</th>
-                  <th>HOD Remarks</th>
+                  {{-- <th>HOD Remarks</th> --}}
                   <th>HR Action</th>
                 </tr>
               </thead>
@@ -94,14 +98,18 @@
                   @endphp
                   <tr>
                     <td>{{ $loop->iteration }}</td>
-                    <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
-                    <td>{{ $application->emp_code }}</td>
+                    <td>{{ capitalizeWords($application->employee->name ?? '') . ' (' . $application->employee->emp_code . ')' }}</td>
+                    <td>{{ $application->designation->desg_desc ?? '-' }}</td>
+                    <td>{{ $application->department->dept_desc ?? '-' }}</td>
                     <td>{{ Carbon::parse($application->overtime_date)->format('d M Y') }}</td>
-                    <td id="otMinutes{{ $loop->index }}">{{ formatMinutes($application->overtime_minutes) }}</td>
+                    <td>{{ $application->shift_start != null ? timeFormatFromString($application->shift_start) : '-' }} - {{ $application->shift_end != null ? timeFormatFromString($application->shift_end) : '-' }}</td>
+                    <td>{{ $application->time_in != null ? timeFormatFromString($application->time_in) : '-' }} - {{ $application->time_out != null ? timeFormatFromString($application->time_out) : '-' }}</td>
+                    <td id="otMinutes{{ $loop->index }}">{{ formatMinutes(payableMinutes($application->overtime_minutes)) }}</td>
+                    <td>{{ number_format($application->gross_salary ?? 0, 0) }}</td>
                     <td id="otAmount{{ $loop->index }}">PKR {{ number_format($displayAmount, 2) }}</td>
                     <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
                     <td>{{ $application->remarks ?: '-' }}</td>
-                    <td>{{ $application->hod_remarks ?: '-' }}</td>
+                    {{-- <td>{{ $application->hod_remarks ?: '-' }}</td> --}}
                     <td>
                       @if($canHrAct)
                         <form action="{{ route('overtime.hr-decision', $application->id) }}" method="POST">
@@ -118,7 +126,7 @@
                             data-hourly-rate="{{ $application->hourly_rate }}"
                           >
                           <small class="form-text text-muted d-block">
-                            Claimed: {{ $application->overtime_minutes }} min (PKR {{ number_format($application->calculated_amount, 2) }})
+                            Claimed: {{ formatMinutes(payableMinutes($application->overtime_minutes)) }} min (PKR {{ number_format($application->calculated_amount, 2) }})
                           </small>
                           <div class="amount-display" id="amountDisplay{{ $loop->index }}">
                             Amount: PKR {{ number_format($application->calculated_amount, 2) }}
@@ -136,7 +144,7 @@
                   </tr>
                 @empty
                   <tr>
-                    <td colspan="10" class="text-center text-muted">No overtime applications found for this month.</td>
+                    <td colspan="13" class="text-center text-muted">No overtime applications found for this month.</td>
                   </tr>
                 @endforelse
 
@@ -144,17 +152,17 @@
                   @php
                     $grandTotal = $applications->reduce(function ($carry, $application) {
                       // Adding only those amounts that have the HR approved status to the grand total
-                      if ($application->status !== OvertimeApplication::STATUS_HR_APPROVED) {
-                        return $carry;
-                      }
+                      // if ($application->status !== OvertimeApplication::STATUS_HR_APPROVED) {
+                      //   return $carry;
+                      // }
                       $amount = number_format($application->sanctioned_amount ?? $application->calculated_amount, 2, '.', '');
                       return bcadd($carry, $amount, 2);
                     }, '0.00');
                   @endphp
                   <tr class="table-active">
-                    <td colspan="5" class="text-end"><strong>Grand Total</strong></td>
+                    <td colspan="9" class="text-end"><strong>Grand Total</strong></td>
                     <td class="text-right"><strong>PKR {{ number_format($grandTotal, 2) }}</strong></td>
-                    <td colspan="4"></td>
+                    <td colspan="7"></td>
                   </tr>
                 @endif
               </tbody>

@@ -439,3 +439,19 @@ function getRamadanDeductionMinutes($empCategory, Carbon $workDate): int
 
     return 0;
 }
+function payableMinutes(int $minutes): int
+{
+    $hours = intdiv($minutes, 60);
+    $remainingMinutes = $minutes % 60;
+
+    if ($remainingMinutes <= 25) {
+        $remainingMinutes = 0;
+    } elseif ($remainingMinutes <= 45) {
+        $remainingMinutes = 30;
+    } else {
+        $hours++;
+        $remainingMinutes = 0;
+    }
+
+    return ($hours * 60) + $remainingMinutes;
+}

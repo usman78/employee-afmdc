@@ -53,7 +53,7 @@
               </button>
               <div class="dropdown-menu animated--fade-in"
                   aria-labelledby="dropdownMenuButton">
-                  <a class="dropdown-item" href="{{ route('overtime.approved-download', ['month' => $month]) }}" target="_blank">All Approved</a>
+                  <a class="dropdown-item" href="{{ route('overtime.approved-download', ['month' => $month, 'status' => OvertimeApplication::STATUS_APPROVED]) }}" target="_blank">All Approved</a>
               </div>
             </div>
           </form>
@@ -66,8 +66,10 @@
                   <th>Name</th>
                   <th>Code</th>
                   <th>Date</th>
-                  <th>OT Minutes</th>
+                  {{-- <th>OT Minutes</th> --}}
                   <th>Sanctioned Minutes</th>
+                  <th>Salary</th>
+                  <th>Hourly Rate</th>
                   <th>Sanctioned Amount</th>
                   <th>Status</th>
                   <th>HR Remarks</th>
@@ -84,8 +86,10 @@
                     <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
                     <td>{{ $application->emp_code }}</td>
                     <td>{{ Carbon::parse($application->overtime_date)->format('d M Y') }}</td>
-                    <td>{{ formatMinutes($application->overtime_minutes) }}</td>
-                    <td>{{ formatMinutes($application->sanctioned_minutes) ?? '-' }}</td>
+                    {{-- <td>{{ formatMinutes($application->overtime_minutes) }}</td> --}}
+                    <td>{{ formatMinutes(payableMinutes($application->sanctioned_minutes)) ?? formatMinutes(payableMinutes($application->overtime_minutes)) }}</td>
+                    <td>{{ number_format($application->gross_salary ?? 0, 0) }}</td>
+                    <td>{{ $application->hourly_rate ?? '-' }}</td>
                     <td>
                       @if($application->sanctioned_amount)
                         PKR {{ number_format($application->sanctioned_amount, 2) }}
@@ -112,9 +116,27 @@
                   </tr>
                 @empty
                   <tr>
-                    <td colspan="9" class="text-center text-muted">No overtime applications found for this month.</td>
+                    <td colspan="11" class="text-center text-muted">No overtime applications found for this month.</td>
                   </tr>
                 @endforelse
+
+                @if($applications->count())
+                  @php
+                    $grandTotal = $applications->reduce(function ($carry, $application) {
+                      // Adding only those amounts that have the HR approved status to the grand total
+                      // if ($application->status !== OvertimeApplication::STATUS_HR_APPROVED) {
+                      //   return $carry;
+                      // }
+                      $amount = number_format($application->sanctioned_amount ?? 0, 2, '.', '');
+                      return bcadd($carry, $amount, 2);
+                    }, '0.00');
+                  @endphp
+                  <tr class="table-active">
+                    <td colspan="7" class="text-end"><strong>Grand Total</strong></td>
+                    <td class="text-right"><strong>PKR {{ number_format($grandTotal, 2) }}</strong></td>
+                    <td colspan="3"></td>
+                  </tr>
+                @endif
               </tbody>
             </table>
           </div>

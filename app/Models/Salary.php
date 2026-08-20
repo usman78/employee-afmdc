@@ -27,4 +27,19 @@ class Salary extends Model
 
         return isset($row['gross_sal']) ? (float) $row['gross_sal'] : null;
     }
+    public static function basicSalaryFor($empCode): ?float
+    {
+        $row = DB::selectOne(
+            'SELECT BASIC FROM PAYROLL.EMP_SAL_BREAKUP WHERE EMPCODE = ?',
+            [$empCode]
+        );
+
+        if (! $row) {
+            return null;
+        }
+
+        $row = array_change_key_case((array) $row, CASE_LOWER);
+
+        return isset($row['basic']) ? (float) $row['basic'] : null;
+    }
 }
