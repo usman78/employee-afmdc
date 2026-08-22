@@ -42,7 +42,20 @@ use App\Models\OvertimeApplication;
     }
     .total-row td {
       font-weight: bold;
-      background: #eef6ff;
+      background: #eef8ff;
+    }
+    .detail-row td {
+      font-size: 8px;
+      background: #bae0ff;
+    }
+    .approval-row td {
+      background: #e2f2ff;
+      font-size: 8px;
+      padding-top: 3px;
+      padding-bottom: 3px;
+    }
+    .approval-label {
+      font-weight: bold;
     }
     body {
         font-family: "DejaVu Sans", sans-serif;
@@ -102,6 +115,8 @@ use App\Models\OvertimeApplication;
         <th>Designation</th>
         <th>Department</th>
         <th>Overtime Date</th>
+        <th>Shift</th>
+        <th>Time in/out</th>
         <th>OT minutes</th>
         <th>Salary (PKR)</th>
         <th>Hourly Rate (PKR)</th>
@@ -125,13 +140,15 @@ use App\Models\OvertimeApplication;
           <td colspan="7">{{ $employeeApplications->count() }} overtime application(s)</td>
         </tr>
         @foreach($employeeApplications as $application)
-          <tr>
+          <tr class="detail-row">
             <td>{{ $serialNumber++ }}</td>
             <td></td>
             <td></td>
             <td></td>
             <td></td>
             <td>{{ dateFormat($application->overtime_date) }}</td>
+            <td>{{ $application->shift_start != null ? timeFormatFromString($application->shift_start) : '-' }} - {{ $application->shift_end != null ? timeFormatFromString($application->shift_end) : '-' }}</td>
+            <td>{{ $application->time_in != null ? timeFormatFromString($application->time_in) : '-' }} - {{ $application->time_out != null ? timeFormatFromString($application->time_out) : '-' }}</td>            
             <td class="text-right">{{ formatMinutes(payableMinutes($application->sanctioned_minutes ?? $application->overtime_minutes)) }}</td>
             <td class="text-right">{{ number_format($application->gross_salary ?? 0, 0) }}</td>
             <td class="text-right">{{ $application->hourly_rate ?? '-' }}</td>
@@ -140,18 +157,30 @@ use App\Models\OvertimeApplication;
             <td>{{ $application->hr_remarks ?? '-' }}</td>
             <td>{{ $application->finance_remarks ?? '-' }}</td>
           </tr>
+          <tr class="approval-row">
+            <td></td>
+            <td colspan="1" class="approval-label">HOD Approval</td>
+            <td colspan="1">{{ $application->hod_approved_by ? capitalizeWords(getEmployeeName($application->hod_approved_by)) : '' }}</td>
+            <td colspan="1">{{ $application->hod_approved_at ? dateAndTimeFormat($application->hod_approved_at) : '' }}</td>
+            <td colspan="2" class="approval-label">HR Approval</td>
+            <td colspan="2">{{ $application->hr_approved_by ? capitalizeWords(getEmployeeName($application->hr_approved_by)) : '' }}</td>
+            <td colspan="2">{{ $application->hr_approved_at ? dateAndTimeFormat($application->hr_approved_at) : '' }}</td>
+            <td colspan="2" class="approval-label">Finance Approval</td>
+            <td colspan="2">{{ $application->finance_approved_by ? capitalizeWords(getEmployeeName($application->finance_approved_by)) : '' }}</td>
+            <td colspan="1">{{ $application->finance_approved_at ? dateAndTimeFormat($application->finance_approved_at) : '' }}</td>
+          </tr>
         @endforeach
       @empty
         <tr>
-          <td colspan="13" style="text-align: center;">No approved overtime applications found yet in this month.</td>
+          <td colspan="15" style="text-align: center;">No approved overtime applications found yet in this month.</td>
         </tr>
       @endforelse
 
       @if($applications->count())
         <tr class="total-row">
-          <td colspan="9" class="text-right">Grand Total</td>
+          <td colspan="11" class="text-right">Grand Total</td>
           <td class="text-right">{{ number_format($totalAmount, 2) }}</td>
-          <td colspan="3"></td>
+          <td colspan="4"></td>
         </tr>
       @endif
     </tbody>

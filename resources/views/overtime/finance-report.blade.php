@@ -10,6 +10,87 @@
   .table>:not(caption)>*>* { padding: .5rem .6rem; vertical-align: middle; }
   .overtime-finance-table { font-size: 13px; }
   .overtime-finance-table textarea { min-width: 130px; }
+  {{-- tr.detail-row td {
+      background-color: #bae0ff;
+  }
+  .approval-row td {
+    background-color: #e2f2ff;
+    font-size: 12px;
+    padding-top: .3rem !important;
+    padding-bottom: .3rem !important;
+  }
+  .approval-label {
+    font-weight: bold;
+    color: #555;
+  } --}}
+        /* -------------------------------------------------
+           APPROVAL ROW
+        ------------------------------------------------- */
+
+        .approval-row td {
+            padding-top: 8px !important;
+            padding-bottom: 12px !important;
+            border-bottom: 1px solid #edf0f5;
+        }
+
+        .approval-wrapper {
+            background: #f8faff;
+            border: 1px solid #e5eaf5;
+            border-radius: 9px;
+
+            display: flex;
+            align-items: center;
+
+            padding: 10px 14px;
+            gap: 0;
+        }
+
+        .approval-item {
+            flex: 1;
+            min-width: 180px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 9px;
+
+            padding-right: 15px;
+            margin-right: 15px;
+
+            border-right: 1px solid #e3e7ef;
+        }
+
+        .approval-item:last-child {
+            border-right: none;
+            margin-right: 0;
+        }
+
+        .approval-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: #eef2ff;
+            color: #4f46e5;
+
+            flex-shrink: 0;
+        }
+
+        .approval-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #475467;
+        }
+
+        .approval-value {
+            font-size: 11px;
+            color: #98a2b3;
+            margin-top: 2px;
+        }
 @endpush
 
 @section('content')
@@ -124,6 +205,128 @@
                           <small class="text-muted">{{ $application->finance_remarks ?: $application->hr_remarks ?: '-' }}</small>
                         @endif
                       </td>
+                        {{-- <tr class="approval-row">
+                          <td></td>
+                          <td colspan="1" class="approval-label">HOD Approval</td>
+                          <td colspan="1">
+                            {{ $employee->hod_approved_by ? capitalizeWords(getEmployeeName($employee->hod_approved_by)) : '' }}
+                          </td>
+                          <td colspan="1">
+                            {{ $employee->hod_approved_at ? Carbon::parse($employee->hod_approved_at)->format('d M Y') : '' }}
+                          </td>
+                          <td colspan="1" class="approval-label">HR Approval</td>
+                          <td colspan="2">
+                            {{ $employee->hr_approved_by ? capitalizeWords(getEmployeeName($employee->hr_approved_by)) : '' }}
+                          </td>
+                          <td colspan="1">
+                            {{ $employee->hr_approved_at ? Carbon::parse($employee->hr_approved_at)->format('d M Y') : '' }}
+                          </td>
+                          <td colspan="1" class="approval-label">Finance Approval</td>
+                          <td colspan="1">
+                            {{ $employee->finance_approved_by ? capitalizeWords(getEmployeeName($employee->finance_approved_by)) : '' }}
+                          </td>
+                          <td colspan="1">
+                            {{ $employee->finance_approved_at ? Carbon::parse($employee->finance_approved_at)->format('d M Y') : '' }}
+                          </td>
+                        </tr> --}}
+                                                <tr class="approval-row">
+
+                        <td colspan="13">
+
+                                <div class="approval-wrapper">
+
+
+                                    <!-- HOD -->
+
+                                    <div class="approval-item">
+
+                                        <div class="approval-icon">
+
+                                            <i class="bi bi-person-check"></i>
+
+                                        </div>
+
+                                        <div>
+
+                                            <div class="approval-label">
+                                                HOD Approval
+                                            </div>
+
+                                            <div class="approval-value">
+                                              @if($application->status === OvertimeApplication::STATUS_HOD_APPROVED || $application->status === OvertimeApplication::STATUS_HR_APPROVED || $application->status === OvertimeApplication::STATUS_APPROVED)
+                                                {{ $employee->hod_approved_by ? capitalizeWords(getEmployeeName($employee->hod_approved_by)) : 'Approved' }} · {{ $employee->hod_approved_at ? Carbon::parse($employee->hod_approved_at)->format('d M Y') : '' }}
+                                              @else
+                                                <span class="text-muted">Pending</span>
+                                              @endif
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <!-- HR -->
+
+                                    <div class="approval-item">
+
+                                        <div class="approval-icon">
+
+                                            <i class="bi bi-file-check"></i>
+
+                                        </div>
+
+                                        <div>
+
+                                            <div class="approval-label">
+                                                HR Approval
+                                            </div>
+
+                                            <div class="approval-value">
+                                              @if($application->status === OvertimeApplication::STATUS_HR_APPROVED || $application->status === OvertimeApplication::STATUS_APPROVED)
+                                                {{ $employee->hr_approved_by ? capitalizeWords(getEmployeeName($employee->hr_approved_by)) : '' }} · {{ $employee->hr_approved_at ? Carbon::parse($employee->hr_approved_at)->format('d M Y') : '' }}
+                                              @else
+                                                <span class="text-muted">Pending</span>
+                                              @endif
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <!-- Finance -->
+
+                                    <div class="approval-item">
+
+                                        <div class="approval-icon">
+
+                                            <i class="bi bi-wallet2"></i>
+
+                                        </div>
+
+                                        <div>
+
+                                            <div class="approval-label">
+                                                Finance Approval
+                                            </div>
+
+                                            <div class="approval-value">
+                                                @if($application->status === OvertimeApplication::STATUS_APPROVED)
+                                                    {{ $employee->finance_approved_by ? capitalizeWords(getEmployeeName($employee->finance_approved_by)) : '' }} · {{ $employee->finance_approved_at ? Carbon::parse($employee->finance_approved_at)->format('d M Y') : '' }}
+                                                @else
+                                                    <span class="text-muted">Pending</span>
+                                                @endif
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
                     </tr>
                   @endforeach
                 @empty
