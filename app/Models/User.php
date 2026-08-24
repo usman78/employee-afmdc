@@ -95,7 +95,7 @@ class User extends Authenticatable
     }
     public function isStoreOfficer()
     {
-        if($this->dept_code == 15 || in_array($this->emp_code, ['1045', '1171']))
+        if($this->dept_code == 15 || in_array($this->emp_code, ['1045', '1171', '431']))
         {
             return true;
         }
