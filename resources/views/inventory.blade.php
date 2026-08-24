@@ -141,7 +141,7 @@
                           <td>{{ date('d-m-Y',strtotime($inv->doc_date)) }}</td>
                           <td>{{ $inv->doc_no }}</td>
                           <td>{{ $inv->item_code }}</td>
-                          <td>{{ $inv->inventory->item_desc }}</td>
+                          <td>{{ $inv->inventory->item_desc ?? '-' }}</td>
                           <td>{{ $inv->qty }}</td>
                           <td>{{ $inv->rate }}</td>
                           <td>{{ $inv->value }}</td>
@@ -193,7 +193,7 @@
                           <td>{{ date('d-m-Y',strtotime($inv->doc_date)) }}</td>
                           <td>{{ $inv->doc_no }}</td>
                           <td>{{ $inv->item_code }}</td>
-                          <td>{{ $inv->inventory->item_desc }}</td>
+                          <td>{{ $inv->inventory->item_desc ?? '-' }}</td>
                           <td>{{ $inv->qty }}</td>
                           <td>{{ $inv->rate }}</td>
                           <td>{{ $inv->value }}</td>
