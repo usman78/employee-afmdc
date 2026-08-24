@@ -816,6 +816,7 @@ class LeavesController extends Controller
             ->whereIn('leave_code', [1, 2])
             ->where('leave_code', '!=', $leave_code)
             ->where('status', '!=', 9)
+            ->where('l_day', '!=', 0.5)
             ->where(function ($query) use ($from, $yesterday, $tomorrow) {
 
                 // Existing leave covers the previous day
