@@ -239,6 +239,7 @@
                         'overtime.finance-report',
                         'overtime.finance-decision',
                         'admissions', 
+                        'inventory.reports',
                         'inventory',
                         'inventory.store_report'
                         ])
@@ -248,7 +249,7 @@
                         <span>Reports</span>
                     </a>
                     <div id="collapseReports"
-                        class="collapse {{ in_array(request()->route()->getName(), ['attendance-report', 'attendance-report-data','attendance-late-report','attendance-late-report-data','attendance-absent-report','attendance-absent-report-data','attendance-present-report','attendance-present-report-data','manual-attendance-report','manual-attendance-report-data','leave-report', 'advance-salary.report', 'advance-salary.hr-decision', 'overtime.report', 'overtime.eligibility-report', 'overtime.hr-decision', 'finance-reports', 'advance-salary.accounts-report', 'advance-salary.accounts-decision', 'overtime.finance-reports', 'overtime.finance-report', 'overtime.finance-decision', 'admissions', 'inventory', 'exit-interview.report', 'exit-interview.show']) ? 'show' : '' }}"
+                        class="collapse {{ in_array(request()->route()->getName(), ['attendance-report', 'attendance-report-data','attendance-late-report','attendance-late-report-data','attendance-absent-report','attendance-absent-report-data','attendance-present-report','attendance-present-report-data','manual-attendance-report','manual-attendance-report-data','leave-report', 'advance-salary.report', 'advance-salary.hr-decision', 'overtime.report', 'overtime.eligibility-report', 'overtime.hr-decision', 'finance-reports', 'advance-salary.accounts-report', 'advance-salary.accounts-decision', 'overtime.finance-reports', 'overtime.finance-report', 'overtime.finance-decision', 'admissions', 'inventory.reports', 'inventory', 'inventory.store_report', 'exit-interview.report', 'exit-interview.show']) ? 'show' : '' }}"
                         data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             @if (Auth::user()->isHR())
@@ -282,7 +283,7 @@
                             @if (Auth::user()->isAllowedToSeeAdmissions())
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['admissions']) ? 'active' : '' }}" href="{{ route('admissions') }}">Admissions Report</a>
                             @endif
-                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['inventory']) ? 'active' : '' }}" href="{{ route('inventory', $emp_code) }}">Store Issuance Report</a>
+                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['inventory.reports', 'inventory', 'inventory.store_report']) ? 'active' : '' }}" href="{{ route('inventory.reports') }}">Inventory Reports</a>
                             @if (Auth::user()->isStoreOfficer())
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['inventory.store_report']) ? 'active' : '' }}" href="{{ route('inventory.store_report') }}">Store Report</a>
                             @endif

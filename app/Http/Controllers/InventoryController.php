@@ -14,6 +14,11 @@ use Illuminate\Pagination\Paginator;
 
 class InventoryController extends Controller
 {
+    public function reports()
+    {
+        return view('inventory.index');
+    }
+
     public function inventory($emp_code)
     {
         // Check if the logged in user is the same as the user whose inventory is being viewed
