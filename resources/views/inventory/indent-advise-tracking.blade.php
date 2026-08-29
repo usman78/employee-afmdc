@@ -1,4 +1,7 @@
 @extends('layouts.app')
+@push('cdn-styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />    
+@endpush
 @push('styles')
 
         body {
@@ -456,6 +459,26 @@
         }
 
         /* -------------------------------------------------
+           SELECT2
+        ------------------------------------------------- */
+        .select2-container .select2-selection--single {
+            height: 44px;
+        }        
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #d9deea;
+            border-radius: 8px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 44px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            top: 9px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__clear {
+            height: 40px;
+        }
+
+        /* -------------------------------------------------
            RESPONSIVE
         ------------------------------------------------- */
 
@@ -547,7 +570,7 @@
                     @csrf
                     <div class="row g-3">
 
-                        <div class="col-md-4">
+                        <div class="col-md-2">
 
                             <label class="form-label">
                                 From Date
@@ -562,7 +585,7 @@
 
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-2">
 
                             <label class="form-label">
                                 To Date
@@ -577,14 +600,32 @@
 
                         </div>
 
-                        <div class="col-md-3">
+                        <div class="col-md-4">
 
                             <label class="form-label">
-                                Item Code
+                                Item
                             </label>
 
-                            <input type="text" name="item_code" class="form-control" placeholder="Enter Item Code" required>
+                            <select accesskey="" id="item_code" name="item_code" class="form-control">
+                                <option value="">Select Item</option>
+                                @foreach($items as $item)
+                                    <option value="{{ $item->item_code }}">{{ $item->item_desc }}</option>
+                                @endforeach
+                            </select>
 
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                Vendor
+                            </label>
+
+                            <select id="vendor_code" name="vendor_code" class="form-control">
+                                <option value="">Select Vendor</option>
+                                @foreach($vendors as $vendor)
+                                    <option value="{{ $vendor->vendor_no }}">{{ $vendor->vendor_name }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="col-md-1 d-flex align-items-end">
@@ -604,6 +645,9 @@
     </div>
 </div>
 @endsection
+@push('cdn-scripts')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>    
+@endpush
 
 @push('scripts')
 
@@ -614,8 +658,9 @@
         const fromDate = form.elements.from_po_date.value;
         const toDate = form.elements.to_po_date.value;
         const itemCode = form.elements.item_code.value.trim();
+        const vendorCode = form.elements.vendor_code.value.trim();
 
-        if (!fromDate || !toDate || !itemCode) {
+        if (!fromDate || !toDate || (!itemCode && !vendorCode)) {
             form.reportValidity();
             return;
         }
@@ -636,8 +681,19 @@
         reportUrl.searchParams.set('item_code', itemCode);
         reportUrl.searchParams.set('from_po_date', formatReportDate(fromDate));
         reportUrl.searchParams.set('to_po_date', formatReportDate(toDate));
-
+        reportUrl.searchParams.set('vendor_code', vendorCode);
         window.open(reportUrl.toString(), '_blank');
     });
-
+    // initialize select2 for vendor search from $vendors passed from controller
+    $('#vendor_code').select2({
+        placeholder: "Select a vendor",
+        allowClear: true,
+        width: '100%'
+    });
+    // initialize select2 for item search from $items passed from controller
+    $('#item_code').select2({
+        placeholder: "Select an item",
+        allowClear: true,
+        width: '100%'
+    });
 @endpush

@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Issue;
-use App\Models\Inventory;
-use App\Models\IssueMaster;
-use App\Models\Department;
+use App\Models\InventoryItems;
+use App\Models\InventoryVendors;
 use App\Models\DeptInventory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\Paginator;
+
 
 class InventoryController extends Controller
 {
@@ -98,6 +98,12 @@ class InventoryController extends Controller
             ->paginate(20, ['*'], 'routine_page');
 
         return view('inventory', compact('unacknowledged', 'allAcknowledged', 'routineIssues'));
+    }
+    public function indentAdviseTracking()
+    {
+        $items = InventoryItems::select('item_code', 'item_desc')->get();
+        $vendors = InventoryVendors::select('vendor_no', 'vendor_name')->get();
+        return view('inventory.indent-advise-tracking', compact('items', 'vendors'));
     }
     
     public function acknowledgeItem(Request $request, $item_code, $doc_no)
