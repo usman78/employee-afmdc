@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Holidays;
+use App\Models\LeaveCredit;
 use App\Models\OvertimeApplication;
 use App\Models\Roster;
 use App\Models\Salary;
@@ -461,13 +462,19 @@ class OvertimeController extends Controller
             ->pluck('overtime_date')
             ->map(fn ($date) => Carbon::parse($date)->toDateString())
             ->all();
+        $leaveCreditDates = LeaveCredit::where('emp_code', $employee->emp_code)
+            ->where('leav_code', 4)
+            ->whereBetween('credit_date', [$monthStart->copy()->startOfDay(), $windowEnd->copy()->endOfDay()])
+            ->pluck('credit_date')
+            ->map(fn ($date) => Carbon::parse($date)->toDateString())
+            ->all();
 
         $eligibleRows = $attendanceRows
-            ->map(function (array $row) use ($employee, $holidayDates, $rostersByDate, $today, $claimedDates, $grossSalary, $monthStart) {
+            ->map(function (array $row) use ($employee, $holidayDates, $rostersByDate, $today, $claimedDates, $leaveCreditDates, $grossSalary, $monthStart) {
                 $date = Carbon::parse($row['at_date'])->startOfDay();
                 $dateString = $date->toDateString();
 
-                if (in_array($dateString, $claimedDates, true)) {
+                if (in_array($dateString, $claimedDates, true) || in_array($dateString, $leaveCreditDates, true)) {
                     return null;
                 }
 
