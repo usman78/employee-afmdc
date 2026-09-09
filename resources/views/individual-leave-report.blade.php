@@ -26,6 +26,7 @@
             font-weight: 700;
             color: #172554;
             margin-bottom: 3px;
+            padding: 0;
         }
 
         .page-subtitle {
@@ -276,22 +277,11 @@
         }
 
         /* -------------------------------------------------
-           OT
+           BUTTON
         ------------------------------------------------- */
 
-        .ot-time {
-            font-weight: 700;
-            color: #3156c9;
-            white-space: nowrap;
-        }
-
-        .salary {
-            font-weight: 500;
-        }
-
-        .claimed {
-            font-weight: 600;
-            white-space: nowrap;
+        .btn {
+            line-height: 1.8;
         }
 
         /* -------------------------------------------------
@@ -579,6 +569,7 @@
 
                         </div>
 
+                        @if(!$isSelfReport)
                         <div class="col-md-4">
                             <label class="form-label">
                                 Employee Code
@@ -591,6 +582,9 @@
                                 @endforeach
                             </select>
                         </div>
+                        @else
+                        <input type="hidden" name="employee_code" value="{{ $reportEmployeeCode }}">
+                        @endif
 
                         <div class="col-md-1 d-flex align-items-end">
 
@@ -617,10 +611,13 @@
 @push('scripts')
    
     $(document).ready(function() {
-        $('#employee_code').select2({
-            placeholder: 'Select Employee',
-            allowClear: true
-        });
+        const employeeSelect = $('#employee_code');
+        if (employeeSelect.length) {
+            employeeSelect.select2({
+                placeholder: 'Select Employee',
+                allowClear: true
+            });
+        }
     });
 
     const formatReportDate = function (dateValue) {

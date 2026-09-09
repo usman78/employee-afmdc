@@ -110,6 +110,10 @@
                 <i class="fa-solid fa-check"></i>
                 Leaves Status
               </a>
+              <a class="btn btn-info" id="leave-summary" href="{{ route('my-individual-leave-report') }}">
+                <i class="fa-solid fa-file-lines me-1" aria-hidden="true"></i>
+                Leave Applications
+              </a>
               <a class="btn btn-success" id="apply-leave" href="{{ route('apply-leave-advance', ['emp_code' => $leaves->emp_code, 'shortLeaveOnly' => false]) }}">
                 <i class="fa-solid fa-person-walking-arrow-right me-1" aria-hidden="true"></i>
                 Apply Leave

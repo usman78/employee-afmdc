@@ -92,6 +92,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pending-leaves-report/{status}', [LeavesController::class, 'getPendingLeavesByStatus'])->middleware('report.access:leave')->name('pending-leaves-report');
     Route::get('/pending-leaves-report-view', [LeavesController::class, 'getPendingLeavesReportView'])->middleware('report.access:leave')->name('pending-leaves-report-view');
     Route::get('/individual-leave-report', [LeavesController::class, 'individualLeaveReport'])->middleware('report.access:leave')->name('individual-leave-report');
+    Route::get('/my-individual-leave-report', [LeavesController::class, 'myIndividualLeaveReport'])->name('my-individual-leave-report');
 
     Route::get('/job-dashboard', [JobController::class, 'summaryDashboard'])->name('job-dashboard');
     Route::get('/open-jobs', [JobController::class, 'openJobs'])->name('open-jobs');

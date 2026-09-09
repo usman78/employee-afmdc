@@ -1832,6 +1832,23 @@ class LeavesController extends Controller
     public function individualLeaveReport()
     {
         $employees = Employee::whereNull('quit_stat')->get(['emp_code', 'name']);
-        return view('individual-leave-report', compact('employees'));
+        return view('individual-leave-report', [
+            'employees' => $employees,
+            'reportEmployeeCode' => null,
+            'isSelfReport' => false,
+        ]);
+    }
+
+    public function myIndividualLeaveReport()
+    {
+        $employee = Employee::where('emp_code', Auth::user()->emp_code)
+            ->whereNull('quit_stat')
+            ->firstOrFail(['emp_code', 'name']);
+
+        return view('individual-leave-report', [
+            'employees' => collect([$employee]),
+            'reportEmployeeCode' => $employee->emp_code,
+            'isSelfReport' => true,
+        ]);
     }
 }
