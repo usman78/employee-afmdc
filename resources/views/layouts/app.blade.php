@@ -211,6 +211,11 @@
                     </div>
                 </li>
                 {{-- Reports --}}
+                @php
+                    $reportAccess = app(\App\Services\ReportAccessService::class);
+                    $canViewHrReports = $reportAccess->allowedAny(Auth::user(), $reportAccess->groupKeys('HR'));
+                    $canViewFinanceReports = $reportAccess->allowedAny(Auth::user(), $reportAccess->groupKeys('Finance'));
+                @endphp
                 <li @class([
                     'nav-item',
                     'active' => in_array(request()->route()->getName(), [
@@ -252,7 +257,7 @@
                         class="collapse {{ in_array(request()->route()->getName(), ['attendance-report', 'attendance-report-data','attendance-late-report','attendance-late-report-data','attendance-absent-report','attendance-absent-report-data','attendance-present-report','attendance-present-report-data','manual-attendance-report','manual-attendance-report-data','leave-report', 'advance-salary.report', 'advance-salary.hr-decision', 'overtime.report', 'overtime.eligibility-report', 'overtime.hr-decision', 'finance-reports', 'advance-salary.accounts-report', 'advance-salary.accounts-decision', 'overtime.finance-reports', 'overtime.finance-report', 'overtime.finance-decision', 'admissions', 'inventory.reports', 'inventory', 'inventory.store_report', 'exit-interview.report', 'exit-interview.show']) ? 'show' : '' }}"
                         data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
-                            @if (Auth::user()->isHR())
+                            @if ($canViewHrReports)
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), [
                                 'hr-reports', 
                                 'attendance-report', 
@@ -274,22 +279,32 @@
                                 'overtime.eligibility-report',
                                 'overtime.hr-decision']) ? 'active' : '' }}" href="{{ route('hr-reports') }}">HR Reports</a>
                             @endif
-                            @if (Auth::user()->isAccountsOfficer())
+                            @if ($canViewFinanceReports)
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['finance-reports', 'advance-salary.accounts-report', 'advance-salary.accounts-decision', 'overtime.finance-report', 'overtime.finance-decision']) ? 'active' : '' }}" href="{{ route('finance-reports') }}">Finance Reports</a>
                             @endif
-                            @if (!Auth::user()->isHR() && Auth::user()->canViewLeaveReport())
+                            @if (! $canViewHrReports && $reportAccess->allowed(Auth::user(), 'leave'))
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['leave-report', 'leave-report-data']) ? 'active' : '' }}" href="{{ route('leave-report') }}">Leave Report</a>
                             @endif
                             @if (Auth::user()->isAllowedToSeeAdmissions())
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['admissions']) ? 'active' : '' }}" href="{{ route('admissions') }}">Admissions Report</a>
                             @endif
-                            <a class="collapse-item {{ in_array(request()->route()->getName(), ['inventory.reports', 'inventory', 'inventory.store_report']) ? 'active' : '' }}" href="{{ route('inventory.reports') }}">Inventory Reports</a>
-                            @if (Auth::user()->isStoreOfficer())
+                            @if ($reportAccess->allowed(Auth::user(), 'inventory-reports'))
+                                <a class="collapse-item {{ in_array(request()->route()->getName(), ['inventory.reports', 'inventory', 'inventory.store_report']) ? 'active' : '' }}" href="{{ route('inventory.reports') }}">Inventory Reports</a>
+                            @endif
+                            @if ($reportAccess->allowed(Auth::user(), 'store-report'))
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['inventory.store_report']) ? 'active' : '' }}" href="{{ route('inventory.store_report') }}">Store Report</a>
                             @endif
                         </div>
                     </div>
                 </li>
+                @if ($reportAccess->canManage(Auth::user()))
+                    <li class="nav-item {{ request()->routeIs('report-access.*') ? 'active' : '' }}">
+                        <a class="nav-link" href="{{ route('report-access.index') }}">
+                            <i class="fas fa-fw fa-user-shield"></i>
+                            <span>Report Access</span>
+                        </a>
+                    </li>
+                @endif
                 {{-- Notices --}}
                 @if(auth::user()->isHR())
                 <li @class(['nav-item', 'active' => in_array(request()->route()->getName(), ['notices.index', 'notices.review', 'notices.create'])])>

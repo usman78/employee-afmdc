@@ -23,7 +23,7 @@ class LeavesController extends Controller
 {
     private function authorizeLeaveReportAccess(): void
     {
-        abort_unless(Auth::user()?->canViewLeaveReport(), 403);
+        abort_unless(Auth::user() && app(\App\Services\ReportAccessService::class)->allowed(Auth::user(), 'leave'), 403);
     }
 
     public function leaves(Request $request, $emp_code)                                                                      
@@ -1828,5 +1828,10 @@ class LeavesController extends Controller
             'monthName' => $monthName,
             'currentMonth' => $month,
         ]);
+    }
+    public function individualLeaveReport()
+    {
+        $employees = Employee::whereNull('quit_stat')->get(['emp_code', 'name']);
+        return view('individual-leave-report', compact('employees'));
     }
 }

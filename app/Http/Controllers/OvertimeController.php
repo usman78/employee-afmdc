@@ -238,7 +238,7 @@ class OvertimeController extends Controller
 
     public function report(Request $request)
     {
-        $this->ensureHr();
+        $this->ensureReportAccess('overtime-hr');
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');
@@ -262,7 +262,7 @@ class OvertimeController extends Controller
 
     public function eligibilityReport(Request $request)
     {
-        $this->ensureHr();
+        $this->ensureReportAccess('overtime-eligibility');
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $reportRows = $this->buildEligibilityReportRows($month);
@@ -279,7 +279,7 @@ class OvertimeController extends Controller
 
     public function downloadEligibilityReport(Request $request)
     {
-        $this->ensureHr();
+        $this->ensureReportAccess('overtime-eligibility');
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $reportRows = $this->buildEligibilityReportRows($month);
@@ -352,14 +352,14 @@ class OvertimeController extends Controller
 
     public function financeReports()
     {
-        $this->ensureAccountsOfficer();
+        $this->ensureAnyReportAccess(['advance-salary-finance', 'overtime-finance']);
 
         return view('overtime.finance-reports');
     }
 
     public function financeReport(Request $request)
     {
-        $this->ensureAccountsOfficer();
+        $this->ensureReportAccess('overtime-finance');
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');
@@ -815,6 +815,22 @@ class OvertimeController extends Controller
         if (! auth()->user()->isAccountsOfficer()) {
             abort(403);
         }
+    }
+
+    private function ensureReportAccess(string $reportKey): void
+    {
+        abort_unless(
+            auth()->user() && app(\App\Services\ReportAccessService::class)->allowed(auth()->user(), $reportKey),
+            403
+        );
+    }
+
+    private function ensureAnyReportAccess(array $reportKeys): void
+    {
+        abort_unless(
+            auth()->user() && app(\App\Services\ReportAccessService::class)->allowedAny(auth()->user(), $reportKeys),
+            403
+        );
     }
 
     private function notifyEmployee(OvertimeApplication $application, string $stage): void

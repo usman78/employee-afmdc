@@ -187,7 +187,7 @@ class AdvanceSalaryController extends Controller
 
     public function report(Request $request)
     {
-        $this->ensureHr();
+        $this->ensureReportAccess('advance-salary-hr');
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');
@@ -272,14 +272,14 @@ class AdvanceSalaryController extends Controller
 
     public function financeReports()
     {
-        $this->ensureAccountsOfficer();
+        $this->ensureAnyReportAccess(['advance-salary-finance', 'overtime-finance']);
 
         return view('finance-reports');
     }
 
     public function accountsReport(Request $request)
     {
-        $this->ensureAccountsOfficer();
+        $this->ensureReportAccess('advance-salary-finance');
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');
@@ -317,7 +317,7 @@ class AdvanceSalaryController extends Controller
 
     public function accountsApprovedDownload(Request $request)
     {
-        $this->ensureAccountsOfficer();
+        $this->ensureReportAccess('advance-salary-finance');
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $applications = AdvanceSalaryApplication::with(['employee.designation', 'employee.department', 'hrApprover', 'accountsApprover'])
@@ -340,7 +340,7 @@ class AdvanceSalaryController extends Controller
 
     public function nameFilteredDownload(Request $request)
     {
-        $this->ensureAccountsOfficer();
+        $this->ensureReportAccess('advance-salary-finance');
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $employeeName = $request->input('employee_name');
@@ -387,7 +387,7 @@ class AdvanceSalaryController extends Controller
 
     public function dateFilteredDownload(Request $request)
     {
-        $this->ensureAccountsOfficer();
+        $this->ensureReportAccess('advance-salary-finance');
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $fromDate = $request->input('from_date');
@@ -522,6 +522,22 @@ class AdvanceSalaryController extends Controller
         if (! auth()->user()->isAccountsOfficer()) {
             abort(403);
         }
+    }
+
+    private function ensureReportAccess(string $reportKey): void
+    {
+        abort_unless(
+            auth()->user() && app(\App\Services\ReportAccessService::class)->allowed(auth()->user(), $reportKey),
+            403
+        );
+    }
+
+    private function ensureAnyReportAccess(array $reportKeys): void
+    {
+        abort_unless(
+            auth()->user() && app(\App\Services\ReportAccessService::class)->allowedAny(auth()->user(), $reportKeys),
+            403
+        );
     }
 
     private function buildSummary($empCode): array

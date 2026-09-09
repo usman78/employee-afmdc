@@ -188,12 +188,15 @@
                 </div>
             </div>
 
+            @php($reportAccess = app(\App\Services\ReportAccessService::class))
             <div class="row g-3 justify-content-center">
+                @if($reportAccess->allowed(Auth::user(), 'attendance'))
                 <div class="col-md-6 col-lg-2">
                     <a href="{{ route('attendance-report') }}" class="btn btn-primary w-100 text-nowrap">
                     Attendance Report
                     </a>
                 </div>
+                @endif
 
                 {{-- <div class="col-md-6 col-lg-2">
                     <a href="{{ route('attendance-late-report') }}" class="btn btn-primary w-100 text-nowrap">
@@ -213,64 +216,92 @@
                     </a>
                 </div> --}}
 
+                @if($reportAccess->allowed(Auth::user(), 'manual-attendance'))
                 <div class="col-md-6 col-lg-3">
                     <a href="{{ route('manual-attendance-report') }}" class="btn btn-primary w-100 text-nowrap">
                     Manual Attendance
                     </a>
                 </div>
+                @endif
 
+                @if($reportAccess->allowed(Auth::user(), 'individual-leave-report'))
+                <div class="col-md-6 col-lg-3">
+                    <a href="{{ route('individual-leave-report') }}" class="btn btn-primary w-100 text-nowrap">
+                    Individual Leave Report
+                    </a>
+                </div>
+                @endif
+
+                @if($reportAccess->allowed(Auth::user(), 'leave'))
                 <div class="col-md-6 col-lg-2">
                     <a href="{{ route('leave-report') }}" class="btn btn-primary w-100 text-nowrap">
                     Leave Report
                     </a>
                 </div>
+                @endif
 
+                @if($reportAccess->allowed(Auth::user(), 'leave'))
                 <div class="col-md-6 col-lg-2">
                     <a href="{{ route('hr-leaves-applied') }}" class="btn btn-primary w-100 text-nowrap" id="hr-leaves-applied">
                     Leaves Status
                     </a>
                 </div>
+                @endif
 
+                @if($reportAccess->allowed(Auth::user(), 'leave'))
                 <div class="col-md-6 col-lg-3">
                     <button type="button" class="btn btn-primary w-100 text-nowrap" id="pending-leaves-report-btn">
                     Pending Leaves Report
                     </button>
                 </div>
+                @endif
 
+                @if($reportAccess->allowed(Auth::user(), 'department-strength'))
                 <div class="col-md-6 col-lg-3">
                     <a href="{{ route('department-strength-report') }}" class="btn btn-primary w-100 text-nowrap">
                     Department Strength
                     </a>
                 </div>
+                @endif
 
+                @if($reportAccess->allowed(Auth::user(), 'advance-salary-hr'))
                 <div class="col-md-6 col-lg-3">
                     <a href="{{ route('advance-salary.report') }}" class="btn btn-primary w-100 text-nowrap">
                     Advance Salary Report
                     </a>
                 </div>
+                @endif
+                @if($reportAccess->allowed(Auth::user(), 'exit-interview'))
 
                 <div class="col-md-6 col-lg-3">
                     <a href="{{ route('exit-interview.report') }}" class="btn btn-primary w-100 text-nowrap">
                     Exit Interview Report
                     </a>
                 </div>
+                @endif
 
+                @if($reportAccess->allowed(Auth::user(), 'overtime-hr'))
                 <div class="col-md-6 col-lg-3">
                     <a href="{{ route('overtime.report') }}" class="btn btn-primary w-100 text-nowrap">
                     Overtime Report
                     </a>
                 </div>
+                @endif
 
+                @if($reportAccess->allowed(Auth::user(), 'overtime-eligibility'))
                 <div class="col-md-6 col-lg-3">
                     <a href="{{ route('overtime.eligibility-report') }}" class="btn btn-primary w-100 text-nowrap">
                     Overtime Eligibility
                     </a>
                 </div>
+                @endif
+                @if($reportAccess->allowed(Auth::user(), 'attendance-discrepancy'))
                 <div class="col-md-6 col-lg-3">
                     <a href="{{ route('att-discrepancy-report') }}" class="btn btn-primary w-100 text-nowrap">
                     Attendance Discrepancy Report
                     </a>
                 </div>
+                @endif
             </div>
         </div>
       </div>

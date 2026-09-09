@@ -18,6 +18,7 @@ use App\Http\Controllers\RosterController;
 use App\Http\Controllers\NoticeController;
 use App\Http\Controllers\AdvanceSalaryController;
 use App\Http\Controllers\OvertimeController;
+use App\Http\Controllers\ReportAccessController;
 use App\Models\Employee;
 
 Auth::routes();
@@ -30,34 +31,34 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/att', [RosterController::class, 'index'])->name('attendance.index');
 
-    Route::get('/attendance-report', [AttendanceController::class, 'attendanceReport'])->name('attendance-report');
-    Route::get('/attendance-late-report', [AttendanceController::class, 'attendanceLateReport'])->name('attendance-late-report');
-    Route::get('/attendance-absent-report', [AttendanceController::class, 'attendanceAbsentReport'])->name('attendance-absent-report');
-    Route::get('/attendance-present-report', [AttendanceController::class, 'attendancePresentReport'])->name('attendance-present-report');
-    Route::get('/manual-attendance-report', [AttendanceController::class, 'manualAttendanceReport'])->name('manual-attendance-report');
-    Route::get('/hr-reports', [AttendanceController::class, 'hrReports'])->name('hr-reports');
-    Route::get('/department-strength-report', [AttendanceController::class, 'departmentStrengthReport'])->name('department-strength-report');
-    Route::post('/department-strength-report', [AttendanceController::class, 'departmentStrengthReportData'])->name('department-strength-report-data');
-    Route::post('/department-strength-report-download', [AttendanceController::class, 'departmentStrengthReportDownload'])->name('department-strength-report-download');
-    Route::post('/attendance-report-department', [AttendanceController::class, 'attendanceReportDepartmentData'])->name('attendance-report-department-data');
-    Route::post('/attendance-report-department-email', [AttendanceController::class, 'attendanceReportDepartmentEmail'])->name('attendance-report-department-email');
-    Route::post('/attendance-report-department-download', [AttendanceController::class, 'attendanceReportDepartmentDownload'])->name('attendance-report-department-download');
-    Route::post('/attendance-report', [AttendanceController::class, 'attendanceReportData'])->name('attendance-report-data');
-    Route::post('/attendance-late-report', [AttendanceController::class, 'attendanceLateReportData'])->name('attendance-late-report-data');
-    Route::post('/attendance-absent-report', [AttendanceController::class, 'attendanceAbsentReportData'])->name('attendance-absent-report-data');
-    Route::post('/attendance-present-report', [AttendanceController::class, 'attendancePresentReportData'])->name('attendance-present-report-data');
-    Route::post('/manual-attendance-report', [AttendanceController::class, 'manualAttendanceReportData'])->name('manual-attendance-report-data');
-    Route::post('/manual-attendance-report-download', [AttendanceController::class, 'manualAttendanceReportDownload'])->name('manual-attendance-report-download');
-    Route::post('/attendance-late-report-download', [AttendanceController::class, 'attendanceLateReportDownload'])->name('attendance-late-report-download');
-    Route::post('/attendance-absent-report-download', [AttendanceController::class, 'attendanceAbsentReportDownload'])->name('attendance-absent-report-download');
-    Route::post('/attendance-report-download/{emp_code}', [AttendanceController::class, 'attendanceReportDownload'])->name('attendance-report-download');
-    Route::post('/attendance-report-email/{emp_code}', [AttendanceController::class, 'attendanceReportEmail'])->name('attendance-report-email');
+    Route::get('/attendance-report', [AttendanceController::class, 'attendanceReport'])->middleware('report.access:attendance')->name('attendance-report');
+    Route::get('/attendance-late-report', [AttendanceController::class, 'attendanceLateReport'])->middleware('report.access:attendance-late')->name('attendance-late-report');
+    Route::get('/attendance-absent-report', [AttendanceController::class, 'attendanceAbsentReport'])->middleware('report.access:attendance-absent')->name('attendance-absent-report');
+    Route::get('/attendance-present-report', [AttendanceController::class, 'attendancePresentReport'])->middleware('report.access:attendance-present')->name('attendance-present-report');
+    Route::get('/manual-attendance-report', [AttendanceController::class, 'manualAttendanceReport'])->middleware('report.access:manual-attendance')->name('manual-attendance-report');
+    Route::get('/hr-reports', [AttendanceController::class, 'hrReports'])->middleware('report.access:hr-dashboard')->name('hr-reports');
+    Route::get('/department-strength-report', [AttendanceController::class, 'departmentStrengthReport'])->middleware('report.access:department-strength')->name('department-strength-report');
+    Route::post('/department-strength-report', [AttendanceController::class, 'departmentStrengthReportData'])->middleware('report.access:department-strength')->name('department-strength-report-data');
+    Route::post('/department-strength-report-download', [AttendanceController::class, 'departmentStrengthReportDownload'])->middleware('report.access:department-strength')->name('department-strength-report-download');
+    Route::post('/attendance-report-department', [AttendanceController::class, 'attendanceReportDepartmentData'])->middleware('report.access:attendance')->name('attendance-report-department-data');
+    Route::post('/attendance-report-department-email', [AttendanceController::class, 'attendanceReportDepartmentEmail'])->middleware('report.access:attendance')->name('attendance-report-department-email');
+    Route::post('/attendance-report-department-download', [AttendanceController::class, 'attendanceReportDepartmentDownload'])->middleware('report.access:attendance')->name('attendance-report-department-download');
+    Route::post('/attendance-report', [AttendanceController::class, 'attendanceReportData'])->middleware('report.access:attendance')->name('attendance-report-data');
+    Route::post('/attendance-late-report', [AttendanceController::class, 'attendanceLateReportData'])->middleware('report.access:attendance-late')->name('attendance-late-report-data');
+    Route::post('/attendance-absent-report', [AttendanceController::class, 'attendanceAbsentReportData'])->middleware('report.access:attendance-absent')->name('attendance-absent-report-data');
+    Route::post('/attendance-present-report', [AttendanceController::class, 'attendancePresentReportData'])->middleware('report.access:attendance-present')->name('attendance-present-report-data');
+    Route::post('/manual-attendance-report', [AttendanceController::class, 'manualAttendanceReportData'])->middleware('report.access:manual-attendance')->name('manual-attendance-report-data');
+    Route::post('/manual-attendance-report-download', [AttendanceController::class, 'manualAttendanceReportDownload'])->middleware('report.access:manual-attendance')->name('manual-attendance-report-download');
+    Route::post('/attendance-late-report-download', [AttendanceController::class, 'attendanceLateReportDownload'])->middleware('report.access:attendance-late')->name('attendance-late-report-download');
+    Route::post('/attendance-absent-report-download', [AttendanceController::class, 'attendanceAbsentReportDownload'])->middleware('report.access:attendance-absent')->name('attendance-absent-report-download');
+    Route::post('/attendance-report-download/{emp_code}', [AttendanceController::class, 'attendanceReportDownload'])->middleware('report.access:attendance')->name('attendance-report-download');
+    Route::post('/attendance-report-email/{emp_code}', [AttendanceController::class, 'attendanceReportEmail'])->middleware('report.access:attendance')->name('attendance-report-email');
     Route::get('/attendance/{emp_code}', [AttendanceController::class, 'attendance'])->name('attendance');
     Route::get('/att-discrepancy-report', function() {
         return view('attendance-discrepancy');
-    })->name('att-discrepancy-report');
-    Route::post('/att-discrepency', [AttendanceController::class, 'attDiscrepency'])->name('att-discrepency');
-    Route::post('/att-discrepancy-download/{emp_code}', [AttendanceController::class, 'attDiscrepancyDownload'])->name('att-discrepancy-report-download');
+    })->middleware('report.access:attendance-discrepancy')->name('att-discrepancy-report');
+    Route::post('/att-discrepency', [AttendanceController::class, 'attDiscrepency'])->middleware('report.access:attendance-discrepancy')->name('att-discrepency');
+    Route::post('/att-discrepancy-download/{emp_code}', [AttendanceController::class, 'attDiscrepancyDownload'])->middleware('report.access:attendance-discrepancy')->name('att-discrepancy-report-download');
     Route::get('/leaves/{emp_code}', [LeavesController::class, 'leaves'])->name('leaves');
     Route::get('/apply-leave-advance/{emp_code}/{shortLeaveOnly?}', [LeavesController::class, 'applyLeaveAdvance'])->name('apply-leave-advance');
     Route::post('/leave/preview', [LeavesController::class, 'preview'])->name('leave.preview');
@@ -79,17 +80,18 @@ Route::middleware(['auth'])->group(function () {
     })->name('apply-od-leave');
     Route::post('/apply-od-leave/{emp_code}', [LeavesController::class, 'storeOdLeave'])->name('store-od-leave');
     Route::get('/leaves-applied/{emp_code}', [LeavesController::class, 'leavesApplied'])->name('leaves-applied');
-    Route::get('/hr/leaves-applied', [LeavesController::class, 'leavesAppliedHr'])->name('hr-leaves-applied');
+    Route::get('/hr/leaves-applied', [LeavesController::class, 'leavesAppliedHr'])->middleware('report.access:leave')->name('hr-leaves-applied');
     Route::get('leave-approvals/{emp_code}', [LeavesController::class, 'leaveApprovals'])->name('leave-approvals');
     Route::post('/approve-leave/{leave_id}', [LeavesController::class, 'approveLeave'])->name('approve-leave');
     Route::post('/approve-all-leaves', [LeavesController::class, 'approveAll'])->name('approve-all-leaves');
     Route::post('/reject-leave/{leave_id}', [LeavesController::class, 'rejectLeave'])->name('reject-leave');
-    Route::get('/leave-report', [LeavesController::class, 'leaveReport'])->name('leave-report');
-    Route::post('/leave-report-data', [LeavesController::class, 'leaveReportData'])->name('leave-report-data');
-    Route::post('/leave-report-download/{start_date}/{end_date}/{dept_code?}', [LeavesController::class, 'leaveReportDownload'])->name('leave.report.download');
-    Route::get('/leave-report-employee-search', [LeavesController::class, 'leaveReportEmployeeSearch'])->name('leave-report-employee-search');
-    Route::get('/pending-leaves-report/{status}', [LeavesController::class, 'getPendingLeavesByStatus'])->name('pending-leaves-report');
-    Route::get('/pending-leaves-report-view', [LeavesController::class, 'getPendingLeavesReportView'])->name('pending-leaves-report-view');
+    Route::get('/leave-report', [LeavesController::class, 'leaveReport'])->middleware('report.access:leave')->name('leave-report');
+    Route::post('/leave-report-data', [LeavesController::class, 'leaveReportData'])->middleware('report.access:leave')->name('leave-report-data');
+    Route::post('/leave-report-download/{start_date}/{end_date}/{dept_code?}', [LeavesController::class, 'leaveReportDownload'])->middleware('report.access:leave')->name('leave.report.download');
+    Route::get('/leave-report-employee-search', [LeavesController::class, 'leaveReportEmployeeSearch'])->middleware('report.access:leave')->name('leave-report-employee-search');
+    Route::get('/pending-leaves-report/{status}', [LeavesController::class, 'getPendingLeavesByStatus'])->middleware('report.access:leave')->name('pending-leaves-report');
+    Route::get('/pending-leaves-report-view', [LeavesController::class, 'getPendingLeavesReportView'])->middleware('report.access:leave')->name('pending-leaves-report-view');
+    Route::get('/individual-leave-report', [LeavesController::class, 'individualLeaveReport'])->middleware('report.access:leave')->name('individual-leave-report');
 
     Route::get('/job-dashboard', [JobController::class, 'summaryDashboard'])->name('job-dashboard');
     Route::get('/open-jobs', [JobController::class, 'openJobs'])->name('open-jobs');
@@ -111,10 +113,10 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('employee-tasks', EmployeeTaskController::class)->parameters(['employee-tasks' => 'employeeTask']);
     Route::get('/notifications/redirect/{notification}', [NotificationsController::class, 'handle'])->name('notifications.redirect');
 
-    Route::get('/inventory-reports', [InventoryController::class, 'reports'])->name('inventory.reports');
+    Route::get('/inventory-reports', [InventoryController::class, 'reports'])->middleware('report.access:inventory-reports')->name('inventory.reports');
     Route::get('/inventory/{emp_code}', [InventoryController::class, 'inventory'])->name('inventory');
     Route::post('/inventory/acknowledge/{item_code}/{doc_no}', [InventoryController::class, 'acknowledgeItem'])->name('inventory.acknowledge');
-    Route::get('/inventory-report', [InventoryController::class, 'storeReport'])->name('inventory.store_report');
+    Route::get('/inventory-report', [InventoryController::class, 'storeReport'])->middleware('report.access:store-report')->name('inventory.store_report');
     Route::get('/indent-to-advise-tracking', [InventoryController::class, 'indentAdviseTracking'])->name('inventory.indent_advise_tracking');
 
     Route::get('/team', [TeamController::class, 'index'])->name('team');
@@ -162,18 +164,18 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('exit-interview')->group(function() {
         Route::get('/create/{emp_code}', [App\Http\Controllers\ExitInterviewController::class, 'create'])->name('exit-interview.create');
         Route::post('/store', [App\Http\Controllers\ExitInterviewController::class, 'store'])->name('exit-interview.store');
-        Route::get('/report', [App\Http\Controllers\ExitInterviewController::class, 'report'])->name('exit-interview.report');
-        Route::get('/show/{id}', [App\Http\Controllers\ExitInterviewController::class, 'show'])->name('exit-interview.show');
-        Route::get('/download-pdf/{id}', [App\Http\Controllers\ExitInterviewController::class, 'downloadPDF'])->name('exit-interview.download-pdf');
+        Route::get('/report', [App\Http\Controllers\ExitInterviewController::class, 'report'])->middleware('report.access:exit-interview')->name('exit-interview.report');
+        Route::get('/show/{id}', [App\Http\Controllers\ExitInterviewController::class, 'show'])->middleware('report.access:exit-interview')->name('exit-interview.show');
+        Route::get('/download-pdf/{id}', [App\Http\Controllers\ExitInterviewController::class, 'downloadPDF'])->middleware('report.access:exit-interview')->name('exit-interview.download-pdf');
     });
 
-    Route::get('/advance-salary-report', [AdvanceSalaryController::class, 'report'])->name('advance-salary.report');
+    Route::get('/advance-salary-report', [AdvanceSalaryController::class, 'report'])->middleware('report.access:advance-salary-hr')->name('advance-salary.report');
     Route::post('/advance-salary-report/{application}/decision', [AdvanceSalaryController::class, 'hrDecision'])->name('advance-salary.hr-decision');
-    Route::get('/finance-reports', [AdvanceSalaryController::class, 'financeReports'])->name('finance-reports');
-    Route::get('/finance/advance-salary-report', [AdvanceSalaryController::class, 'accountsReport'])->name('advance-salary.accounts-report');
-    Route::get('/finance/advance-salary-report/download-approved', [AdvanceSalaryController::class, 'accountsApprovedDownload'])->name('advance-salary.accounts-approved-download');
-    Route::get('/finance/advance-salary-report/download-by-name', [AdvanceSalaryController::class, 'nameFilteredDownload'])->name('advance-salary.name-filtered-download');
-    Route::get('/finance/advance-salary-report/download-by-date', [AdvanceSalaryController::class, 'dateFilteredDownload'])->name('advance-salary.date-filtered-download');
+    Route::get('/finance-reports', [AdvanceSalaryController::class, 'financeReports'])->middleware('report.access:finance-dashboard')->name('finance-reports');
+    Route::get('/finance/advance-salary-report', [AdvanceSalaryController::class, 'accountsReport'])->middleware('report.access:advance-salary-finance')->name('advance-salary.accounts-report');
+    Route::get('/finance/advance-salary-report/download-approved', [AdvanceSalaryController::class, 'accountsApprovedDownload'])->middleware('report.access:advance-salary-finance')->name('advance-salary.accounts-approved-download');
+    Route::get('/finance/advance-salary-report/download-by-name', [AdvanceSalaryController::class, 'nameFilteredDownload'])->middleware('report.access:advance-salary-finance')->name('advance-salary.name-filtered-download');
+    Route::get('/finance/advance-salary-report/download-by-date', [AdvanceSalaryController::class, 'dateFilteredDownload'])->middleware('report.access:advance-salary-finance')->name('advance-salary.date-filtered-download');
     Route::post('/finance/advance-salary-report/{application}/decision', [AdvanceSalaryController::class, 'accountsDecision'])->name('advance-salary.accounts-decision');
     Route::get('/advance-salary-subordinate-applications', [AdvanceSalaryController::class, 'hodIndex'])->name('advance-salary.hod-index');
     Route::get('/advance-salary-approvals/{application}', [AdvanceSalaryController::class, 'hodShow'])->name('advance-salary.hod-show');
@@ -185,16 +187,19 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/overtime-subordinate-applications', [OvertimeController::class, 'hodIndex'])->name('overtime.hod-index');
     Route::get('/overtime-approvals/{application}', [OvertimeController::class, 'hodShow'])->name('overtime.hod-show');
     Route::post('/overtime-approvals/{application}/decision', [OvertimeController::class, 'hodDecision'])->name('overtime.hod-decision');
-    Route::get('/overtime-report', [OvertimeController::class, 'report'])->name('overtime.report');
-    Route::get('/overtime-eligibility-report', [OvertimeController::class, 'eligibilityReport'])->name('overtime.eligibility-report');
-    Route::get('/overtime-eligibility-report/download', [OvertimeController::class, 'downloadEligibilityReport'])->name('overtime.eligibility-download');
-    Route::get('/overtime-report/download-approved', [OvertimeController::class, 'downloadApprovedReport'])->name('overtime.approved-download');
+    Route::get('/overtime-report', [OvertimeController::class, 'report'])->middleware('report.access:overtime-hr')->name('overtime.report');
+    Route::get('/overtime-eligibility-report', [OvertimeController::class, 'eligibilityReport'])->middleware('report.access:overtime-eligibility')->name('overtime.eligibility-report');
+    Route::get('/overtime-eligibility-report/download', [OvertimeController::class, 'downloadEligibilityReport'])->middleware('report.access:overtime-eligibility')->name('overtime.eligibility-download');
+    Route::get('/overtime-report/download-approved', [OvertimeController::class, 'downloadApprovedReport'])->middleware('report.access:overtime-hr')->name('overtime.approved-download');
     Route::post('/overtime-report/{application}/decision', [OvertimeController::class, 'hrDecision'])->name('overtime.hr-decision');
     Route::get('/overtime/{emp_code}', [OvertimeController::class, 'create'])->name('overtime.create');
     Route::post('/overtime/{emp_code}', [OvertimeController::class, 'store'])->name('overtime.store');
     Route::post('/overtime/{application}/edit-minutes', [OvertimeController::class, 'editMinutes'])->name('overtime.edit-minutes');
-    Route::get('/finance/overtime-reports', [OvertimeController::class, 'financeReports'])->name('overtime.finance-reports');
-    Route::get('/finance/overtime-report', [OvertimeController::class, 'financeReport'])->name('overtime.finance-report');
+    Route::get('/finance/overtime-reports', [OvertimeController::class, 'financeReports'])->middleware('report.access:overtime-finance')->name('overtime.finance-reports');
+    Route::get('/finance/overtime-report', [OvertimeController::class, 'financeReport'])->middleware('report.access:overtime-finance')->name('overtime.finance-report');
+
+    Route::get('/report-access', [ReportAccessController::class, 'index'])->name('report-access.index');
+    Route::put('/report-access/{empCode}', [ReportAccessController::class, 'update'])->name('report-access.update');
     Route::post('/finance/overtime-report/{application}/decision', [OvertimeController::class, 'financeDecision'])->name('overtime.finance-decision');
 
     Route::prefix('notices')->group(function () {
