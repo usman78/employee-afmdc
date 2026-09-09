@@ -68,7 +68,7 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
-    margin-bottom: 10px;
+    margin-bottom: 50px;
   }
   @media (max-width: 768px) {
     .portfolio-details .portfolio-info {
@@ -83,7 +83,7 @@
     <div class="col-12">
       <div class="portfolio-details mb-5">
         <div class="portfolio-info">
-          <h3>Attendance Information</h3>
+          <h3>Monthly Attendance</h3>
           <div class="attendance-header">
             <p class="employee-meta mb-0">
               <strong>Employee:</strong> {{ $emp_name ?? 'Unknown Employee' }}
@@ -122,9 +122,9 @@
                 Apply Range
               </button>
             </form>
-            <div class="dropdown">
+            <div class="dropdown" style="align-self: end;">
               <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="downloadDropdownAttendance" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fas fa-download"></i> Download Report as PDF
+                <i class="fas fa-download"></i>
               </button>
               <ul class="dropdown-menu" aria-labelledby="downloadDropdownAttendance">
                 <li>
