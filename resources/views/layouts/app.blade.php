@@ -215,6 +215,7 @@
                     $reportAccess = app(\App\Services\ReportAccessService::class);
                     $canViewHrReports = $reportAccess->allowedAny(Auth::user(), $reportAccess->groupKeys('HR'));
                     $canViewFinanceReports = $reportAccess->allowedAny(Auth::user(), $reportAccess->groupKeys('Finance'));
+                    $canViewAuditReports = $reportAccess->allowedAny(Auth::user(), $reportAccess->groupKeys('Audit'));
                 @endphp
                 <li @class([
                     'nav-item',
@@ -246,7 +247,10 @@
                         'admissions', 
                         'inventory.reports',
                         'inventory',
-                        'inventory.store_report'
+                        'inventory.store_report',
+                        'audit-reports.index',
+                        'audit-reports.advance-salary',
+                        'audit-reports.overtime'
                         ])
                 ])>
                     <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseReports">
@@ -254,7 +258,7 @@
                         <span>Reports</span>
                     </a>
                     <div id="collapseReports"
-                        class="collapse {{ in_array(request()->route()->getName(), ['attendance-report', 'attendance-report-data','attendance-late-report','attendance-late-report-data','attendance-absent-report','attendance-absent-report-data','attendance-present-report','attendance-present-report-data','manual-attendance-report','manual-attendance-report-data','leave-report', 'advance-salary.report', 'advance-salary.hr-decision', 'overtime.report', 'overtime.eligibility-report', 'overtime.hr-decision', 'finance-reports', 'advance-salary.accounts-report', 'advance-salary.accounts-decision', 'overtime.finance-reports', 'overtime.finance-report', 'overtime.finance-decision', 'admissions', 'inventory.reports', 'inventory', 'inventory.store_report', 'exit-interview.report', 'exit-interview.show']) ? 'show' : '' }}"
+                        class="collapse {{ in_array(request()->route()->getName(), ['attendance-report', 'attendance-report-data','attendance-late-report','attendance-late-report-data','attendance-absent-report','attendance-absent-report-data','attendance-present-report','attendance-present-report-data','manual-attendance-report','manual-attendance-report-data','leave-report', 'advance-salary.report', 'advance-salary.hr-decision', 'overtime.report', 'overtime.eligibility-report', 'overtime.hr-decision', 'finance-reports', 'advance-salary.accounts-report', 'advance-salary.accounts-decision', 'overtime.finance-reports', 'overtime.finance-report', 'overtime.finance-decision', 'admissions', 'inventory.reports', 'inventory', 'inventory.store_report', 'exit-interview.report', 'exit-interview.show', 'audit-reports.index', 'audit-reports.advance-salary', 'audit-reports.overtime']) ? 'show' : '' }}"
                         data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             @if ($canViewHrReports)
@@ -281,6 +285,9 @@
                             @endif
                             @if ($canViewFinanceReports)
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['finance-reports', 'advance-salary.accounts-report', 'advance-salary.accounts-decision', 'overtime.finance-report', 'overtime.finance-decision']) ? 'active' : '' }}" href="{{ route('finance-reports') }}">Finance Reports</a>
+                            @endif
+                            @if ($canViewAuditReports)
+                                <a class="collapse-item {{ request()->routeIs('audit-reports.*') ? 'active' : '' }}" href="{{ route('audit-reports.index') }}">Audit Reports</a>
                             @endif
                             @if (! $canViewHrReports && $reportAccess->allowed(Auth::user(), 'leave'))
                                 <a class="collapse-item {{ in_array(request()->route()->getName(), ['leave-report', 'leave-report-data']) ? 'active' : '' }}" href="{{ route('leave-report') }}">Leave Report</a>

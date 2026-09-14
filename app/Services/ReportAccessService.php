@@ -31,6 +31,8 @@ class ReportAccessService
         'inventory-reports' => ['label' => 'Inventory Reports', 'group' => 'Inventory'],
         'store-report' => ['label' => 'Store Report', 'group' => 'Inventory'],
         'individual-leave-report' => ['label' => 'Individual Leave Report', 'group' => 'HR'],
+        'audit-advance-salary' => ['label' => 'Advance Salary Audit Report', 'group' => 'Audit'],
+        'audit-overtime' => ['label' => 'Overtime Audit Report', 'group' => 'Audit'],
     ];
 
     public function reports(): array
@@ -125,6 +127,7 @@ class ReportAccessService
             'advance-salary-finance', 'overtime-finance' => $user->isAccountsOfficer(),
             'inventory-reports' => true,
             'store-report' => $user->isStoreOfficer(),
+            'audit-advance-salary', 'audit-overtime' => false,
             default => $user->isHR(),
         };
     }

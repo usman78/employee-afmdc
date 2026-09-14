@@ -180,9 +180,9 @@
                   @endphp
                   <tr class="table-secondary">
                     <td></td>
-                    <td><strong>{{ capitalizeWords($employee->employee->name ?? '') . ' (' . $employee->emp_code . ')' }}</strong></td>
-                    <td><strong>{{ $employee->designation->desg_desc ?? '-' }}</strong></td>
-                    <td><strong>{{ $employee->department->dept_desc ?? '-' }}</strong></td>
+                    <td><strong>{{ capitalizeWords($employee->employee->name ?? $employee->dailyWager->name ?? '') . ' (' . $employee->emp_code . ')' }}</strong></td>
+                    <td><strong>{{ $employee->designation->desg_desc ?? $employee->dailyWagerDesignation->desg_desc ?? '-' }}</strong></td>
+                    <td><strong>{{ $employee->department->dept_desc ?? $employee->dailyWagerDepartment->dept_desc ?? '-' }}</strong></td>
                     <td colspan="9"><strong>{{ $employeeApplications->count() }} overtime application(s)</strong></td>
                   </tr>
                   @foreach($employeeApplications as $application)

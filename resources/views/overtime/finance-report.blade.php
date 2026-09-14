@@ -165,7 +165,7 @@
                   @endphp
                   <tr class="table-secondary">
                     <td></td>
-                    <td><strong>{{ capitalizeWords($employee->employee->name ?? '') }}</strong></td>
+                    <td><strong>{{ capitalizeWords($employee->employee->name ?? $employee->dailyWager->name ?? '') }}</strong></td>
                     <td><strong>{{ $employee->emp_code }}</strong></td>
                     <td colspan="8"><strong>{{ $employeeApplications->count() }} overtime application(s)</strong></td>
                   </tr>

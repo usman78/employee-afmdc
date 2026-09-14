@@ -133,10 +133,10 @@ use App\Models\OvertimeApplication;
         @endphp
         <tr class="master-row">
           <td></td>
-          <td>{{ capitalizeWords($employee->employee->name ?? '') }}</td>
+          <td>{{ capitalizeWords($employee->employee->name ?? $employee->dailyWager->name ?? '') }}</td>
           <td>{{ $employee->emp_code }}</td>
-          <td>{{ $employee->employee->designation->desg_short ?? '-' }}</td>
-          <td>{{ $employee->employee->department->dept_desc ?? '-' }}</td>
+          <td>{{ $employee->employee->designation->desg_short ?? $employee->dailyWagerDesignation->desg_short ?? '-' }}</td>
+          <td>{{ $employee->employee->department->dept_desc ?? $employee->dailyWagerDepartment->dept_desc ?? '-' }}</td>
           <td colspan="7">{{ $employeeApplications->count() }} overtime application(s)</td>
         </tr>
         @foreach($employeeApplications as $application)

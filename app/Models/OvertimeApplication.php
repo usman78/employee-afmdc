@@ -86,6 +86,32 @@ class OvertimeApplication extends Model
     {
         return $this->belongsTo(Employee::class, 'emp_code', 'emp_code');
     }
+    public function dailyWager()
+    {
+        return $this->belongsTo(DailyWager::class, 'emp_code', 'emp_code');
+    }
+    public function dailyWagerDesignation()
+    {
+        return $this->hasOneThrough(
+            Designation::class,
+            DailyWager::class,
+            'emp_code', // Foreign key on DailyWager table
+            'desg_code', // Foreign key on Designation table
+            'emp_code', // Local key on OvertimeApplication table
+            'desg_code' // Local key on DailyWager table
+        );
+    }
+    public function dailyWagerDepartment()
+    {
+        return $this->hasOneThrough(
+            Department::class,
+            DailyWager::class,
+            'emp_code', // Foreign key on DailyWager table
+            'dept_code', // Foreign key on Department table
+            'emp_code', // Local key on OvertimeApplication table
+            'dept_code' // Local key on DailyWager table
+        );
+    }
     public function designation()
     {
         return $this->hasOneThrough(

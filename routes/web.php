@@ -19,6 +19,7 @@ use App\Http\Controllers\NoticeController;
 use App\Http\Controllers\AdvanceSalaryController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\ReportAccessController;
+use App\Http\Controllers\AuditReportController;
 use App\Models\Employee;
 
 Auth::routes();
@@ -202,6 +203,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/report-access', [ReportAccessController::class, 'index'])->name('report-access.index');
     Route::put('/report-access/{empCode}', [ReportAccessController::class, 'update'])->name('report-access.update');
     Route::post('/finance/overtime-report/{application}/decision', [OvertimeController::class, 'financeDecision'])->name('overtime.finance-decision');
+
+    Route::get('/audit-reports', [AuditReportController::class, 'index'])->middleware('report.access:audit-dashboard')->name('audit-reports.index');
+    Route::get('/audit-reports/advance-salary', [AuditReportController::class, 'advanceSalary'])->middleware('report.access:audit-advance-salary')->name('audit-reports.advance-salary');
+    Route::get('/audit-reports/overtime', [AuditReportController::class, 'overtime'])->middleware('report.access:audit-overtime')->name('audit-reports.overtime');
+    Route::get('/audit-reports/advance-salary/download/{scope}', [AuditReportController::class, 'downloadAdvanceSalary'])->middleware('report.access:audit-advance-salary')->name('audit-reports.advance-salary.download');
+    Route::get('/audit-reports/overtime/download/{scope}', [AuditReportController::class, 'downloadOvertime'])->middleware('report.access:audit-overtime')->name('audit-reports.overtime.download');
 
     Route::prefix('notices')->group(function () {
         Route::get('/', [NoticeController::class, 'index'])->name('notices.index');
