@@ -149,6 +149,9 @@
                   <a class="dropdown-item" href="#" data-toggle="modal" data-target="#filterByDateModal">Download by Finance Approval Date</a> --}}
               </div>
             </div>
+            <button type="button" id="inventory-report-btn" class="btn btn-info">
+              Report for Daily Wagers
+            </button>
           </form>
           @php
             $serialNumber = 1;
@@ -392,6 +395,43 @@
 </div>
 
 @push('scripts')
+
+  document.getElementById('inventory-report-btn').addEventListener('click', async function() {
+    const monthDefault = new Date().toISOString().slice(0, 7);
+    const { value: month } = await Swal.fire({
+      title: 'Inventory Report',
+      html: `
+        <div class="text-start">
+          <label for="swal-report-month" class="form-label">Month</label>
+          <input id="swal-report-month" type="month" class="form-control" value="${monthDefault}">
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'View Report',
+      preConfirm: () => {
+        const selectedMonth = document.getElementById('swal-report-month').value;
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(selectedMonth)) {
+          Swal.showValidationMessage('Please select a month in YYYY-MM format.');
+          return false;
+        }
+        return selectedMonth;
+      }
+    });
+
+    if (!month) {
+      return;
+    }
+
+    const reportUrl = new URL('http://110.39.174.203:7777/reports/rwservlet');
+    reportUrl.searchParams.set('P_RMS', '');
+    reportUrl.searchParams.set('report', 'R:\\Applications\\Payroll\\Reports\\over_time_dw.rdf');
+    reportUrl.searchParams.set('destype', 'cache');
+    reportUrl.searchParams.set('desformat', 'pdf');
+    const reportMonth = `${month.slice(5, 7)}-${month.slice(0, 4)}`;
+    reportUrl.searchParams.set('dt1', reportMonth);
+    window.open(reportUrl.toString(), '_blank');
+  });
 
   document.querySelectorAll('.sanctioned-minutes-input').forEach(input => {
     input.addEventListener('input', function() {
