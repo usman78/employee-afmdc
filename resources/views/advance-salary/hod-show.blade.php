@@ -31,15 +31,15 @@
             <tbody>
               <tr>
                 <th>Employee</th>
-                <td>{{ capitalizeWords($application->employee->name ?? '') }} ({{ $application->emp_code }})</td>
+                <td>{{ capitalizeWords($application->employee->name ?? $application->dailyWager->name ?? '') }} ({{ $application->emp_code }})</td>
               </tr>
               <tr>
                 <th>Designation</th>
-                <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
+                <td>{{ $application->employee->designation->desg_short ?? $application->dailyWager->Designation->desg_short ?? '-' }}</td>
               </tr>
               <tr>
                 <th>Department</th>
-                <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
+                <td>{{ $application->employee->department->dept_desc ?? $application->dailyWager->Department->dept_desc ?? '-' }}</td>
               </tr>
               <tr>
                 <th>Days Worked</th>

@@ -61,10 +61,10 @@
                 @forelse($applications as $application)
                   <tr>
                     <td>{{ $application->applied_at ? \Carbon\Carbon::parse($application->applied_at)->format('j M Y h:i A') : '-' }}</td>
-                    <td>{{ capitalizeWords($application->employee->name ?? '') }}</td>
+                    <td>{{ capitalizeWords($application->employee->name ?? $application->dailyWager->name ?? '') }}</td>
                     <td>{{ $application->emp_code }}</td>
-                    <td>{{ $application->employee->designation->desg_short ?? '-' }}</td>
-                    <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
+                    <td>{{ $application->employee->designation->desg_short ?? $application->dailyWager->Designation->desg_short ?? '-' }}</td>
+                    <td>{{ $application->employee->department->dept_desc ?? $application->dailyWager->Department->dept_desc ?? '-' }}</td>
                     <td>{{ $application->eligible_days }}</td>
                     <td>PKR {{ number_format($application->requested_amount) }}</td>
                     <td>PKR {{ number_format($application->max_amount) }}</td>
