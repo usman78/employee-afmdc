@@ -149,7 +149,7 @@
                   <a class="dropdown-item" href="#" data-toggle="modal" data-target="#filterByDateModal">Download by Finance Approval Date</a> --}}
               </div>
             </div>
-            <button type="button" id="inventory-report-btn" class="btn btn-info">
+            <button type="button" id="ot-dw-report-btn" class="btn btn-info">
               Report for Daily Wagers
             </button>
           </form>
@@ -396,7 +396,7 @@
 
 @push('scripts')
 
-  document.getElementById('inventory-report-btn').addEventListener('click', async function() {
+  document.getElementById('ot-dw-report-btn').addEventListener('click', async function() {
     const monthDefault = new Date().toISOString().slice(0, 7);
     const { value: month } = await Swal.fire({
       title: 'Inventory Report',
