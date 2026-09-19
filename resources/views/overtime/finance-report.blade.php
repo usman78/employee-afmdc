@@ -134,7 +134,7 @@
               </button>
               <div class="dropdown-menu animated--fade-in"
                   aria-labelledby="dropdownMenuButton">
-                  <a class="dropdown-item" href="{{ route('overtime.approved-download', ['month' => $month, 'status' => OvertimeApplication::STATUS_APPROVED]) }}" target="_blank">All Approved</a>
+                  <a class="dropdown-item" href="#" id="ot-approved-report-btn">All Approved</a>
               </div>
               <button type="button" id="ot-dw-report-btn" class="btn btn-info">
                 Report for Daily Wagers
@@ -365,6 +365,24 @@
 </div>
 @endsection
 @push('scripts')
+  document.getElementById('ot-approved-report-btn').addEventListener('click', function(event) {
+    event.preventDefault();
+
+    const month = document.getElementById('month').value;
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+      Swal.fire('Month required', 'Please select a month in YYYY-MM format.', 'warning');
+      return;
+    }
+
+    const reportUrl = new URL('http://110.39.174.203:7777/reports/rwservlet');
+    reportUrl.searchParams.set('P_RMS', '');
+    reportUrl.searchParams.set('report', 'R:\\Applications\\Payroll\\Reports\\over_time_reg.rdf');
+    reportUrl.searchParams.set('destype', 'cache');
+    reportUrl.searchParams.set('desformat', 'pdf');
+    reportUrl.searchParams.set('dt1', `${month.slice(5, 7)}-${month.slice(0, 4)}`);
+    window.open(reportUrl.toString(), '_blank');
+  });
+
   document.getElementById('ot-dw-report-btn').addEventListener('click', async function() {
     const monthDefault = new Date().toISOString().slice(0, 7);
     const { value: month } = await Swal.fire({
