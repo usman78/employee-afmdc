@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Validator;
 use App\Models\Employee; 
 use App\Models\LeavesBalance;   
 use Carbon\Carbon;
@@ -9,12 +10,22 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Leave;
-use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\LeaveAuth;
 use App\Models\ApprovedLeave;
+use App\Models\Department;
+use App\Models\Attendance;
+use App\Models\Designation;
+use App\Models\Balance;
+use App\Models\Holidays;
 
 class LeavesController extends Controller
 {
+    private function authorizeLeaveReportAccess(): void
+    {
+        abort_unless(Auth::user() && app(\App\Services\ReportAccessService::class)->allowed(Auth::user(), 'leave'), 403);
+    }
+
     public function leaves(Request $request, $emp_code)                                                                      
     {
         // Check if the logged in user is the same as the user whose leaves are being viewed
@@ -25,7 +36,7 @@ class LeavesController extends Controller
 
         // Get leaves balance for the user
         $leaves = LeavesBalance::where('emp_code', $emp_code)
-            ->whereIn('leav_code', [1, 2, 3])
+            ->whereIn('leav_code', [1, 2, 3, 4, 5, 12])
             ->get();
         $leaves->emp_code = $emp_code;
 
@@ -40,6 +51,15 @@ class LeavesController extends Controller
                 case 3:
                     $leave->leave_type = 'Annual Leave';
                     break;
+                case 4:
+                    $leave->leave_type = 'Compensatory Leave';
+                    break;
+                // case 5:
+                //     $leave->leave_type = 'Leave Without Pay';
+                //     break;
+                // case 12:
+                //     $leave->leave_type = 'Outdoor Duty (OD)';
+                //     break;
                 default:
                     $leave->leave_type = 'Unknown Leave Type';
             }
@@ -47,16 +67,36 @@ class LeavesController extends Controller
 
         $pendingLeaves = $this->checkPendingLeaves($emp_code);
 
+        $yearStart = Carbon::now()->startOfYear()->toDateString();
+        $today = Carbon::today()->toDateString();
+
+        $yearlyLeavesTaken = Attendance::selectRaw('att_stat, COUNT(*) as total')
+            ->where('emp_code', $emp_code)
+            ->whereIn('att_stat', [5, 12])
+            ->whereRaw(
+                "TRUNC(at_date) BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD')",
+                [$yearStart, $today]
+            )
+            ->groupBy('att_stat')
+            ->pluck('total', 'att_stat');
+
+        $yearlyLeaveSummary = [
+            'without_pay' => (int) ($yearlyLeavesTaken->get(5, 0)),
+            'od' => (int) ($yearlyLeavesTaken->get(12, 0)),
+            'from' => $yearStart,
+            'to' => $today,
+        ];
+
         // Get employee details
         $employee = Employee::where('emp_code', $emp_code)->first();
         $leaves->emp_name = capitalizeWords($employee->name);
-        return view('leaves', compact('leaves', 'pendingLeaves'))->with('emp_code', $emp_code);
+        return view('leaves', compact('leaves', 'pendingLeaves', 'yearlyLeaveSummary', 'employee'))->with('emp_code', $emp_code);
     }
 
     public function empType($emp_code)
     {
         $typeOfEmployee = DB::table('pay_pers')
-        ->join('pre_leave_auth', 'pay_pers.emp_code', '=', 'pre_leave_auth.emp_code_l')
+        ->leftJoin('pre_leave_auth', 'pay_pers.emp_code', '=', 'pre_leave_auth.emp_code_l')
         ->where('pay_pers.emp_code', $emp_code)
         ->select('pay_pers.*', 'pre_leave_auth.*')
         ->get();
@@ -83,12 +123,16 @@ class LeavesController extends Controller
     public static function getNextLeaveId()
     {
         $max = DB::table('pre_leave_tran')->max('leave_id');
-        log::info('Max leave_id: ' . $max + 1);
         return $max + 1;
     }
 
     public function checkBalance($empcode, $leave_type, $leave_duration)
     {
+        if($leave_type == 5 || $leave_type == 12){ 
+            // Unpaid & OD leave does not require balance check
+            return true;
+        }
+
         $leave_balance = LeavesBalance::where('emp_code', $empcode)
             ->where('leav_code', $leave_type)
             ->first();
@@ -111,6 +155,9 @@ class LeavesController extends Controller
                 case 3:
                     $balance -= $pending['annual_leave'];
                     break;
+                case Leave::CPL:
+                    $balance -= $pending['compensatory_leave'];
+                    break;
             }
         }
         
@@ -128,6 +175,7 @@ class LeavesController extends Controller
         $pendingCasual = $pending['casual_leave'] ?? 0;
         $pendingMedical = $pending['medical_leave'] ?? 0;
         $pendingAnnual = $pending['annual_leave'] ?? 0;
+        $pendingCompensatory = $pending['compensatory_leave'] ?? 0;
 
         // Check casual leave (leave_code = 1)
         $casualBalance = LeavesBalance::where('emp_code', $empcode)->where('leav_code', 1)->first();
@@ -147,17 +195,40 @@ class LeavesController extends Controller
             $annualBalance->leav_open + $annualBalance->leav_credit - $annualBalance->leav_taken - $annualBalance->leave_encashed - $pendingAnnual 
             : 0;
 
+        // Check CPL / compensatory leave (leave_code = 4)
+        $compensatoryBalance = LeavesBalance::where('emp_code', $empcode)->where('leav_code', Leave::CPL)->first();
+        $compensatoryAvailable = $compensatoryBalance ?
+            $compensatoryBalance->leav_open + $compensatoryBalance->leav_credit - $compensatoryBalance->leav_taken - $compensatoryBalance->leave_encashed - $pendingCompensatory
+            : 0;
+
         // If all types are 0 or less, then user has no leave left
-        return $casualAvailable <= 0 && $medicalAvailable <= 0 && $annualAvailable <= 0;
+        return $casualAvailable <= 0 && $medicalAvailable <= 0 && $annualAvailable <= 0 && $compensatoryAvailable <= 0;
     }
 
     public function checkIfAnyLeave($emp_code)
     {
-        if($this->hasNoLeavesLeft($emp_code)) {
-            return view('apply-leave-unpaid', ['emp_code' => $emp_code]);
+        // Ensure logged-in user matches the requested employee code
+        $authUser = Auth::user();
+        if ($authUser->emp_code != $emp_code) {
+            return redirect()->route('home');
         }
-        // $this->applyLeaveAdvance($emp_code);
-        return redirect()->route('apply-leave-advance', ['emp_code' => $emp_code]);
+
+        $response = [
+            'has_no_leaves' => false,
+            'has_no_short_leave' => false,
+        ];
+
+        if ($this->hasNoLeavesLeft($emp_code)) {
+            $response['has_no_leaves'] = true;
+
+            if ($this->checkShortBalance($emp_code)) {
+                $response['has_no_short_leave'] = true;
+            } else {
+                $response['has_no_short_leave'] = false;
+            }
+        }
+
+        return response()->json($response);
     }
 
     public function checkShortBalance($empcode){
@@ -167,6 +238,7 @@ class LeavesController extends Controller
             ->where('from_date', '>=', $startDate)
             ->where('to_date', '<=', $endDate)
             ->where('leave_code', 8)
+            ->whereNot('status', 9)
             ->get(); 
         if($leave->isEmpty()){
             return true;
@@ -174,7 +246,27 @@ class LeavesController extends Controller
         return false;
     }
 
-    public function applyLeaveAdvance($emp_code)
+    public function checkLeaveCurrentMonth($singleLeave = null, $leaveFrom = null, $leaveTo = null)
+    {
+        if ($singleLeave) {
+            $leaveDate = Carbon::parse($singleLeave);
+            return $leaveDate->isCurrentMonth() || $leaveDate->isNextMonth();
+        } 
+        
+        if ($leaveFrom && $leaveTo) {
+            $fromDate = Carbon::parse($leaveFrom);
+            $toDate = Carbon::parse($leaveTo);
+
+            // ✅ Both must be in current month
+            return $fromDate->isCurrentMonth() && $toDate->isCurrentMonth() || 
+            $fromDate->isCurrentMonth() && $toDate->isNextMonth() || 
+            $fromDate->isNextMonth() && $toDate->isNextMonth();
+        }
+
+        return false; // default fallback
+    }
+
+    public function applyLeaveAdvance($emp_code, $shortLeaveOnly = null)
     {
         // Ensure logged-in user matches the requested employee code
         $authUser = Auth::user();
@@ -189,8 +281,28 @@ class LeavesController extends Controller
 
         return view('apply-leave-advance', [
             'emp_code' => $emp_code,
+            'shortLeaveOnly' => $shortLeaveOnly,
             'employee' => $employee,
             'pendingLeaves' => $pendingLeaves,
+        ]);
+    }
+
+    public function preview(Request $request)
+    {
+        if($request->input('leave_type') == null) {
+            return response()->json([
+                'sandwich' => false,
+                'rest_day' => null,
+            ]);
+        }
+        $emp_code = auth()->user()->emp_code;
+        $from = $request->input('leave_from_date');
+        $to = $request->input('leave_to_date');
+        $sandwichDate = $this->checkSandwichLeave($emp_code, $from, $to);
+
+        return response()->json([
+            'sandwich' => $sandwichDate !== false,
+            'rest_day' => $sandwichDate ? Carbon::parse($sandwichDate)->format('l') : null,
         ]);
     }
 
@@ -201,34 +313,50 @@ class LeavesController extends Controller
         if ($authUser->emp_code != $emp_code) {
             return redirect()->route('home');
         }
-
         // Validate the request
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'leave_duration' => 'required|string|in:full,half,short',
-            'leave_type' => 'required_if:leave_duration,half,full|integer|in:1,2,3',
-            'single_leave_date' => 'required_if:leave_duration,half,short|date',
-            'leave_from_date' => 'required_if:leave_duration,full|date',
-            'leave_to_date' => 'required_if:leave_duration,full|date',
+            'leave_type' => 'required_if:leave_duration,half,full|integer|in:1,2,3,4,5,12',
+            'single_leave_date' => 'required_if:leave_duration,half,short|nullable|date',
+            'leave_from_date' => 'required_if:leave_duration,full|date|nullable|before_or_equal:leave_to_date',
+            'leave_to_date' => 'required_if:leave_duration,full|date|nullable|after_or_equal:leave_from_date',
             'start_time' => 'required_if:leave_duration,short',
             'end_time' => 'required_if:leave_duration,short',
-            'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2',
+            'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2,3,4',
+            'half_custom_start_time' => 'required_if:leave_interval,3,4|nullable|date_format:H:i',
+            'half_custom_end_time' => 'required_if:leave_interval,3,4|nullable|date_format:H:i',
             'reason' => 'required|string|max:255',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'error' => $validator->errors()->first()
+            ], 422);
+        }
 
         // Get the leave type and duration from the request
         $leave_duration = $request->input('leave_duration');
 
         if ($leave_duration == 'full') {
-            
+            if(checkMultipleLeaves($emp_code,  
+                date('Y-m-d',strtotime($request->input('leave_from_date'))), 
+                date('Y-m-d',strtotime($request->input('leave_to_date'))),
+                $request->input('leave_type'))){
+                return response()->json(['error' => 'You have already applied for leave on one or more of the selected dates.']);
+            }
             $range = $request->input('leave_from_date') . ' - ' . $request->input('leave_to_date');
             list($from, $to) = explode(' - ', $range);
             $to = date('d-m-Y', strtotime($to));
             $from = date('d-m-Y', strtotime($from));
+            // check if the leave dates range are in the current month
+            if (! $this->checkLeaveCurrentMonth(null, $from, $to)) {
+                return response()->json(['error' => 'For full day leave, both From and To dates must be within the current month.']);
+            }
             $fromDate = Carbon::parse($from);
             $toDate = Carbon::parse($to);
             $numberOfDays = (int) $fromDate->diffInDays($toDate) + 1;
             if(! $this->checkBalance($emp_code, $request->input('leave_type'), $numberOfDays)){
-                return redirect()->back()->with('error', 'You do not have the leave balance.');
+                return response()->json(['error' => 'You do not have the leave balance.']);
             }
 
             $leave = new Leave();
@@ -246,6 +374,7 @@ class LeavesController extends Controller
             $leave->moddate = now();
             $leave->remark = $request->input('reason');
             $leave->emp_code = $emp_code;
+            $leave->day_half = 0;
             $leave->leave_date = Carbon::today();
 
             $check = $this->checkConsecutiveLeave($emp_code, 
@@ -253,16 +382,18 @@ class LeavesController extends Controller
                 $request->input('leave_from_date'), 
                 $request->input('leave_to_date'));
             if($check == false){
-                return redirect()->back()->with('error', 'You cannot apply for consecutive leaves of different leave types.');
+                return response()->json(['error' => 'You cannot apply for consecutive leaves of different leave types.']);
             }
             $leave->save();
-            return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+            return response()->json(['message' => 'Your leave has been submitted successfully!']);
+            // return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
 
         } elseif ($leave_duration == 'half') {
 
             if(! $this->checkBalance($emp_code, $request->input('leave_type'), 0.5)){
-                return redirect()->back()->with('error', 'You do not have the leave balance.');
+                return response()->json(['error' => 'You do not have the leave balance.']);
             }
+            $userCatg  = Employee::where('emp_code', $emp_code)->value('catg_code');
             $leave = new Leave();
             $leave->leave_id = self::getNextLeaveId();
             $leave->leave_date = Carbon::today();
@@ -270,17 +401,106 @@ class LeavesController extends Controller
             $leave->leave_code = $request->input('leave_type');
             $leaveDate = $request->input('single_leave_date');
             $leaveDate = date('d-m-Y', strtotime($leaveDate));
+            // check if the leave date is in the current month
+            if (! $this->checkLeaveCurrentMonth($leaveDate)) {
+                return response()->json(['error' => 'For half day leave, the selected date must be within the current month.']);
+            }
             $time = Employee::where('emp_code', $emp_code)->first();
+            if (!$time || !$time->st_time || !$time->end_time) {
+                return response()->json(['error' => 'Office timing is not configured for this employee.']);
+            }
             $startTime = Carbon::parse(  "$leaveDate $time->st_time");
             $endTime = Carbon::parse( "$leaveDate $time->end_time");
             $durationMinutes = $startTime->diffInMinutes($endTime);
-            $halfDuration = $durationMinutes / 2;
+            // check if the catgory code is 2 and the day of leave is friday, then reduce the shift duration by 1 hour
+            if ($userCatg == 2) {
+                $dayOfWeek = Carbon::parse($leaveDate)->format('l');
+                if ($dayOfWeek == 'Friday') {
+                    $durationMinutes -= 60; // Reduce by 1 hour (60 minutes)
+                    $endTime = $endTime->subHour(); // Adjust the end time accordingly
+                }
+            }
+            $halfDuration = (int) round($durationMinutes / 2);
             $midPoint = $startTime->copy()->addMinutes($halfDuration);
             Carbon::parse($midPoint);
-            if($request->input('leave_interval') == 1){
+
+            if((int) $request->input('leave_interval') === 4){
+                if ((int) $request->input('leave_type') !== 12) {
+                    return response()->json(['error' => 'Custom time is only available for OD half leave.']);
+                }
+
+                $customStartInput = $request->input('half_custom_start_time');
+                $customEndInput = $request->input('half_custom_end_time');
+                $customStart = Carbon::parse("$leaveDate $customStartInput");
+                $customEnd = Carbon::parse("$leaveDate $customEndInput");
+
+                if ($customStart->lt($startTime)) {
+                    return response()->json(['error' => 'Custom OD time cannot start before office timing.']);
+                }
+
+                if ($customEnd->gt($endTime)) {
+                    return response()->json(['error' => 'Custom OD time must end within office timing.']);
+                }
+
+                if ($customEnd->lte($customStart)) {
+                    return response()->json(['error' => 'Custom OD end time must be after start time.']);
+                }
+
+                if(checkMultipleLeaves(
+                    $emp_code,
+                    $customStart,
+                    $customEnd,
+                    $request->input('leave_type')
+                )){
+                    return response()->json(['error' => 'You have already applied for leave on the selected date.']);
+                }
+
+                $leave->from_date = $customStart;
+                $leave->to_date = $customEnd;
+            } elseif((int) $request->input('leave_interval') === 3){
+                $customStartInput = $request->input('half_custom_start_time');
+                $customStart = Carbon::parse("$leaveDate $customStartInput");
+                $customEnd = $customStart->copy()->addMinutes($halfDuration);
+
+                if ($customStart->lt($startTime)) {
+                    return response()->json(['error' => 'Custom half leave cannot start before office timing.']);
+                }
+
+                if ($customEnd->gt($endTime)) {
+                    return response()->json(['error' => 'Custom half leave must end within office timing.']);
+                }
+
+                if(checkMultipleLeaves(
+                    $emp_code,
+                    $customStart,
+                    $customEnd,
+                    $request->input('leave_type')
+                )){
+                    return response()->json(['error' => 'You have already applied for leave on the selected date.']);
+                }
+
+                $leave->from_date = $customStart;
+                $leave->to_date = $customEnd;
+            } elseif((int) $request->input('leave_interval') === 1){
+                if(checkMultipleLeaves(
+                    $emp_code,
+                    $startTime,
+                    $midPoint,
+                    $request->input('leave_type')
+                )){
+                    return response()->json(['error' => 'You have already applied for leave on the selected date.']);
+                }
                 $leave->from_date = $startTime;
                 $leave->to_date = $midPoint;
             } else {
+                if(checkMultipleLeaves(
+                    $emp_code,
+                    $midPoint,
+                    $endTime,
+                    $request->input('leave_type')
+                )){
+                    return response()->json(['error' => 'You have already applied for leave on the selected date.']);
+                }
                 $leave->from_date = $midPoint;
                 $leave->to_date = $endTime;
             }
@@ -292,18 +512,20 @@ class LeavesController extends Controller
             $leave->terminal_id = 'online';
             $leave->moddate = now();
             $leave->remark = $request->input('reason');
+            $leave->day_half = $request->input('leave_interval');
             $check = $this->checkConsecutiveLeave($emp_code, 
                 $request->input('leave_type'), 
                 $request->input('single_leave_date'), 
                 $request->input('single_leave_date'));
             if($check == false){
-                return redirect()->back()->with('error', 'You cannot apply for consecutive leaves of different leave types.');
+                return response()->json(['error' => 'You cannot apply for consecutive leaves of different leave types.']);
             }
             $leave->save();
-            return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+            return response()->json(['message' => 'Your leave has been submitted successfully!']);
+            // return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
         } elseif ($leave_duration == 'short') {
             if(! $this->checkShortBalance($emp_code)){
-                return redirect()->back()->with('error', 'You already availed your short leave.');
+                return response()->json(['error' => 'You already availed your short leave.']);
             }
             $leave = new Leave();
             $leave->leave_id = self::getNextLeaveId();
@@ -313,8 +535,20 @@ class LeavesController extends Controller
             $fromTime = $request->input('start_time');
             $toTime = $request->input('end_time');
             $leaveDate = $request->input('single_leave_date');
+            // check if the leave date is in the current month
+            if (! $this->checkLeaveCurrentMonth($leaveDate)) {
+                return response()->json(['error' => 'For short leave, the selected date must be within the current month.']);
+            }
             $fromTime = Carbon::parse("$leaveDate $fromTime");
             $toTime = Carbon::parse("$leaveDate $toTime");
+            if(checkMultipleLeaves(
+                $emp_code,
+                $fromTime,
+                $toTime,
+                8
+            )){
+                return response()->json(['error' => 'You have already applied for leave on the selected date.']);
+            }
             $leave->from_date = $fromTime;
             $leave->to_date = $toTime;
             $leave->l_day = 1;
@@ -322,20 +556,22 @@ class LeavesController extends Controller
             $leave->status = $employeeType == 'Regular' ? '1' : '3';
             $leave->dept_code = $deptCode;
             $leave->user_id = $emp_code;
+            $leave->day_half = 5;
             $leave->terminal_id = 'online';
             $leave->moddate = now();
             $leave->remark = $request->input('reason');
 
             $leave->save();
-            return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+            return response()->json(['message' => 'Your leave has been submitted successfully!']);
+            // return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
         }
         else {
             // Handle invalid leave exception
-            return redirect()->back()->with('error', 'Invalid leave type selected. Please try again!');
+            return response()->json(['error' => 'Invalid leave type selected. Please try again!']);
         }
     }
 
-    public function leaveApprovals($emp_code)
+    public function leaveApprovals(Request $request, $emp_code)
     {
         // Ensure logged-in user matches the requested employee code
         $authUser = Auth::user();
@@ -343,11 +579,36 @@ class LeavesController extends Controller
             return redirect()->route('home');
         }
 
+        $leaveTypes = [
+            1 => 'Casual Leave',
+            2 => 'Sick Leave',
+            3 => 'Annual Leave',
+            4 => 'CPL Leave',
+            5 => 'Leave Without Pay',
+            8 => 'Short Leave',
+            12 => 'Outdoor Duty',
+        ];
+
+        $request->validate([
+            'hr_leave_type' => 'nullable|integer|in:' . implode(',', array_keys($leaveTypes)),
+        ]);
+
+        $selectedHrLeaveType = $request->filled('hr_leave_type')
+            ? (int) $request->input('hr_leave_type')
+            : null;
+
         // Check if the user is HR
         $hrApprovals = null;
         $hr = $this->identifyHR($emp_code);
         if($hr != null){
-            $hrApprovals = Leave::where('status', 5)->get();
+            $hrApprovals = Leave::where('status', 5)
+            ->when($selectedHrLeaveType, function ($query) use ($selectedHrLeaveType) {
+                $query->where('leave_code', $selectedHrLeaveType);
+            })
+            ->where(function ($query) {     //only get leaves that are of current or previous month
+                $query->whereMonth('leave_date', Carbon::now()->month)
+                      ->orWhereMonth('leave_date', Carbon::now()->subMonth()->month);
+            })->get();
         }
 
         $leavesToApprove = collect();
@@ -373,6 +634,8 @@ class LeavesController extends Controller
             'leaves' => $leavesToApprove,
             'hrApprovals' => $hrApprovals,
             'hr' => $hr,
+            'leaveTypes' => $leaveTypes,
+            'selectedHrLeaveType' => $selectedHrLeaveType,
         ]);
     }
     public function approveLeave(Request $request, $leave_id)
@@ -429,17 +692,17 @@ class LeavesController extends Controller
     public function approveAll(Request $request)
     {
         $user = Auth::user()->emp_code;
-        $leaveIds = $request->input('leave_ids');
+        $leaveIds = $request->input('leave_ids', []);
         if (!$leaveIds || !is_array($leaveIds)) {
             return response()->json(['success' => false, 'message' => 'No leave IDs provided']);
         }
 
-        foreach ($leaveIds as $leaveId) {
-            $leave = Leave::find($leaveId);
-            if (!$leave) {
-                continue; // Skip if leave not found
-            }
-            Leave::where('leave_id', $leaveId)
+        $leaves = Leave::whereIn('leave_id', $leaveIds)
+            ->where('status', 5)
+            ->get();
+
+        foreach ($leaves as $leave) {
+            Leave::where('leave_id', $leave->leave_id)
                 ->update(['status' => 7, 'user_id_p' => $user, 'terminal_id_p' => 'WEB', 'moddate_p' => now()]);
             
             $approvedLeave = new ApprovedLeave();
@@ -458,7 +721,11 @@ class LeavesController extends Controller
             $approvedLeave->leave_nature = 'R';
             $approvedLeave->save();
         }
-        return response()->json(['success' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $leaves->count() . ' leave(s) approved successfully.',
+        ]);
     }
 
     public function identifyHR($emp_code)
@@ -486,6 +753,7 @@ class LeavesController extends Controller
             'casual_leave' => 0,
             'medical_leave' => 0,
             'annual_leave' => 0,
+            'compensatory_leave' => 0,
         ];
     
         foreach ($leaves as $leave) {
@@ -499,27 +767,88 @@ class LeavesController extends Controller
                 case 3:
                     $pending['annual_leave'] += $leave->l_day;
                     break;
+                case Leave::CPL:
+                    $pending['compensatory_leave'] += $leave->l_day;
+                    break;
             }
         }
     
         return $pending;
     }
 
-    public function checkConsecutiveLeave($emp_code, $leave_code, $from_date, $to_date)
+    public function checkSandwichLeave($emp_code, $from_date, $to_date)
     {
+        // CHECK THE REST DAY OF USER
+        $user = Employee::where('emp_code', $emp_code)->first();
+        $restDay = $user->rest_day;
+        $restDay = ucfirst(strtolower($restDay));
+        // check if the user applies leave consecutively with the rest day, if yes check if leave exists on the previous day or next day
+
         $from = Carbon::parse($from_date);
         $to = Carbon::parse($to_date);
-        $yesterday = Carbon::parse($from)->copy()->subDay();
-        $tomorrow = Carbon::parse($to)->copy()->addDay();
-        $leave = Leave::where('emp_code', $emp_code)
-        ->whereIn('leave_code', [1, 2, 3])  // restricted leave codes
-        ->where('leave_code', '!=', $leave_code) // different leave type
-        ->where(function ($query) use ($yesterday, $tomorrow) {
-            $query->whereDate('to_date', $yesterday) // ends right before new leave
-                  ->orWhereDate('from_date', $tomorrow); // starts right after new leave
-        })->exists();
+        $dayBefore = $from->copy()->subDay();
+        $dayAfter = $to->copy()->addDay();
 
-        return !$leave;    
+        
+        // Case 1: applied only on the day before rest day, check if after day is on leave
+        if ($dayAfter->format('l') === $restDay) {
+            $checkNext = $dayAfter->copy()->addDay();
+            if (checkFullLeaveExists($emp_code, $checkNext->toDateString())) {
+                return $dayAfter; // sandwich leave applies
+            }
+        }
+
+        // Case 2: applied only on the day after rest day, check if before day is on leave
+        if ($dayBefore->format('l') === $restDay) {
+            $checkPrev = $dayBefore->copy()->subDay();
+            if (checkFullLeaveExists($emp_code, $checkPrev->toDateString())) {
+                return $dayBefore; // sandwich leave applies
+            }
+        }
+
+        return false; // No sandwich leave
+    }
+    public function checkConsecutiveLeave($emp_code, $leave_code, $from_date, $to_date)
+    {
+        // Leave types that are exempt from consecutive leave check
+        if (in_array($leave_code, [3, 4, 5, 8, 12])) {
+            return true;
+        }
+
+        $from = Carbon::parse($from_date)->startOfDay();
+        $to = Carbon::parse($to_date)->startOfDay();
+
+        $yesterday = $from->copy()->subDay();
+        $tomorrow = $to->copy()->addDay();
+
+        $leaveExists = Leave::where('emp_code', $emp_code)
+            ->whereIn('leave_code', [1, 2])
+            ->where('leave_code', '!=', $leave_code)
+            ->where('status', '!=', 9)
+            ->where('l_day', '!=', 0.5)
+            ->where(function ($query) use ($from, $yesterday, $tomorrow) {
+
+                // Existing leave covers the previous day
+                $query->where(function ($q) use ($yesterday) {
+                    $q->whereDate('from_date', '<=', $yesterday)
+                    ->whereDate('to_date', '>=', $yesterday);
+                })
+
+                // Existing leave covers the next day
+                ->orWhere(function ($q) use ($tomorrow) {
+                    $q->whereDate('from_date', '<=', $tomorrow)
+                    ->whereDate('to_date', '>=', $tomorrow);
+                })
+
+                // Existing leave exists on the same day
+                ->orWhere(function ($q) use ($from) {
+                    $q->whereDate('from_date', '<=', $from)
+                    ->whereDate('to_date', '>=', $from);
+                });
+            })
+            ->exists();
+
+        return !$leaveExists;
     }
     
     public function rejectLeave(Request $request, $leave_id)
@@ -551,7 +880,6 @@ class LeavesController extends Controller
         
         return response()->json(['success' => false]);
     }
-
     public function storeUnpaidLeave(Request $request, $emp_code)
     {
         // Ensure logged-in user matches the requested employee code
@@ -562,11 +890,13 @@ class LeavesController extends Controller
 
         // Validate the request
         $request->validate([
-            'leave_duration' => 'required|string|in:full,half,short',
-            'single_leave_date' => 'required_if:leave_duration,half|date',
-            'leave_from_date' => 'required_if:leave_duration,full|date',
-            'leave_to_date' => 'required_if:leave_duration,full|date',
-            'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2',
+            'leave_duration' => 'required|string|in:full,half',
+            'single_leave_date' => 'required_if:leave_duration,half|date|nullable',
+            'leave_from_date' => 'required_if:leave_duration,full|date|nullable|before_or_equal:leave_to_date',
+            'leave_to_date' => 'required_if:leave_duration,full|date|nullable|after_or_equal:leave_from_date',
+            'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2,3',
+            'half_custom_start_time' => 'required_if:leave_interval,3|nullable|date_format:H:i',
+            'half_custom_end_time' => 'required_if:leave_interval,3|nullable|date_format:H:i',
             'reason' => 'required|string|max:255',
         ]);
 
@@ -574,7 +904,13 @@ class LeavesController extends Controller
         $leave_duration = $request->input('leave_duration');
 
         if ($leave_duration == 'full') {
-            
+            // check if any leave already exists in the selected range
+            if(checkMultipleLeaves($emp_code,  
+                date('Y-m-d',strtotime($request->input('leave_from_date'))), 
+                date('Y-m-d',strtotime($request->input('leave_to_date'))),
+                5)){
+                return redirect()->back()->with('error', 'You have already applied for leave on one or more of the selected dates.');
+            }
             $range = $request->input('leave_from_date') . ' - ' . $request->input('leave_to_date');
             list($from, $to) = explode(' - ', $range);
             $to = date('d-m-Y', strtotime($to));
@@ -588,7 +924,7 @@ class LeavesController extends Controller
             $leave->to_date = Carbon::createFromDate($to)->format('Y-m-d');
             $leave->leave_id = self::getNextLeaveId();
             $leave->leave_date = Carbon::today();
-            $leave->leave_code = 5; // Unpaid leave code
+            $leave->leave_code = 5;
             $leave->l_day = $numberOfDays;
             list($employeeType, $deptCode) = $this->empType($emp_code);
             $leave->status = $employeeType == 'Regular' ? '1' : '3';
@@ -600,10 +936,18 @@ class LeavesController extends Controller
             $leave->emp_code = $emp_code;
             $leave->leave_date = Carbon::today();
             $leave->save();
-            return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+            return redirect()->route('leaves', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
         }
         else if($leave_duration == 'half') {
-
+            // check if any leave already exists in the selected date
+            if(checkMultipleLeaves(
+                $emp_code,
+                date('Y-m-d', strtotime($request->input('single_leave_date'))),
+                date('Y-m-d', strtotime($request->input('single_leave_date'))),
+                5
+            )){
+                return redirect()->back()->with('error', 'You have already applied for leave on the selected date.');
+            }
             $leave = new Leave();
             $leave->leave_id = self::getNextLeaveId();
             $leave->leave_date = Carbon::today();
@@ -612,13 +956,31 @@ class LeavesController extends Controller
             $leaveDate = $request->input('single_leave_date');
             $leaveDate = date('d-m-Y', strtotime($leaveDate));
             $time = Employee::where('emp_code', $emp_code)->first();
+            if (!$time || !$time->st_time || !$time->end_time) {
+                return response()->json(['error' => 'Office timing is not configured for this employee.']);
+            }
             $startTime = Carbon::parse(  "$leaveDate $time->st_time");
             $endTime = Carbon::parse( "$leaveDate $time->end_time");
             $durationMinutes = $startTime->diffInMinutes($endTime);
             $halfDuration = $durationMinutes / 2;
             $midPoint = $startTime->copy()->addMinutes($halfDuration);
             Carbon::parse($midPoint);
-            if($request->input('leave_interval') == 1){
+            if((int) $request->input('leave_interval') === 3){
+                $customStartInput = $request->input('half_custom_start_time');
+                $customStart = Carbon::parse("$leaveDate $customStartInput");
+                $customEnd = $customStart->copy()->addMinutes($halfDuration);
+
+                if ($customStart->lt($startTime)) {
+                    return response()->json(['error' => 'Custom half leave cannot start before office timing.']);
+                }
+
+                if ($customEnd->gt($endTime)) {
+                    return response()->json(['error' => 'Custom half leave must end within office timing.']);
+                }
+
+                $leave->from_date = $customStart;
+                $leave->to_date = $customEnd;
+            } elseif((int) $request->input('leave_interval') === 1){
                 $leave->from_date = $startTime;
                 $leave->to_date = $midPoint;
             } else {
@@ -634,10 +996,868 @@ class LeavesController extends Controller
             $leave->moddate = now();
             $leave->remark = $request->input('reason');
             $leave->save();
-            return redirect()->route('attendance', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+            return redirect()->route('leaves', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
         } else {
             // Handle invalid leave exception
             return redirect()->back()->with('error', 'Invalid leave type selected. Please try again!');
         }
-    }      
+    }
+
+    public function storeOdLeave(Request $request, $emp_code)
+    {
+        // Ensure logged-in user matches the requested employee code
+        $authUser = Auth::user();
+        if ($authUser->emp_code != $emp_code) {
+            return redirect()->route('home');
+        }
+
+        $request->validate([
+            'leave_duration' => 'required|string|in:full,half',
+            'single_leave_date' => 'required_if:leave_duration,half|date|nullable',
+            'leave_from_date' => 'required_if:leave_duration,full|date|nullable|before_or_equal:leave_to_date',
+            'leave_to_date' => 'required_if:leave_duration,full|date|nullable|after_or_equal:leave_from_date',
+            'leave_interval' => 'required_if:leave_duration,half|integer|in:1,2,3',
+            'half_custom_start_time' => 'required_if:leave_interval,3|nullable|date_format:H:i',
+            'half_custom_end_time' => 'required_if:leave_interval,3|nullable|date_format:H:i',
+            'reason' => 'required|string|max:255',
+        ]);
+
+        $leave_duration = $request->input('leave_duration');
+
+        if ($leave_duration == 'full') {
+            // check if any leave already exists in the selected range
+            if(checkMultipleLeaves($emp_code,  
+                date('Y-m-d',strtotime($request->input('leave_from_date'))), 
+                date('Y-m-d',strtotime($request->input('leave_to_date'))),
+                12)){
+                return redirect()->back()->with('error', 'You have already applied for leave on one or more of the selected dates.');
+            }
+            $range = $request->input('leave_from_date') . ' - ' . $request->input('leave_to_date');
+            list($from, $to) = explode(' - ', $range);
+            $to = date('d-m-Y', strtotime($to));
+            $from = date('d-m-Y', strtotime($from));
+            $fromDate = Carbon::parse($from);
+            $toDate = Carbon::parse($to);
+            $numberOfDays = (int) $fromDate->diffInDays($toDate) + 1;
+
+            $leave = new Leave();
+            $leave->from_date = Carbon::createFromDate($from)->format('Y-m-d');
+            $leave->to_date = Carbon::createFromDate($to)->format('Y-m-d');
+            $leave->leave_id = self::getNextLeaveId();
+            $leave->leave_date = Carbon::today();
+            $leave->leave_code = 12;
+            $leave->l_day = $numberOfDays;
+            list($employeeType, $deptCode) = $this->empType($emp_code);
+            $leave->status = $employeeType == 'Regular' ? '1' : '3';
+            $leave->dept_code = $deptCode;
+            $leave->user_id = $emp_code;
+            $leave->terminal_id = 'online';
+            $leave->moddate = now();
+            $leave->remark = $request->input('reason');
+            $leave->emp_code = $emp_code;
+            $leave->leave_date = Carbon::today();
+            $leave->save();
+            return redirect()->route('leaves', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+        }
+        else if($leave_duration == 'half') {
+            // check if any leave already exists in the selected date
+            if(checkMultipleLeaves(
+                $emp_code,
+                date('Y-m-d', strtotime($request->input('single_leave_date'))),
+                date('Y-m-d', strtotime($request->input('single_leave_date'))),
+                12
+            )){
+                return redirect()->back()->with('error', 'You have already applied for leave on the selected date.');
+            }
+            $leave = new Leave();
+            $leave->leave_id = self::getNextLeaveId();
+            $leave->leave_date = Carbon::today();
+            $leave->emp_code = $emp_code;
+            $leave->leave_code = 12; 
+            $leaveDate = $request->input('single_leave_date');
+            $leaveDate = date('d-m-Y', strtotime($leaveDate));
+            $time = Employee::where('emp_code', $emp_code)->first();
+            if (!$time || !$time->st_time || !$time->end_time) {
+                return response()->json(['error' => 'Office timing is not configured for this employee.']);
+            }
+            $startTime = Carbon::parse(  "$leaveDate $time->st_time");
+            $endTime = Carbon::parse( "$leaveDate $time->end_time");
+            $durationMinutes = $startTime->diffInMinutes($endTime);
+            $halfDuration = $durationMinutes / 2;
+            $midPoint = $startTime->copy()->addMinutes($halfDuration);
+            Carbon::parse($midPoint);
+            if((int) $request->input('leave_interval') === 3){
+                $customStartInput = $request->input('half_custom_start_time');
+                $customStart = Carbon::parse("$leaveDate $customStartInput");
+                $customEnd = $customStart->copy()->addMinutes($halfDuration);
+
+                if ($customStart->lt($startTime)) {
+                    return response()->json(['error' => 'Custom half leave cannot start before office timing.']);
+                }
+
+                if ($customEnd->gt($endTime)) {
+                    return response()->json(['error' => 'Custom half leave must end within office timing.']);
+                }
+
+                $leave->from_date = $customStart;
+                $leave->to_date = $customEnd;
+            } elseif((int) $request->input('leave_interval') === 1){
+                $leave->from_date = $startTime;
+                $leave->to_date = $midPoint;
+            } else {
+                $leave->from_date = $midPoint;
+                $leave->to_date = $endTime;
+            }
+            $leave->l_day = 0.5;
+            list($employeeType, $deptCode) = $this->empType($emp_code);
+            $leave->status = $employeeType == 'Regular' ? '1' : '3';
+            $leave->dept_code = $deptCode;
+            $leave->user_id = $emp_code;
+            $leave->terminal_id = 'online';
+            $leave->moddate = now();
+            $leave->remark = $request->input('reason');
+            $leave->save();
+            return redirect()->route('leaves', ['emp_code' => $emp_code])->with('success', 'Your leave application has been submitted successfully!');
+        } else {
+            // Handle invalid leave exception
+            return redirect()->back()->with('error', 'Invalid leave type selected. Please try again!');
+        }
+    }
+    public function leavesApplied(Request $request, $emp_code)
+    {
+        // Ensure logged-in user matches the requested employee code
+        $authUser = Auth::user();
+        $requestedEmpCode = trim($request->input('emp_code', $emp_code));
+        if ($authUser->emp_code != $requestedEmpCode) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not authorized to view this report.'
+            ]);
+        }
+
+        return response()->json(
+            $this->buildLeavesAppliedReport($requestedEmpCode, $request->input('month'))
+        );
+    }
+
+    public function leavesAppliedHr(Request $request)
+    {
+        $empCode = trim((string) $request->input('emp_code', ''));
+        if (!$empCode) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Employee code is required.'
+            ]);
+        }
+
+        return response()->json(
+            $this->buildLeavesAppliedReport($empCode, $request->input('month'))
+        );
+    }
+
+    private function buildLeavesAppliedReport(string $empCode, ?string $month = null): array
+    {
+        $employee = Employee::where('emp_code', $empCode)->first();
+        if (!$employee) {
+            return [
+                'success' => false,
+                'message' => 'Employee code not found.'
+            ];
+        }
+
+        $deptName = $employee->department->dept_desc ?? '--';
+        $desgName = $employee->designation->desg_short ?? '--';
+        $subtitle = $deptName . ' | ' . $desgName;
+
+        $month = trim((string) $month);
+        try {
+            $monthDate = $month ? Carbon::createFromFormat('Y-m', $month) : Carbon::now();
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Invalid month format. Please use YYYY-MM.'
+            ];
+        }
+
+        $startOfMonth = $monthDate->copy()->startOfMonth();
+        $endOfMonth = $monthDate->copy()->endOfMonth();
+
+        $leaves = Leave::where('emp_code', $empCode)
+            ->where(function ($query) use ($startOfMonth, $endOfMonth) {
+                $query->where('from_date', '<=', $endOfMonth)
+                    ->where('to_date', '>=', $startOfMonth);  
+            })
+            ->orderBy('leave_date', 'desc')
+            ->get();
+
+        foreach ($leaves as $leave) {
+            switch ($leave->leave_code) {
+                case 1:
+                    $leave->leave_type = 'Casual';
+                    break;
+                case 2:
+                    $leave->leave_type = 'Medical';
+                    break;
+                case 3:
+                    $leave->leave_type = 'Annual';
+                    break;
+                case 4:
+                    $leave->leave_type =  'CPL';
+                    break;   
+                case 5:
+                    $leave->leave_type = 'Unpaid';
+                    break;
+                case 8:
+                    $leave->leave_type = 'Short';
+                    break;
+                case 12:
+                    $leave->leave_type = 'Outdoor Duty';
+                    break;    
+                default:
+                    $leave->leave_type = 'Unknown Leave Type';
+            }
+        }
+        $html = "
+            <table class='table table-bordered'>
+                <thead>
+                    <tr>
+                        <th>Leave Type</th>
+                        <th>From Date</th>
+                        <th>To Date</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Applied On</th>
+                    </tr>
+                </thead>
+                <tbody>
+        ";
+
+        foreach ($leaves as $leave) {
+            $statusBadge = '';
+            switch ($leave->status) {
+                case 1:
+                    $statusBadge = '<span class="badge bg-warning">Pending (Supervisor)</span>';
+                    break;
+                case 3:
+                    $statusBadge = '<span class="badge bg-info">Pending (HOD)</span>';
+                    break;
+                case 5:
+                    $statusBadge = '<span class="badge bg-primary">Pending (HR)</span>';
+                    break;
+                case 7:
+                    $statusBadge = '<span class="badge bg-success">Approved</span>';
+                    break;
+                case 9:
+                    $statusBadge = '<span class="badge bg-danger">Rejected</span>';
+                    break;
+                default:
+                    $statusBadge = '<span class="badge bg-secondary">Unknown</span>';
+            }
+
+            $html .= "
+                <tr>
+                    <td>{$leave->leave_type}</td>
+                    <td>" . Carbon::parse($leave->from_date)->format('d-m-Y H:i') . "</td>
+                    <td>" . Carbon::parse($leave->to_date)->format('d-m-Y H:i') . "</td>
+                    <td>{$leave->l_day}</td>
+                    <td>{$statusBadge}</td>
+                    <td>" . Carbon::parse($leave->leave_date)->format('d-m-Y') . "</td>
+                </tr>
+            ";
+        }
+
+        $html .= "
+                </tbody>
+            </table>
+        ";
+                
+        $title = 'Leaves Applied (' . $monthDate->format('M Y') . ')';
+
+        if ($leaves->isEmpty()) {
+            return [
+                'success' => true,
+                'title' => $title,
+                'subtitle' => $subtitle,
+                'html' => '<p>No leaves applied in the selected month.</p>'
+            ];
+        }
+        return [
+            'success' => true,
+            'title' => $title,
+            'subtitle' => $subtitle,
+            'html' => $html
+        ];
+    }
+    public function leaveReport()
+    {
+        $this->authorizeLeaveReportAccess();
+
+        $departments = Department::whereNotIn('dept_code', [61, 60, 64, 48, 54, 11, 13, 17, 18, 19, 31, 32, 58, 65])->get();
+        $designations = Designation::all();
+        return view('leave-report', [
+            'departments' => $departments,
+            'designations' => $designations,
+        ]);
+    }
+    public function leaveReportEmployeeSearch(Request $request)
+    {
+        $this->authorizeLeaveReportAccess();
+
+        $term = trim($request->input('q', ''));
+        if (strlen($term) < 2) {
+            return response()->json(['results' => []]);
+        }
+
+        $employees = Employee::whereNull('quit_stat')
+            ->where(function ($query) use ($term) {
+                $query->where('emp_code', 'like', '%' . $term . '%')
+                    ->orWhereRaw('UPPER(name) LIKE ?', ['%' . strtoupper($term) . '%']);
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get(['emp_code', 'name']);
+
+        $results = $employees->map(function ($employee) {
+            $name = function_exists('capitalizeWords') ? capitalizeWords($employee->name) : ucfirst(strtolower($employee->name));
+            return [
+                'id' => $employee->emp_code,
+                'text' => $employee->emp_code . ' - ' . $name,
+            ];
+        })->values();
+
+        return response()->json(['results' => $results]);
+    }
+    public function leaveReportData(Request $request)
+    {
+        $this->authorizeLeaveReportAccess();
+
+        $filter = $request->input('filter');
+        if (!in_array($filter, ['department', 'employee'])) {
+            return redirect()->back()->with('error', 'Invalid filter selected.');
+        }
+        $startDate = Carbon::parse($request->input('start_date'));
+        $endDate = Carbon::parse($request->input('end_date'));
+
+        if ($filter == 'employee') {
+            $empCode = trim($request->input('emp_code'));
+            if (!$empCode) {
+                return redirect()->back()->with('error', 'Employee code is required.');
+            }
+
+            $employee = Employee::where('emp_code', $empCode)
+                ->whereNull('quit_stat')
+                ->first(['emp_code', 'name', 'dept_code', 'desg_code']);
+
+            if (!$employee) {
+                return redirect()->back()->with('error', 'Employee code not found.');
+            }
+
+            $desigName = (object) ['desg_short' => 'Employee: ' . $employee->emp_code . ' - ' . $employee->name];
+            $department = null;
+            $dept_code = null;
+            $employees = collect([$employee]);
+        } else {
+            $desigName = null;
+            $dept_code = $request->input('department');
+            //get department name
+            $department = Department::select('dept_desc')->where('dept_code', $dept_code)->first();
+
+            // Get active employees of the department
+            $employees = Employee::where('dept_code', $dept_code)
+                ->whereNull('quit_stat')
+                ->get(['emp_code', 'name', 'desg_code']);
+        }
+        $report = [];
+        $reportTitle = $department ? 'Department Availed Leave Report' : 'Availed Leave Report';
+
+        foreach ($employees as $employee) {
+
+            $leaves = Leave::where('emp_code', $employee->emp_code)
+                ->where(function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('from_date', [$startDate, $endDate])
+                        ->orWhereBetween('to_date', [$startDate, $endDate])
+                        ->orWhere(function ($query) use ($startDate, $endDate) {
+                            $query->where('from_date', '<=', $startDate)
+                                    ->where('to_date', '>=', $endDate);
+                        });
+                })
+                ->whereIn('leave_code', [1, 2, 3, 5, 12]) // approved leave types
+                ->get();
+
+            // Initialize counters
+            $leaveSummary = [
+                'medical' => 0,
+                'annual'  => 0,
+                'casual'  => 0,
+                'without_pay' => 0,
+                'outdoor_duty' => 0,
+            ];
+            foreach ($leaves as $leave) {
+
+                switch ($leave->leave_code) {
+                    case 1:
+                        $leaveSummary['casual'] += $leave->l_day;
+                        break;
+                    case 2:
+                        $leaveSummary['medical'] += $leave->l_day;
+                        break;
+                    case 3:
+                        $leaveSummary['annual'] += $leave->l_day;
+                        break;
+                    case 5:
+                        $leaveSummary['without_pay'] += $leave->l_day;
+                        break;
+                    case 12:
+                        $leaveSummary['outdoor_duty'] += $leave->l_day;
+                        break;    
+                }
+            }
+            // late and early calculation
+            $attendanceTotals = $this->calculateLateEarlyMinutes(
+                $employee->emp_code,
+                $startDate,
+                $endDate
+            );
+
+            // getting employees designation
+            $designation = $employee->designation->desg_short;
+
+            $balances = Balance::where('emp_code', $employee->emp_code)
+                ->whereIn('leav_code', [1, 2, 3])
+                ->pluck('leave_balance', 'leav_code');
+
+            $report[] = [
+                'emp_code' => $employee->emp_code,
+                'emp_name' => $employee->name,
+                'designation' => $designation,
+                'leaves'   => $leaveSummary,
+                'balances' => [
+                    'casual' => (float) ($balances[1] ?? 0),
+                    'medical' => (float) ($balances[2] ?? 0),
+                    'annual' => (float) ($balances[3] ?? 0),
+                ],
+                'late_mins'  => $attendanceTotals['late'],
+                'early_mins' => $attendanceTotals['early'],
+            ];
+        }
+
+        return view('leave-report-data', compact('report', 'startDate', 'endDate', 'department', 'dept_code', 'desigName', 'reportTitle', 'employee'));
+    }
+    private function calculateLateEarlyMinutes($emp_code, Carbon $startDate, Carbon $endDate)
+    {
+        $emp = Employee::select(
+            'catg_code', 'loca_code', 'st_time', 'end_time', 'twh'
+        )->where('emp_code', $emp_code)->first();
+
+        if (!$emp) {
+            return ['late' => 0, 'early' => 0];
+        }
+
+        $holidays = $this->getHolidayDates();
+
+        $totalLate  = 0;
+        $totalEarly = 0;
+
+        $date = $startDate->copy();
+
+        while ($date->lte($endDate)) {
+
+            $dateStr = $date->toDateString();
+
+            if ($date->isSunday() || in_array($dateStr, $holidays, true)) {
+                $date->addDay();
+                continue;
+            }
+
+            /* ===============================
+            DAILY REQUIRED MINUTES (RESET)
+            ================================ */
+            $totalMins = 480;
+
+            if ($emp->catg_code == 2) {
+                $totalMins = 360;
+            } elseif ($emp->twh == 12) {
+                $totalMins = 720;
+            }
+
+            $records = Attendance::whereRaw(
+                    "TRUNC(at_date) = TO_DATE(?, 'YYYY-MM-DD')", [$dateStr]
+                )
+                ->where('emp_code', $emp_code)
+                ->whereNull('att_stat')
+                ->orderBy('timein')
+                ->get();
+
+            if ($records->isEmpty()) {
+                $date->addDay();
+                continue;
+            }
+
+            /* ===============================
+            LEAVE DETECTION
+            ================================ */
+            $isFullDayLeave = false;
+            $leaveStart = null;
+            $leaveEnd   = null;
+            $leaveMins  = 0;
+
+            if (ifLeaveExists($emp_code, $dateStr)) {
+
+                $leave = Leave::whereRaw("TRUNC(from_date) <= TO_DATE(?, 'YYYY-MM-DD')", [$dateStr])
+                    ->whereRaw("TRUNC(to_date)   >= TO_DATE(?, 'YYYY-MM-DD')", [$dateStr])
+                    ->where('emp_code', $emp_code)
+                    ->whereNot('status', 9)
+                    ->first();
+
+                if ($leave) {
+                    $from = Carbon::parse($leave->from_date);
+                    $to   = Carbon::parse($leave->to_date);
+
+                    if ($from->format('H:i:s') === '00:00:00' &&
+                        $to->format('H:i:s')   === '00:00:00') {
+
+                        $isFullDayLeave = true;
+
+                    } else {
+                        $leaveStart = $from;
+                        $leaveEnd   = $to;
+                        $leaveMins  = $from->diffInMinutes($to);
+                    }
+                }
+            }
+
+            if ($isFullDayLeave) {
+                $date->addDay();
+                continue;
+            }
+
+            /* ===============================
+            SHIFT TIMES
+            ================================ */
+            $workDate = Carbon::parse($dateStr);
+            $startShift = $workDate->copy()->setTimeFromTimeString($emp->st_time);
+            $endShift   = $workDate->copy()->setTimeFromTimeString($emp->end_time);
+
+            if ($emp->twh != 12) {
+
+                if ($emp->catg_code == 2 && $workDate->isFriday()) {
+                    $totalMins = 300;
+                    $startShift->setTime(8,0);
+                    $endShift->setTime(13,0);
+
+                } elseif ($emp->catg_code == 1 &&
+                        $emp->loca_code == 2 &&
+                        $workDate->isFriday()) {
+
+                    $totalMins = 390;
+                    $startShift->setTime(8,0);
+                    $endShift->setTime(14,30);
+                }
+            }
+
+            /* ===============================
+            TIME CALCULATION
+            ================================ */
+            $minsWorked = 0;
+            foreach ($records as $r) {
+                $minsWorked += minutesWorked($r->timein, $r->timeout);
+            }
+
+            $minIn = Carbon::parse($records->min('timein'));
+
+            if ($records->whereNull('timeout')->isNotEmpty()) {
+                $maxOut = null;
+            } else {
+                $maxOut = Carbon::parse($records->max('timeout'));
+            }
+
+            $late  = 0;
+            $early = 0;
+
+            if ($emp->twh == 12) {
+
+                $required = $totalMins;
+
+                if ($leaveMins > 0) {
+                    $required = max(0, $totalMins - $leaveMins);
+                }
+
+                $late = max(0, $required - $minsWorked);
+
+            } else {
+
+                if ($minIn->gt($startShift)) {
+
+                    $diff = $startShift->diffInMinutes($minIn);
+
+                    if ($diff < 10) {
+                        $late = 0;                 // within grace
+                    } else {
+                        $late = $diff;             // full late minutes
+                    }
+                }
+                $minsDeduction = getRamadanDeductionMinutes($emp, $date);
+                if ($minsDeduction >= 0) {
+                    $reducedEndShift = $endShift->copy()->subMinutes($minsDeduction);
+                }
+                if ($maxOut && $maxOut->lt($reducedEndShift ?? $endShift)) {
+                    $early = $maxOut->diffInMinutes($reducedEndShift ?? $endShift);
+                }
+
+                if ($leaveStart) {
+
+                    if ($late > 0) {
+                        $overlapStart = max($startShift, $leaveStart);
+                        $overlapEnd   = min($minIn, $leaveEnd);
+
+                        if ($overlapStart < $overlapEnd) {
+                            $late -= $overlapStart->diffInMinutes($overlapEnd);
+                        }
+                        // $late = 0; // compensation for partial leaves
+                    }
+
+                    if ($early > 0 && $maxOut) {
+                        $overlapStart = max($maxOut, $leaveStart);
+                        $overlapEnd   = min($endShift, $leaveEnd);
+
+                        if ($overlapStart < $overlapEnd) {
+                            $early -= $overlapStart->diffInMinutes($overlapEnd);
+                        }
+                        // $early = 0; // compensation for partial leaves
+                    }
+                }
+            }
+
+            $totalLate  += max(0, intval($late));
+            $totalEarly += max(0, round($early));
+
+            $date->addDay();
+        }
+
+        return [
+            'late'  => $totalLate,
+            'early' => $totalEarly
+        ];
+    }
+
+    private function getHolidayDates(): array
+    {
+        static $holidayDates = null;
+
+        if ($holidayDates !== null) {
+            return $holidayDates;
+        }
+
+        $holidayDates = Holidays::query()
+            ->whereNotNull('h_date')
+            ->pluck('h_date')
+            ->map(function ($date) {
+                return Carbon::parse($date)->toDateString();
+            })
+            ->unique()
+            ->values()
+            ->all();
+
+        return $holidayDates;
+    }
+
+    public function leaveReportDownload($start_date, $end_date)
+    {
+        $this->authorizeLeaveReportAccess();
+
+        $dept_desc = request()->input('dept_desc');
+        $report = request()->input('report');
+        $desgShort = request()->input('desg_short');
+        $reportTitle = $dept_desc ? 'Department Availed Leave Report' : 'Availed Leave Report';
+        $employeeDept = request()->input('employee_dept');
+        $now = Carbon::now();
+        $pdf = Pdf::loadView('pdf.leave-report', [
+            'start' => dateFormat($start_date),
+            'end' => dateFormat($end_date),
+            'dept_desc' => $dept_desc,
+            'report' => $report,
+            'desg_short' => $desgShort,
+            'report_title' => $reportTitle,
+            'employee_dept' => $employeeDept,
+        ]);
+        return $pdf->stream("leave_report_{$now}.pdf");
+        // return view('pdf.leave-report', [
+        //     'start' => $start_date,
+        //     'end' => $end_date,
+        //     'dept_desc' => $dept_desc,
+        //     'report' => $report
+        // ]);
+    }
+
+    public function getPendingLeavesByStatus($status)
+    {
+        // Get month from request, default to current month
+        $month = request()->input('month', Carbon::now()->format('Y-m'));
+        
+        // Parse the month string and get first and last day
+        $startOfMonth = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $endOfMonth = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
+
+        // Get leaves by status and join with employee, designation, and department
+        // Filter leaves where from_date or to_date falls within the selected month
+        $leaves = Leave::where('status', $status)
+            ->whereRaw("(TRUNC(from_date) <= TRUNC(TO_DATE(?, 'YYYY-MM-DD')) AND TRUNC(to_date) >= TRUNC(TO_DATE(?, 'YYYY-MM-DD')))", 
+                [$endOfMonth->toDateString(), $startOfMonth->toDateString()])
+            ->join('pay_pers', 'pre_leave_tran.emp_code', '=', 'pay_pers.emp_code')
+            ->leftJoin('pay_desig', 'pay_pers.desg_code', '=', 'pay_desig.desg_code')
+            ->leftJoin('pay_dept', 'pay_pers.dept_code', '=', 'pay_dept.dept_code')
+            ->select(
+                'pre_leave_tran.leave_id',
+                'pre_leave_tran.emp_code',
+                'pre_leave_tran.leave_code',
+                'pre_leave_tran.from_date',
+                'pre_leave_tran.to_date',
+                'pre_leave_tran.leave_date',
+                'pre_leave_tran.l_day',
+                'pay_pers.name',
+                'pay_desig.desg_short',
+                'pay_dept.dept_desc'
+            )
+            ->orderBy('pre_leave_tran.leave_date', 'desc')
+            ->get();
+        // Map leave codes to leave types
+        $leaveTypeMap = [
+            1 => 'Casual Leave',
+            2 => 'Medical Leave',
+            3 => 'Annual Leave',
+            4 => 'CPL Leave',
+            5 => 'Without Pay Leave',
+            8 => 'Short Leave',
+            12 => 'OD Leave',
+        ];
+
+        // Format the response
+        $formattedLeaves = $leaves->map(function ($leave) use ($leaveTypeMap) {
+            return [
+                'leave_id' => $leave->leave_id,
+                'emp_code' => $leave->emp_code,
+                'name' => capitalizeWords($leave->name),
+                'leave_type' => $leaveTypeMap[$leave->leave_code] ?? 'Unknown',
+                'leave_code' => $leave->leave_code,
+                'designation' => $leave->desg_short ?? 'N/A',
+                'department' => $leave->dept_desc ?? 'N/A',
+                'applied_date' => Carbon::parse($leave->leave_date)->format('d M, y'),
+                'from_date' => Carbon::parse($leave->from_date)->format('d M, y'),
+                'to_date' => Carbon::parse($leave->to_date)->format('d M, y'),
+                'days' => $leave->l_day ?? 0,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $formattedLeaves,
+        ]);
+    }
+
+    public function getPendingLeavesReportView()
+    {
+        // Get month from request, default to current month
+        $month = request()->input('month', Carbon::now()->format('Y-m'));
+        
+        // Parse the month string and get first and last day
+        $startOfMonth = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $endOfMonth = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
+
+        // Status map
+        $statusMap = [
+            1 => 'Recommended',
+            3 => 'HOD Stage',
+            5 => 'HR Stage',
+            7 => 'Approved',
+            9 => 'Cancelled',
+        ];
+
+        // Leave type map
+        $leaveTypeMap = [
+            1 => 'Casual Leave',
+            2 => 'Medical Leave',
+            3 => 'Annual Leave',
+            4 => 'CPL Leave',
+            5 => 'Without Pay Leave',
+            8 => 'Short Leave',
+            12 => 'OD Leave',
+        ];
+
+        // Fetch leaves for all statuses
+        $leavesData = [];
+        foreach ($statusMap as $status => $stageName) {
+            $leaves = Leave::where('status', $status)
+                ->whereRaw("(TRUNC(from_date) <= TRUNC(TO_DATE(?, 'YYYY-MM-DD')) AND TRUNC(to_date) >= TRUNC(TO_DATE(?, 'YYYY-MM-DD')))", 
+                    [$endOfMonth->toDateString(), $startOfMonth->toDateString()])
+                ->join('pay_pers', 'pre_leave_tran.emp_code', '=', 'pay_pers.emp_code')
+                ->leftJoin('pay_desig', 'pay_pers.desg_code', '=', 'pay_desig.desg_code')
+                ->leftJoin('pay_dept', 'pay_pers.dept_code', '=', 'pay_dept.dept_code')
+                ->select(
+                    'pre_leave_tran.leave_id',
+                    'pre_leave_tran.emp_code',
+                    'pre_leave_tran.leave_code',
+                    'pre_leave_tran.from_date',
+                    'pre_leave_tran.to_date',
+                    'pre_leave_tran.leave_date',
+                    'pre_leave_tran.l_day',
+                    'pay_pers.name',
+                    'pay_desig.desg_short',
+                    'pay_dept.dept_desc'
+                )
+                ->orderBy('pre_leave_tran.leave_date', 'desc')
+                ->get();
+
+            // Format the leaves
+            $formattedLeaves = $leaves->map(function ($leave) use ($leaveTypeMap) {
+                return [
+                    'leave_id' => $leave->leave_id,
+                    'emp_code' => $leave->emp_code,
+                    'name' => capitalizeWords($leave->name),
+                    'leave_type' => $leaveTypeMap[$leave->leave_code] ?? 'Unknown',
+                    'leave_code' => $leave->leave_code,
+                    'designation' => $leave->desg_short ?? 'N/A',
+                    'department' => $leave->dept_desc ?? 'N/A',
+                    'applied_date' => Carbon::parse($leave->leave_date)->format('d M, y'),
+                    'from_date' => Carbon::parse($leave->from_date)->format('d M, y'),
+                    'to_date' => Carbon::parse($leave->to_date)->format('d M, y'),
+                    'days' => $leave->l_day ?? 0,
+                ];
+            });
+
+            $leavesData[$status] = $formattedLeaves->toArray();
+        }
+
+        // Format month for display
+        $monthDate = Carbon::createFromFormat('Y-m', $month);
+        $monthName = $monthDate->format('F Y');
+
+        return view('pending-leaves-report', [
+            'leavesData' => $leavesData,
+            'statusMap' => $statusMap,
+            'monthName' => $monthName,
+            'currentMonth' => $month,
+        ]);
+    }
+    public function individualLeaveReport()
+    {
+        $employees = Employee::whereNull('quit_stat')->get(['emp_code', 'name']);
+        return view('individual-leave-report', [
+            'employees' => $employees,
+            'reportEmployeeCode' => null,
+            'isSelfReport' => false,
+        ]);
+    }
+
+    public function myIndividualLeaveReport()
+    {
+        $employee = Employee::where('emp_code', Auth::user()->emp_code)
+            ->whereNull('quit_stat')
+            ->firstOrFail(['emp_code', 'name']);
+
+        return view('individual-leave-report', [
+            'employees' => collect([$employee]),
+            'reportEmployeeCode' => $employee->emp_code,
+            'isSelfReport' => true,
+        ]);
+    }
 }

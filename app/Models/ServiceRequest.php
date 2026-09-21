@@ -46,15 +46,19 @@ class ServiceRequest extends Model
 
     public function approvals()
     {
-        return $this->hasMany(RequestApproval::class, 'SERVICE_REQUEST_ID');
+        return $this->hasMany(RequestApproval::class, 'service_request_id');
     }
 
     public function assignment()
     {
-        return $this->hasOne(RequestAssignment::class, 'SERVICE_REQUEST_ID');
+        return $this->hasOne(RequestAssignment::class, 'service_request_id');
     }
     public function department()
     {
         return $this->belongsTo(Department::class, 'department_id', 'dept_code');
+    }
+    public function requester()
+    {
+        return $this->belongsTo(User::class, 'requester_id', 'emp_code');
     }
 }

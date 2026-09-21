@@ -20,8 +20,8 @@
 <div class="container">
   <div class="row">
     <div class="col-12">
-      <div class="portfolio-details mt-5">
-        <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+      <div class="portfolio-details">
+        <div class="portfolio-info">
           <h3>Leaves Balance</h3>
           <ul>
             <li class="mt-5">
@@ -42,26 +42,82 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($leaves as $leave)
+                @php
+                  $leaveTypes = [
+                    1 => 'Casual Leave',
+                    2 => 'Medical Leave',
+                    3 => 'Annual Leave',
+                    4 => 'Compensatory Leave',
+                  ];
+
+                  $pendingLeaveKeys = [
+                    1 => 'casual_leave',
+                    2 => 'medical_leave',
+                    3 => 'annual_leave',
+                    4 => 'compensatory_leave',
+                  ];
+
+                  $leavesByCode = $leaves->keyBy('leav_code');
+                @endphp
+
+                @foreach ($leaveTypes as $leaveCode => $leaveType)
+                    @php
+                      $leave = $leavesByCode->get($leaveCode);
+                      $balance = 0;
+                      if ($leave) {
+                        $balance = $leave->leav_open + $leave->leav_credit - $leave->leav_taken - $leave->leave_encashed;
+                      }
+                      $pendingKey = $pendingLeaveKeys[$leaveCode] ?? null;
+                    @endphp
                     <tr>
-                        <td>{{ $leave->leave_type }}</td>
-                        <td style="color: #2196F3"><strong>{{ $leave->leav_open + $leave->leav_credit - $leave->leav_taken - $leave->leave_encashed }}</strong></td>
+                        <td>{{ $leaveType }}</td>
+                        <td style="color: #2196F3"><strong>{{ $balance }}</strong></td>
                         <td>
-                          @if ($leave->leav_code == 1)
-                            {{ $pendingLeaves['casual_leave'] ?? 0 }}
-                          @elseif ($leave->leav_code == 2) 
-                            {{ $pendingLeaves['medical_leave'] ?? 0 }}
-                          @elseif ($leave->leav_code == 3)   
-                            {{ $pendingLeaves['annual_leave'] ?? 0 }}
-                          @endif
+                          {{ $pendingKey ? ($pendingLeaves[$pendingKey] ?? 0) : 0 }}
                         </td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
+
+        <h3>Leaves Taken in Current Year</h3>
+        <p class="mb-2">
+          {{ \Carbon\Carbon::parse($yearlyLeaveSummary['from'])->format('j M Y') }}
+          to
+          {{ \Carbon\Carbon::parse($yearlyLeaveSummary['to'])->format('j M Y') }}
+        </p>
+        <table class="table mt-2 mb-5">
+          <thead>
+            <tr>
+              <th>Leave Type</th>
+              <th>Leaves Taken</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Outdoor Duty (OD)</td>
+              <td style="color: #2196F3"><strong>{{ $yearlyLeaveSummary['od'] }}</strong></td>
+            </tr>
+            <tr>
+              <td>Leave Without Pay</td>
+              <td style="color: #2196F3"><strong>{{ $yearlyLeaveSummary['without_pay'] }}</strong></td>
+            </tr>
+          </tbody>
+        </table>
           <div class="row mt-5">
-            <div class="col-12" style="text-align: center;">
-              <a class="btn btn-primary" href="{{route('check-if-any-leave', parameters: $leaves->emp_code)}}"><i class="fa-solid fa-house-person-leave"></i>Apply For Leave</a>
+            <div class="col-12 d-flex justify-content-around gap-2" style="text-align: center;">
+              <a class="btn btn-primary" id="leaves-applied" data-emp-code="{{ $leaves->emp_code }}" href="{{route('leaves-applied', $leaves->emp_code)}}">
+                <i class="fa-solid fa-check"></i>
+                Leaves Status
+              </a>
+              <a class="btn btn-info" id="leave-summary" href="{{ route('my-individual-leave-report') }}">
+                <i class="fa-solid fa-file-lines me-1" aria-hidden="true"></i>
+                Leave Applications
+              </a>
+              <a class="btn btn-success" id="apply-leave" href="{{ route('apply-leave-advance', ['emp_code' => $leaves->emp_code, 'shortLeaveOnly' => false]) }}">
+                <i class="fa-solid fa-person-walking-arrow-right me-1" aria-hidden="true"></i>
+                Apply Leave
+              </a>
             </div>
           </div>
         </div>
@@ -73,5 +129,151 @@
 @endsection
 
 @push('scripts')
+  function printLeavesReport(title, subtitle, tableHtml) {
+    const printWindow = window.open('', 'leaves-report');
+    if (!printWindow) {
+      return;
+    }
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${title}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 16px; color: #111; }
+            h2 { margin: 0 0 4px; }
+            .subtitle { margin: 0 0 12px; color: #555; font-size: 12px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+            th { background: #f5f5f5; }
+            .badge { padding: 2px 6px; border-radius: 4px; color: #fff; font-size: 12px; }
+            .bg-warning { background: #ff9800; }
+            .bg-info { background: #2196f3; }
+            .bg-primary { background: #0d6efd; }
+            .bg-success { background: #4caf50; }
+            .bg-danger { background: #f44336; }
+            .bg-secondary { background: #6c757d; }
+          </style>
+        </head>
+        <body>
+          <h2>${title}</h2>
+          <div class="subtitle">${subtitle || ''}</div>
+          ${tableHtml}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  }
+
+  document.getElementById('leaves-applied').addEventListener('click', async function(event) {
+    event.preventDefault();
+    const url = this.href;
+    const empCodeDefault = (this.dataset.empCode || '').trim();
+    const now = new Date();
+    const monthDefault = now.toISOString().slice(0, 7);
+
+    const { value: formValues } = await Swal.fire({
+      title: 'Leaves Applied Report',
+      html: `
+        <div class="text-start">
+          <label for="swal-emp-code" class="form-label">Employee Code</label>
+          <input id="swal-emp-code" class="form-control" value="${empCodeDefault}" disabled>
+        </div>
+        <div class="text-start mt-2">
+          <label for="swal-month" class="form-label">Month</label>
+          <input id="swal-month" type="month" class="form-control" value="${monthDefault}">
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'View Report',
+      preConfirm: () => {
+        const empCode = document.getElementById('swal-emp-code').value.trim();
+        const month = document.getElementById('swal-month').value;
+        if (!empCode) {
+          Swal.showValidationMessage('Employee code is required.');
+          return false;
+        }
+        if (!month) {
+          Swal.showValidationMessage('Month is required.');
+          return false;
+        }
+        return { empCode, month };
+      }
+    });
+
+    if (!formValues) {
+      return;
+    }
+
+    $.ajax({
+      url: url,
+      type: 'GET',
+      data: {
+        emp_code: formValues.empCode,
+        month: formValues.month
+      },
+      statusCode: {
+        401: function() {
+          Swal.fire({
+            title: 'Session Expired',
+            text: 'Your session has expired. Please login again.',
+            icon: 'warning'
+          }).then(() => {
+            window.location.href = "{{ route('login') }}";
+          });
+        },
+        419: function() {
+          Swal.fire({
+            title: 'Session Expired',
+            text: 'Your session has expired. Please login again.',
+            icon: 'warning'
+          }).then(() => {
+            window.location.href = "{{ route('login') }}";
+          });
+        }
+      },
+      success: function(response) {
+        console.log(response);
+        if(response.success) {
+          const modalHtml = `
+            <div class="text-muted mb-2"><small>${response.subtitle || ''}</small></div>
+            <div class="d-flex justify-content-end mb-2">
+              <button type="button" class="btn btn-sm btn-outline-secondary" id="print-leaves-report">Print</button>
+            </div>
+            ${response.html}
+          `;
+          Swal.fire({
+            width: 900,
+            draggable: true,
+            title: response.title || 'Leaves Applied',
+            html: modalHtml,
+            didOpen: () => {
+              const btn = document.getElementById('print-leaves-report');
+              if (btn) {
+                btn.addEventListener('click', () => {
+                  printLeavesReport(response.title || 'Leaves Applied', response.subtitle || '', response.html);
+                });
+              }
+            }
+          });
+        } else {
+          Swal.fire({
+            title: 'Error',
+            text: response.message || 'Could not fetch leaves applied.',
+            icon: 'error'
+          });
+        }
+      },
+      error: function() {
+        Swal.fire({
+          title: 'Error',
+          text: 'Could not fetch leaves applied.',
+          icon: 'error'
+        });
+      }
+    });
+  });
   
 @endpush

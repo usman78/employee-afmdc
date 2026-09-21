@@ -101,7 +101,7 @@ td {
     <div class="row">
         <div class="col-12">
         <div class="portfolio-details mt-5 mb-5">
-            <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+            <div class="portfolio-info">
             <h3>Team Members</h3>
             <ul>
                 <li class="mt-5">
@@ -114,45 +114,92 @@ td {
                 </li>
             </ul>
             <table class="table mt-5 mb-5">
-                <thead>
+              <thead>
                 <tr>
-                    <th>Code</th>
-                    <th>Name</th>
-                    <th>Attendance</th>
-                    <th>Filter</th>
+                  <th>Code</th>
+                  <th>Name</th>
+                  <th>Date</th>
+                  <th>Time In</th>
+                  <th>Time Out</th>
+                  <th>Filter</th>
                 </tr>
-                </thead>
-                <tbody>
-                    @foreach($team as $t)
-                    <tr>
-                    <td>{{ $t->emp_code }}</td>
-                    <td>{{ capitalizeWords($t->name) }}</td>
-                    <td colspan="1">
-                      @if(isset($t->attendance_records) && count($t->attendance_records))
-                        <ul class="list-unstyled">
-                          @foreach($t->attendance_records as $attn)
-                            <li>{{ dateFormat($attn->at_date) }} - {{ $attn->timein ? date('H:i', strtotime($attn->timein)) : 'Not Signed In' }}</li>
-                          @endforeach
-                        </ul>
-                      @else
-                        No records found.
-                      @endif
-                    </td>
-                    
-                    <td>
-                      <div class="reportrange" data-emp="{{ $t->emp_code }}" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; display: inline-block;">
-                          <i class="fa fa-calendar"></i>&nbsp;
-                          <span></span> <i class="fa fa-caret-down"></i>
-                      </div>
+              </thead>
 
-                      <button class="btn btn-primary btn-sm ml-2 filter-btn" data-emp="{{ $t->emp_code }}">
-                          <i class="fa fa-filter"></i> Filter 
-                      </button>
-                    </td>
-                    
-                    </tr>
+              <tbody>
+                @forelse($team as $t)
+                  @php
+                    $records = $t->attendance_records ?? [];
+                  @endphp
+
+                  @if(count($records))
+                    @foreach($records as $index => $attn)
+                      <tr>
+                        {{-- Only show code & name on first row for each employee --}}
+                        @if($index === 0)
+                          <td rowspan="{{ count($records) }}">{{ $t->emp_code }}</td>
+                          <td rowspan="{{ count($records) }}">{{ capitalizeWords($t->name) }}</td>
+                        @endif
+
+                        <td>{{ dateFormat($attn->at_date) }}</td>
+                        <td>{{ $attn->timein ? date('H:i', strtotime($attn->timein)) : 'Not Signed In' }}</td>
+                        <td>{{ $attn->timeout ? date('H:i', strtotime($attn->timeout)) : 'Not Signed Out' }}</td>
+
+                        @if($index === 0)
+                          <td rowspan="{{ count($records) }}">
+                            <div 
+                              class="reportrange d-inline-block px-2 py-1 border rounded" 
+                              data-emp="{{ $t->emp_code }}"
+                              style="background: #fff; cursor: pointer;"
+                            >
+                              <i class="fa fa-calendar"></i>&nbsp;
+                              <span></span>
+                              <i class="fa fa-caret-down"></i>
+                            </div>
+
+                            <button 
+                              type="button" 
+                              class="btn btn-primary btn-sm ms-2 filter-btn"
+                              data-emp="{{ $t->emp_code }}"
+                            >
+                              <i class="fa fa-filter"></i> Filter
+                            </button>
+                          </td>
+                        @endif
+                      </tr>
                     @endforeach
-                </tbody>
+                  @else
+                    <tr>
+                      <td>{{ $t->emp_code }}</td>
+                      <td>{{ capitalizeWords($t->name) }}</td>
+                      <td colspan="3" class="text-muted">No attendance records found</td>
+                      <td>
+                        <div 
+                          class="reportrange d-inline-block px-2 py-1 border rounded" 
+                          data-emp="{{ $t->emp_code }}"
+                          style="background: #fff; cursor: pointer;"
+                        >
+                          <i class="fa fa-calendar"></i>&nbsp;
+                          <span></span>
+                          <i class="fa fa-caret-down"></i>
+                        </div>
+
+                        <button 
+                          type="button" 
+                          class="btn btn-primary btn-sm ms-2 filter-btn"
+                          data-emp="{{ $t->emp_code }}"
+                        >
+                          <i class="fa fa-filter"></i> Filter
+                        </button>
+                      </td>
+                    </tr>
+                  @endif
+                @empty
+                  <tr>
+                    <td colspan="6" class="text-center text-muted">No team members found</td>
+                  </tr>
+                @endforelse
+              </tbody>
+
             </table>
             <div class="clear-filter text-center">
                 <a href="{{ route('team') }}" class="btn btn-primary">Clear Filter</a>

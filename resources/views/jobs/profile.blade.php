@@ -9,16 +9,35 @@
     .services-thumb {
         border: 2px solid var(--border-color);
     }
+    .send-email-btn {
+        color: white;
+        background-color: #2196F3;
+        border: 1px solid #006bc0;
+        transition: box-shadow 0.3s ease;
+    }
+    .send-email-btn:hover {
+        box-shadow: 5px 5px 5px #b7b6b6;
+        {{-- text-decoration: underline; --}}
+    }
+    .send-email-btn a {
+        color: white;
+     }
 @endpush
 @section('content')
         <div class="container">
-        {{-- <nav aria-label="breadcrumb" class="bc mt-3">
-            <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{route('dashboard')}}">Dashboard</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Profile</li>
-            </ol>
-        </nav> --}}
         <div class="row">
+            @if (session()->has('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+            @if (session()->has('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
             <div class="col-6">
                 <div class="profile-thumb">
                     <div class="profile-title">
@@ -27,13 +46,27 @@
 
                     <div class="profile-body">
                         <p>
+                            <span class="profile-small-title">Applied For</span>
+                            @if($job->designation)
+                                <span class="badge badge-pill badge-primary" id="selection-status" style="background-color: #294a70"> {{ $job->designation }} </span>
+                            @else
+                                <span class="badge badge-pill badge-primary" id="selection-status" style="background-color: #294a70"> {{ $job->vacancy }} </span>    
+                            @endif
+                        </p>
+                        <p>
                             <span class="profile-small-title">Status</span> 
                             @if($job->status == 'C')
-                                <span class="badge badge-danger" id="selection-status" style="background-color: crimson"> Cancelled </span>
+                                <span id="selection-status" style="font-weight:500"> Cancelled </span>
                             @elseif($job->status == NULL)
-                                <span class="badge badge-warning" id="selection-status" style="background-color: dodgerblue"> Pending Review </span>
+                                <span id="selection-status" style="font-weight:500"> Pending Review </span>
                             @elseif($job->status == 'S')
-                                <span class="badge badge-pill badge-success" id="selection-status" style="background-color: cadetblue"> Shortlisted </span>
+                                <span id="selection-status" style="font-weight:500"> Shortlisted </span>
+                                <span class="badge badge-pill badge-success send-email-btn" style="margin-left: 15px; padding:5px;">
+                                    <i class="bi bi-envelope-at-fill"></i>
+                                    <a id="send-email-btn" href="{{ route('send-shortlist-email', ['app_no' => $job->app_no]) }}">
+                                        Send Shortlist Email
+                                    </a>
+                                </span>
                             @endif
                         </p>
                         <p>
@@ -50,10 +83,14 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 section-title-wrap d-flex justify-content-center align-items-center mb-4">
+            <div class="col-6 section-title-wrap d-flex justify-content-center align-items-center">
                 <h2 class="text-white me-4 mb-0" style="letter-spacing: normal; font-size: x-large;">{{$job->app_name}}</h2>
 
-                <img src="{{asset('applications/').'/'.$job->app_no.'/'.$job->profile_pic}}" class="avatar-image img-fluid" alt="candidate-picture">
+                <img src="{{ (isset($job->profile_pic)) 
+                        ? asset('applications/'.$job->app_no.'/'.$job->profile_pic) 
+                        : asset('img/default-avatar.jpg') }}" 
+                    class="avatar-image" 
+                    alt="candidate-picture">
             </div>
         </div>  
         <div class="row mt-5">
@@ -112,10 +149,6 @@
 
                     <p class="mb-2">{{ date('d-m-Y', strtotime($job->created_at)) }}</p>
 
-                    <strong class="site-footer-title d-block mb-3">Application For</strong>
-
-                    <p class="mb-2">{{ $job->designation?->desg_short ?? 'CV Bank' }}</p>
-
                     <strong class="site-footer-title d-block mb-3">Expected Salary</strong>
 
                     <p class="mb-2">{{ $job->expt_sal }}</p>
@@ -128,34 +161,38 @@
 
                     <p class="mb-2">{{$job->pmdc_no ?? 'N/A' }}</p>
 
-                    <strong class="site-footer-title d-block mb-3">Profile Completion</strong>
-
-                    <p class="mb-2">{{ $job->is_profile_comp == 'Y' ? 'Yes' : 'No' }}</p>
-
                     <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
                         <h4 class="mt-2 d-block">Applicant Documents</h4>
                     </div>
                     <p class="mb-1" style="display: inline-block;">
-                        <a data-cv=true class="custom-btn btn" href="{{ route('download-file', ['id' => $job->app_no , 'fileName' => $job->cv_id]) }}">View CV</a>  
+                        <a data-cv=true class="custom-btn btn back-btn" href="{{ route('download-file', ['id' => $job->app_no , 'fileName' => $job->cv_id]) }}">View CV</a>  
                     </p>
                     <p class="mb-1" style="display: inline-block;">
-                        <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-file', ['id' => $job->app_no, 'fileName' => $job->cnic_front]) }}" target="_blank">CNIC Front</a>  
+                        <a data-gallery="manual" class="custom-btn btn back-btn" href="{{ route('download-file', ['id' => $job->app_no, 'fileName' => $job->cnic_front]) }}" target="_blank">CNIC Front</a>  
                     </p>
                     <p class="mb-1" style="display: inline-block;">
-                        <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-file', ['id' => $job->app_no,'fileName' => $job->cnic_back]) }}" target="_blank">CNIC Back</a>
+                        <a data-gallery="manual" class="custom-btn btn back-btn" href="{{ route('download-file', ['id' => $job->app_no,'fileName' => $job->cnic_back]) }}" target="_blank">CNIC Back</a>
                     </p>
                     <div class="d-flex flex-wrap align-items-center border-top border-bottom mb-4 mt-4">
                         <h4 class="mt-2 d-block">Educational Documents</h4>
                     </div>
-                    @if ($job->education)
+                    @if ($job->education && count($job->education) > 0)
                         @foreach ($job->education as $edu)
                             <p class="mb-1" style="display: inline-block;">
-                                <a data-gallery="manual" class="custom-btn btn" href="{{ route('download-file',['id' => $edu->app_no,'fileName' => $edu->edu_doc]) }}">{{$edu->edu_dgr_name}} Degree</a>  
+                                @if ($edu->edu_doc)
+                                    <a data-gallery="manual" class="custom-btn btn back-btn" 
+                                    href="{{ route('download-file', ['id' => $edu->app_no, 'fileName' => $edu->edu_doc]) }}">
+                                        {{ $edu->edu_dgr_name }} Degree
+                                    </a>
+                                @else
+                                    <span class="text-muted">{{ $edu->edu_dgr_name }} Degree (But No Document Uploaded)</span>
+                                @endif
                             </p>
                         @endforeach
-                    @else 
+                    @else
                         <p class="mb-2">No Record Found.</p>
                     @endif
+
                 </div>
             </div>
         </div>
@@ -197,8 +234,10 @@
                                         title: "Status Changed!",
                                         text: "The applicant is selected!",
                                         icon: "success"
-                                    })
-                                    statusLabel.innerHTML = 'Shortlisted';
+                                    }).then(() => {
+                                        window.location.href = "{{ route('job-bank') }}";
+                                    });
+                                    {{-- statusLabel.innerHTML = 'Shortlisted'; --}}
                                 }
                                 else {
                                     Swal.fire({
@@ -243,8 +282,10 @@
                                         title: "Status Changed!",
                                         text: "The applicant has been rejected.",
                                         icon: "success"
-                                    })
-                                    statusLabel.innerHTML = 'Cancelled';
+                                    }).then(() => {
+                                        window.location.href = "{{ route('job-bank') }}";
+                                    });
+                                    {{-- statusLabel.innerHTML = 'Cancelled'; --}}
                                 }
                                 else {
                                     Swal.fire({
@@ -289,8 +330,10 @@
                                         title: "Status Changed!",
                                         text: "The status of the application changed successfully.",
                                         icon: "success"
-                                    })   
-                                    statusLabel.innerHTML = 'Pending Review';
+                                    }).then(() => {
+                                        window.location.href = "{{ route('job-bank') }}";
+                                    });   
+                                    {{-- statusLabel.innerHTML = 'Pending Review'; --}}
                                 }
                                 else {
                                     Swal.fire({
@@ -311,6 +354,25 @@
                     }
                 });
             }
+        });
+        const sendEmailBtn = document.getElementById('send-email-btn');
+        sendEmailBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const emailUrl = sendEmailBtn.getAttribute('href');
+
+            Swal.fire({
+                title: "Send Shortlist Email?",
+                text: "Are you sure you want to send the shortlist email to the applicant?",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonColor: "#294a70",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, send it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = emailUrl;
+                }
+            });
         });
     });
 

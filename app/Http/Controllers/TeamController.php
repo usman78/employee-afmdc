@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Http\Controllers\AttendanceController;
 
 class TeamController extends Controller
 {
     public function index()
     {
-        $teamMembers = Auth::user()->teamMembers->pluck('emp_code_l');   
+        $teamMembers = Auth::user()->teamMembers->pluck('emp_code_l');
+        $dgm = Auth::user()->isDGM();   
         $team = collect();
         foreach ($teamMembers as $member) {
             $user = User::where('emp_code', $member)
@@ -24,18 +27,18 @@ class TeamController extends Controller
             $today = Carbon::now();
             $user->attendance_today = $user->attendance()
                 ->whereDate('at_date', $today->toDateString())
+                ->where('w_hrs', '=', null)
                 ->first();    
         }
-        return view('team.team', compact( 'team'));
+        $departments = Department::whereNotIn('dept_code', [61, 60, 64, 48, 54, 11, 13, 17, 18, 19, 31, 32, 58, 65])->get();
+        return view('team.team', compact( 'team', 'departments', 'dgm'));
     }
 
     public function attendanceFilter($emp_code, $date_range)
     {
         $dates = parseDateToRange($date_range);
-        $fromDate = $dates['fromDate']->startOfDay();
-        $toDate = $dates['toDate'];
-
-        // dd($fromDate);
+        $fromDate = $dates['fromDate']->toDateString();
+        $toDate = $dates['toDate']->toDateString();
 
         // Get the user by emp_code
         $user = User::where('emp_code', $emp_code)
@@ -46,18 +49,36 @@ class TeamController extends Controller
             return back()->with('error', 'Employee not found or has quit.');
         }
 
-        // Get attendance records in date range
-        $attendanceRecords = $user->attendance()
-            ->whereBetween('at_date', [$fromDate, $toDate])
-            ->whereNull('att_stat')
-            ->get();
+        $attendanceController = app(AttendanceController::class);
+        $attendanceData = $attendanceController->buildAttendanceData($emp_code, $fromDate, $toDate);
 
-        // Attach the records for the view
-        $user->attendance_records = $attendanceRecords;
+        return view('attendance', $attendanceData);
+    }
+    public function dgmTeamFilter(Request $request)
+    {
+        $department_id = $request->input('dept_code');
+        $emp_code = $request->input('emp_code');
+    
+        $teamMembersQuery = User::whereNull('quit_stat')->where(function($query) use ($department_id, $emp_code) {
+            if ($department_id) {
+                $query->where('dept_code', $department_id);
+            }
+            if ($emp_code) {
+                $query->where('emp_code', $emp_code);
+            }
+        });
 
-        // Create a collection with just this one user
-        $team = collect([$user]);
+        $teamMembers = $teamMembersQuery->get();
+        // dd($teamMembers);
+        $team = collect();
+        foreach ($teamMembers as $user) {
+            $team->push($user);
+            $today = Carbon::now();
+            $user->attendance_today = $user->attendance()
+                ->whereDate('at_date', $today->toDateString())
+                ->first();    
+        }
 
-        return view('team.team-filter', compact('emp_code', 'team', 'date_range'));
+        return view('team.dgm-filter', compact('team', 'department_id', 'emp_code'));
     }
 }

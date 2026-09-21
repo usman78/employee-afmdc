@@ -1,0 +1,488 @@
+@extends('layouts.app')
+
+@php
+  use App\Models\OvertimeApplication;
+  use Carbon\Carbon;
+@endphp
+
+@push('styles')
+  .table { border: 1px solid #ccc; }
+  .table>:not(caption)>*>* { padding: .5rem .6rem; vertical-align: middle; }
+  .overtime-report-table { font-size: 13px; }
+  .overtime-report-table textarea { min-width: 130px; }
+  .amount-display {
+    font-weight: bold;
+    color: #28a745;
+    font-size: 12px;
+    margin-top: 5px;
+  }
+  .amount-display {
+    font-weight: bold;
+    color: #28a745;
+    font-size: 12px;
+    margin-top: 5px;
+  }
+  {{-- tr.detail-row td {
+      background-color: #bae0ff;
+  }
+  .approval-row td {
+    background-color: #e2f2ff;
+    font-size: 12px;
+    padding-top: .3rem !important;
+    padding-bottom: .3rem !important;
+  }
+  .approval-label {
+    font-weight: bold;
+    color: #555;
+  } --}}
+           /* -------------------------------------------------
+           APPROVAL ROW
+        ------------------------------------------------- */
+
+        .approval-row td {
+            padding-top: 8px !important;
+            padding-bottom: 12px !important;
+            border-bottom: 1px solid #edf0f5;
+        }
+
+        .approval-wrapper {
+            background: #f8faff;
+            border: 1px solid #e5eaf5;
+            border-radius: 9px;
+
+            display: flex;
+            align-items: center;
+
+            padding: 10px 14px;
+            gap: 0;
+        }
+
+        .approval-item {
+            flex: 1;
+            min-width: 180px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 9px;
+
+            padding-right: 15px;
+            margin-right: 15px;
+
+            border-right: 1px solid #e3e7ef;
+        }
+
+        .approval-item:last-child {
+            border-right: none;
+            margin-right: 0;
+        }
+
+        .approval-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: #eef2ff;
+            color: #4f46e5;
+
+            flex-shrink: 0;
+        }
+
+        .approval-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #475467;
+        }
+
+        .approval-value {
+            font-size: 11px;
+            color: #98a2b3;
+            margin-top: 2px;
+        }
+@endpush
+
+@section('content')
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="portfolio-details mb-5">
+        <div class="portfolio-info">
+          <h3>Overtime Report</h3>
+
+          @if(session('success'))
+            <div class="alert alert-success mt-3">{{ session('success') }}</div>
+          @endif
+          @if(session('error'))
+            <div class="alert alert-warning mt-3">{{ session('error') }}</div>
+          @endif
+
+          <form action="{{ route('overtime.report') }}" method="GET" class="d-flex align-items-end gap-2 flex-wrap mt-4 mb-4">
+            <div>
+              <label for="month" class="form-label">Month</label>
+              <input type="month" id="month" name="month" class="form-control" value="{{ $month }}">
+            </div>
+            <div>
+              <label for="status" class="form-label">Status</label>
+              <select id="status" name="status" class="form-control">
+                <option value="">All Statuses</option>
+                @foreach($statuses as $statusValue => $statusLabel)
+                  <option value="{{ $statusValue }}" @selected(($status ?? '') === $statusValue)>{{ $statusLabel }}</option>
+                @endforeach
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary">View Report</button>
+            <div class="dropdown">
+              <button class="btn btn-primary dropdown-toggle" type="button"
+                  id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
+                  aria-expanded="false">
+                  Download Report
+              </button>
+              <div class="dropdown-menu animated--fade-in"
+                  aria-labelledby="dropdownMenuButton">
+                  <a class="dropdown-item" href="#" id="ot-approved-report-btn">All Approved</a>
+                  <a class="dropdown-item" href="{{ route('overtime.approved-download', ['month' => $month, 'status' => OvertimeApplication::STATUS_HR_APPROVED]) }}" target="_blank">All HR Approved</a>
+                  {{-- <a class="dropdown-item" href="#" data-toggle="modal" data-target="#filterByNameModal">Download By Name</a>
+                  <a class="dropdown-item" href="#" data-toggle="modal" data-target="#filterByDateModal">Download by Finance Approval Date</a> --}}
+              </div>
+            </div>
+            <button type="button" id="ot-dw-report-btn" class="btn btn-info">
+              Report for Daily Wagers
+            </button>
+          </form>
+          @php
+            $serialNumber = 1;
+          @endphp
+          <div class="table-responsive">
+            <table class="table overtime-report-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Designation</th>
+                  <th>Department</th>
+                  <th>Date</th>
+                  <th>Shift</th>
+                  <th>Time in/out</th>
+                  <th>OT Minutes</th>
+                  <th>Salary</th>
+                  <th>Claimed</th>
+                  <th>Status</th>
+                  <th>Remarks</th>
+                  {{-- <th>HOD Remarks</th> --}}
+                  <th>HR Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @forelse($applications->groupBy('emp_code') as $employeeApplications)
+                  @php
+                    $employee = $employeeApplications->first();
+                  @endphp
+                  <tr class="table-secondary">
+                    <td></td>
+                    <td><strong>{{ capitalizeWords($employee->employee->name ?? $employee->dailyWager->name ?? '') . ' (' . $employee->emp_code . ')' }}</strong></td>
+                    <td><strong>{{ $employee->designation->desg_desc ?? $employee->dailyWagerDesignation->desg_desc ?? '-' }}</strong></td>
+                    <td><strong>{{ $employee->department->dept_desc ?? $employee->dailyWagerDepartment->dept_desc ?? '-' }}</strong></td>
+                    <td colspan="9"><strong>{{ $employeeApplications->count() }} overtime application(s)</strong></td>
+                  </tr>
+                  @foreach($employeeApplications as $application)
+                    @php
+                      $canHrAct = $application->status === OvertimeApplication::STATUS_HOD_APPROVED;
+                      $displayAmount = $application->sanctioned_amount ?? $application->calculated_amount;
+                    @endphp
+                    <tr>
+                      <td>{{ $serialNumber++ }}</td>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                      <td>{{ Carbon::parse($application->overtime_date)->format('d M Y') }}</td>
+                      <td>{{ $application->shift_start != null ? timeFormatFromString($application->shift_start) : '-' }} - {{ $application->shift_end != null ? timeFormatFromString($application->shift_end) : '-' }}</td>
+                      <td>{{ $application->time_in != null ? timeFormatFromString($application->time_in) : '-' }} - {{ $application->time_out != null ? timeFormatFromString($application->time_out) : '-' }}</td>
+                      <td id="otMinutes{{ $loop->parent->index }}-{{ $loop->index }}">{{ formatMinutes(payableMinutes($application->overtime_minutes)) }}</td>
+                      <td>{{ number_format($application->gross_salary ?? 0, 0) }}</td>
+                      <td id="otAmount{{ $loop->parent->index }}-{{ $loop->index }}">PKR {{ number_format($displayAmount, 2) }}</td>
+                      <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
+                      <td>{{ $application->remarks ?: '-' }}</td>
+                      <td>
+                        @if($canHrAct)
+                          <form action="{{ route('overtime.hr-decision', $application->id) }}" method="POST">
+                            @csrf
+                            <input
+                              type="number"
+                              name="sanctioned_minutes"
+                              class="form-control form-control-sm mb-2 sanctioned-minutes-input"
+                              id="minutes{{ $loop->parent->index }}-{{ $loop->index }}"
+                              min="60"
+                              max="{{ (int) $application->overtime_minutes }}"
+                              value="{{ old('sanctioned_minutes', (int) $application->overtime_minutes) }}"
+                              data-row-index="{{ $loop->parent->index }}-{{ $loop->index }}"
+                              data-hourly-rate="{{ $application->hourly_rate }}"
+                            >
+                            <small class="form-text text-muted d-block">
+                              Claimed: {{ formatMinutes(payableMinutes($application->overtime_minutes)) }} min (PKR {{ number_format($application->calculated_amount, 2) }})
+                            </small>
+                            <div class="amount-display" id="amountDisplay{{ $loop->parent->index }}-{{ $loop->index }}">
+                              Amount: PKR {{ number_format($application->calculated_amount, 2) }}
+                            </div>
+                            <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
+                            <div class="d-flex gap-1">
+                              <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
+                              <button type="submit" name="decision" value="reject" class="btn btn-sm btn-danger">Reject</button>
+                            </div>
+                          </form>
+                        @else
+                          <small class="text-muted">{{ $application->hr_remarks ?: $application->hod_remarks ?: '-' }}</small>
+                        @endif
+                      </td>
+                      
+                        {{-- <tr class="approval-row">
+                          <td></td>
+                          <td colspan="1" class="approval-label">HOD Approval</td>
+                          <td colspan="1">
+                            {{ $employee->hod_approved_by ? capitalizeWords(getEmployeeName($employee->hod_approved_by)) : '' }}
+                          </td>
+                          <td colspan="1">
+                            {{ $employee->hod_approved_at ? Carbon::parse($employee->hod_approved_at)->format('d M Y') : '' }}
+                          </td>
+                          <td colspan="2" class="approval-label">HR Approval</td>
+                          <td colspan="2">
+                              
+                          </td>
+                          <td colspan="1">
+                            {{ $employee->hr_approved_at ? Carbon::parse($employee->hr_approved_at)->format('d M Y') : '' }}
+                          </td>
+                          <td colspan="2" class="approval-label">Finance Approval</td>
+                          <td colspan="1">
+                            {{ $employee->finance_approved_by ? capitalizeWords(getEmployeeName($employee->finance_approved_by)) : '' }}
+                          </td>
+                          <td colspan="1">
+                            {{ $employee->finance_approved_at ? Carbon::parse($employee->finance_approved_at)->format('d M Y') : '' }}
+                          </td>
+                        </tr> --}}
+                        <tr class="approval-row">
+
+                            <td colspan="13">
+
+                                <div class="approval-wrapper">
+
+
+                                    <!-- HOD -->
+
+                                    <div class="approval-item">
+
+                                        <div class="approval-icon">
+
+                                            <i class="bi bi-person-check"></i>
+
+                                        </div>
+
+                                        <div>
+
+                                            <div class="approval-label">
+                                                HOD Approval
+                                            </div>
+
+                                            <div class="approval-value">
+                                              @if($application->status === OvertimeApplication::STATUS_HOD_APPROVED || $application->status === OvertimeApplication::STATUS_HR_APPROVED || $application->status === OvertimeApplication::STATUS_APPROVED)
+                                                {{ $employee->hod_approved_by ? capitalizeWords(getEmployeeName($employee->hod_approved_by)) : 'Approved' }} · {{ $employee->hod_approved_at ? Carbon::parse($employee->hod_approved_at)->format('d M Y') : '' }}
+                                              @else
+                                                <span class="text-muted">Pending</span>
+                                              @endif
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <!-- HR -->
+
+                                    <div class="approval-item">
+
+                                        <div class="approval-icon">
+
+                                            <i class="bi bi-file-check"></i>
+
+                                        </div>
+
+                                        <div>
+
+                                            <div class="approval-label">
+                                                HR Approval
+                                            </div>
+
+                                            <div class="approval-value">
+                                              @if($application->status === OvertimeApplication::STATUS_HR_APPROVED || $application->status === OvertimeApplication::STATUS_APPROVED)
+                                                {{ $employee->hr_approved_by ? capitalizeWords(getEmployeeName($employee->hr_approved_by)) : '' }} · {{ $employee->hr_approved_at ? Carbon::parse($employee->hr_approved_at)->format('d M Y') : '' }}
+                                              @else
+                                                <span class="text-muted">Pending</span>
+                                              @endif
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <!-- Finance -->
+
+                                    <div class="approval-item">
+
+                                        <div class="approval-icon">
+
+                                            <i class="bi bi-wallet2"></i>
+
+                                        </div>
+
+                                        <div>
+
+                                            <div class="approval-label">
+                                                Finance Approval
+                                            </div>
+
+                                            <div class="approval-value">
+                                                @if($application->status === OvertimeApplication::STATUS_APPROVED)
+                                                    {{ $employee->finance_approved_by ? capitalizeWords(getEmployeeName($employee->finance_approved_by)) : '' }} · {{ $employee->finance_approved_at ? Carbon::parse($employee->finance_approved_at)->format('d M Y') : '' }}
+                                                @else
+                                                    <span class="text-muted">Pending</span>
+                                                @endif
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+                    </tr>
+                  @endforeach
+                @empty
+                  <tr>
+                    <td colspan="13" class="text-center text-muted">No overtime applications found for this month.</td>
+                  </tr>
+                @endforelse
+
+                @if($applications->count())
+                  @php
+                    $grandTotal = $applications->reduce(function ($carry, $application) {
+                      // Adding only those amounts that have the HR approved status to the grand total
+                      // if ($application->status !== OvertimeApplication::STATUS_HR_APPROVED) {
+                      //   return $carry;
+                      // }
+                      $amount = number_format($application->sanctioned_amount ?? $application->calculated_amount, 2, '.', '');
+                      return bcadd($carry, $amount, 2);
+                    }, '0.00');
+                  @endphp
+                  <tr class="table-active">
+                    <td colspan="9" class="text-end"><strong>Grand Total</strong></td>
+                    <td class="text-right"><strong>PKR {{ number_format($grandTotal, 2) }}</strong></td>
+                    <td colspan="3"></td>
+                  </tr>
+                @endif
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@push('scripts')
+
+  document.getElementById('ot-approved-report-btn').addEventListener('click', function(event) {
+    event.preventDefault();
+
+    const month = document.getElementById('month').value;
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+      Swal.fire('Month required', 'Please select a month in YYYY-MM format.', 'warning');
+      return;
+    }
+
+    const reportUrl = new URL('http://110.39.174.203:7777/reports/rwservlet');
+    reportUrl.searchParams.set('P_RMS', '');
+    reportUrl.searchParams.set('report', 'R:\\Applications\\Payroll\\Reports\\over_time_reg.rdf');
+    reportUrl.searchParams.set('destype', 'cache');
+    reportUrl.searchParams.set('desformat', 'pdf');
+    reportUrl.searchParams.set('dt1', `${month.slice(5, 7)}-${month.slice(0, 4)}`);
+    window.open(reportUrl.toString(), '_blank');
+  });
+
+  document.getElementById('ot-dw-report-btn').addEventListener('click', async function() {
+    const monthDefault = new Date().toISOString().slice(0, 7);
+    const { value: month } = await Swal.fire({
+      title: 'Inventory Report',
+      html: `
+        <div class="text-start">
+          <label for="swal-report-month" class="form-label">Month</label>
+          <input id="swal-report-month" type="month" class="form-control" value="${monthDefault}">
+        </div>
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'View Report',
+      preConfirm: () => {
+        const selectedMonth = document.getElementById('swal-report-month').value;
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(selectedMonth)) {
+          Swal.showValidationMessage('Please select a month in YYYY-MM format.');
+          return false;
+        }
+        return selectedMonth;
+      }
+    });
+
+    if (!month) {
+      return;
+    }
+
+    const reportUrl = new URL('http://110.39.174.203:7777/reports/rwservlet');
+    reportUrl.searchParams.set('P_RMS', '');
+    reportUrl.searchParams.set('report', 'R:\\Applications\\Payroll\\Reports\\over_time_dw.rdf');
+    reportUrl.searchParams.set('destype', 'cache');
+    reportUrl.searchParams.set('desformat', 'pdf');
+    const reportMonth = `${month.slice(5, 7)}-${month.slice(0, 4)}`;
+    reportUrl.searchParams.set('dt1', reportMonth);
+    window.open(reportUrl.toString(), '_blank');
+  });
+
+  document.querySelectorAll('.sanctioned-minutes-input').forEach(input => {
+    input.addEventListener('input', function() {
+      const rowIndex = this.dataset.rowIndex;
+      const hourlyRate = parseFloat(this.dataset.hourlyRate);
+      const minutes = parseInt(this.value) || 0;
+      
+      if (minutes >= 60) {
+        // Calculate amount based on new minutes
+        const amount = calculateOTAmount(hourlyRate, minutes);
+        
+        // Update the display
+        document.getElementById(`amountDisplay${rowIndex}`).textContent = `Amount: PKR ${Math.round(amount).toLocaleString()}`;
+      }
+    });
+  });
+
+  function calculateOTAmount(hourlyRate, minutes) {
+    let hours = Math.floor(minutes / 60);
+    let remainingMinutes = minutes % 60;
+    
+    if (remainingMinutes <= 25) {
+      remainingMinutes = 0;
+    } else if (remainingMinutes <= 45) {
+      remainingMinutes = 30;
+    } else {
+      hours++;
+      remainingMinutes = 0;
+    }
+    
+    const payableMinutes = (hours * 60) + remainingMinutes;
+    return (hourlyRate * payableMinutes) / 60;
+  }
+  
+@endpush
+@endsection

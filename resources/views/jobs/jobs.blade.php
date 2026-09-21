@@ -17,6 +17,7 @@
                             <thead>
                             <tr>
                                 <th scope="col">#</th>
+                                <th scope="col">Refer ID</th>
                                 <th scope="col">Applicant Name</th>
                                 <th scope="col">Position Applied</th>
                                 <th scope="col">Application Date</th>
@@ -28,6 +29,7 @@
                                 @foreach ($jobs as $job)
                                     <tr>
                                         <td scope="row">{{$job->app_no}}</td>
+                                        <td scope="row">{{ $job->ad_refer_id != null ? $job->ad_refer_id : 'N/A' }}</td>
                                         <td>{{$job->app_name}}</td>
                                         <td>
                                             @if ($job->designation?->desg_short != null)
@@ -60,7 +62,6 @@
                                                 </a>
                                             </td>
                                         @endif
-
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -72,10 +73,6 @@
     </div>
 @endsection 
 @push('scripts')
-
-
-
-
     $(document).ready(function () {
         const viewBtn = document.getElementById('view-button');
 
@@ -108,5 +105,4 @@
             table.search(this.value).draw();
         });
     });
-
 @endpush       

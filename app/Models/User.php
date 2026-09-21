@@ -69,9 +69,45 @@ class User extends Authenticatable
     {
         return $this->hasOne(LeaveAuth::class, 'emp_code_a', 'emp_code');
     }
+    public function isAdmin()
+    {
+        return in_array($this->emp_code, [ '1045', '1171']);
+    }
     public function isHR()
     {
-        return in_array($this->desg_code, ['971', '991', '44', '996']);
+        return in_array($this->desg_code, ['716', '971', '991', '44', '996', '786', '95']);
+    }
+    public function isAccountsOfficer()
+    {
+        return in_array($this->desg_code, ['520', '991']);
+    }
+    public function canViewLeaveReport()
+    {
+        return $this->isHR() || in_array($this->emp_code, ['1225']);
+    }
+    public function isManagerHR()
+    {
+        return in_array($this->desg_code, ['716']);
+    }
+    public function isStoreOfficer()
+    {
+        if($this->dept_code == 15 || in_array($this->emp_code, ['1045', '1171', '431']))
+        {
+            return true;
+        }
+        return false;
+    }
+    public function isAllowedToSeeAdmissions()
+    {
+        return in_array($this->emp_code, ['685', '1045', '1171', '569', '199', '987', '823']);
+    }
+    public function isStudentAffairs()
+    {
+        return in_array($this->emp_code, ['883', '856','851','199', '1045', '1171']);
+    }
+    public function isDailyWagerHod()
+    {
+        return in_array($this->emp_code, ['1226']);
     }
     public function isBoss()
     {
@@ -81,12 +117,39 @@ class User extends Authenticatable
         }
         return false;
     }
+    public function isHod()
+    {
+        return LeaveAuth::where('emp_code_a', $this->emp_code)
+            ->where('type', 'A')
+            ->exists();
+    }
+    public function isDGM()
+    {
+        return in_array($this->emp_code, ['431', '1171', '1045', '291']);
+    }
     public function teamMembers()
     {
         return $this->hasMany(LeaveAuth::class, 'emp_code_a', 'emp_code');
     }
+    public function teamMembersOfHod()
+    {
+        return $this->hasMany(LeaveAuth::class, 'emp_code_a', 'emp_code')
+            ->where('type', 'A');
+    }
     public function attendance()
     {
         return $this->hasMany(Attendance::class, 'emp_code', 'emp_code');
+    }
+    public function leaves()
+    {
+        return $this->hasMany(Leave::class, 'emp_code', 'emp_code');
+    }
+    public function designation()
+    {
+        return $this->hasOne(Designation::class, 'desg_code', 'desg_code');
+    }
+    public function department()
+    {
+        return $this->hasOne(Department::class, 'dept_code', 'dept_code');
     }
 }

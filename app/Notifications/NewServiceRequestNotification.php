@@ -30,7 +30,6 @@ class NewServiceRequestNotification extends Notification
     {
         return ['database'];
     }
-
     /**
      * Get the mail representation of the notification.
      */
@@ -50,12 +49,8 @@ class NewServiceRequestNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'message' => 'New service request created',
+            'message' => 'New service request created.',
             'request_id' => $this->serviceRequest->ID,
-            'requester_id' => $this->serviceRequest->REQUESTER_ID,
-            'job_type' => $this->serviceRequest->JOB_TYPE,
-            'description' => $this->serviceRequest->DESCRIPTION,
-            'priority' => $this->serviceRequest->PRIORITY,
         ];
     }
 }

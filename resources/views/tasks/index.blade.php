@@ -10,7 +10,7 @@
     <section id="services" class="services section">
 
       <!-- Section Title -->
-      <div class="container section-title aos-init aos-animate" data-aos="fade-up">
+      <div class="container section-title">
         <h2>Tasks</h2>
         <p>View the minutes of meetings, tasks assigned to you and the SOP's of your department.</p>
       </div><!-- End Section Title -->
@@ -19,7 +19,7 @@
 
         <div class="row gy-4">
 
-          <div class="col-lg-4 col-md-6 aos-init aos-animate" data-aos="fade-up" data-aos-delay="100">
+          <div class="col-lg-4 col-md-6">
             <div class="service-item item-cyan position-relative">
               <div class="icon">
                 <svg width="100" height="100" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
@@ -34,7 +34,7 @@
             </div>
           </div><!-- End Service Item -->
 
-          <div class="col-lg-4 col-md-6 aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
+          <div class="col-lg-4 col-md-6">
             <div class="service-item item-orange position-relative">
               <div class="icon">
                 <svg width="100" height="100" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
@@ -49,7 +49,7 @@
             </div>
           </div><!-- End Service Item -->
 
-          <div class="col-lg-4 col-md-6 aos-init aos-animate" data-aos="fade-up" data-aos-delay="300">
+          <div class="col-lg-4 col-md-6">
             <div class="service-item item-teal position-relative">
               <div class="icon">
                 <svg width="100" height="100" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">

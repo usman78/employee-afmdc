@@ -36,7 +36,7 @@ td {
 }
 @media (max-width: 768px) {
   .portfolio-details .portfolio-info {
-    padding: 0 15px;
+    padding: 15px 15px;
   }
 }
 {{-- Toggle Switch --}}
@@ -106,7 +106,7 @@ td {
   <div class="row">
     <div class="col-12">
       <div class="portfolio-details mt-5 mb-5">
-        <div class="portfolio-info aos-init aos-animate pt-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="portfolio-info">
           <h3>Subordinate Leave Approvals</h3>
           <ul>
             <li class="mt-5">
@@ -126,6 +126,7 @@ td {
                 <th>Leave type</th>
                 <th>Leave Date</th>
                 <th>Stage</th>
+                <th>Remarks</th>
                 <th>Approve/Reject</th>
               </tr>
             </thead>
@@ -148,6 +149,10 @@ td {
     
                         @case(3)
                             Annual Leave
+                            @break
+
+                        @case(4)
+                            CPL Leave
                             @break
 
                         @case(5)
@@ -174,6 +179,7 @@ td {
                             <span class="badge badge-info">HOD</span>
                         @endif        
                     </td>
+                    <td>{{ $leave->remark }}</td>
                     <td>
                         <label class="switch">
                             <input type="checkbox" class="approve-leave" data-url="{{ route('approve-leave', $leave->leave_id) }}" data-urlreject="{{route('reject-leave', $leave->leave_id)}}" data-status="{{$leave->status}}" data-id="{{$leave->leave_id}}">
@@ -184,7 +190,7 @@ td {
                 @endforeach
               @else
                 <tr>
-                  <td colspan="6" class="text-center">No leave approvals available.</td>
+                  <td colspan="7" class="text-center">No leave approvals available.</td>
                 </tr>  
               @endif  
             </tbody>
@@ -196,10 +202,28 @@ td {
       @if ($hrApprovals && $hrApprovals->isNotEmpty())
       <div class="col-12">
         <div class="portfolio-details mt-5 mb-5">
-          <div class="portfolio-info aos-init aos-animate pt-4" data-aos="fade-up" data-aos-delay="200">
-            <h3 class="d-flex justify-content-between align-items-center">
-              HR Leave Approvals
-              <button id="approveAllBtn" class="btn btn-success btn-sm">Approve All</button>
+          <div class="portfolio-info pt-4">
+            <h3 class="d-flex justify-content-between align-items-center flex-wrap">
+              <span>HR Leave Approvals</span>
+              <div class="d-flex align-items-end flex-wrap" style="gap: 8px;">
+                <form method="GET" action="{{ route('leave-approvals', auth()->user()->emp_code) }}" class="d-flex align-items-end flex-wrap mb-0" style="gap: 8px;">
+                  <div>
+                    <label for="hr_leave_type" class="mb-1" style="font-size: 13px;">Leave Type</label>
+                    <select name="hr_leave_type" id="hr_leave_type" class="form-control form-control-sm" onchange="this.form.submit()">
+                      <option value="">All Leave Types</option>
+                      @foreach($leaveTypes as $leaveCode => $leaveType)
+                        <option value="{{ $leaveCode }}" {{ (int) $selectedHrLeaveType === (int) $leaveCode ? 'selected' : '' }}>{{ $leaveType }}</option>
+                      @endforeach
+                    </select>
+                  </div>
+                  @if($selectedHrLeaveType)
+                    <a href="{{ route('leave-approvals', auth()->user()->emp_code) }}" class="btn btn-secondary btn-sm">Reset</a>
+                  @endif
+                </form>
+                <button id="approveAllBtn" class="btn btn-success btn-sm">
+                  {{ $selectedHrLeaveType ? 'Approve Filtered' : 'Approve All' }}
+                </button>
+              </div>
             </h3>
             <table class="table mt-5 mb-5">
               <thead>
@@ -209,6 +233,7 @@ td {
                   <th>Leave type</th>
                   <th>Leave Date</th>
                   <th>Stage</th>
+                  <th>Remarks</th>
                   <th>Approve/Reject</th>
                 </tr>
               </thead>
@@ -230,6 +255,10 @@ td {
           
                               @case(3)
                                   Annual Leave
+                                  @break
+
+                              @case(4)
+                                  CPL Leave
                                   @break
 
                               @case(5)
@@ -254,9 +283,10 @@ td {
                                   <span class="badge badge-info">HR</span>
                               @endif        
                           </td>
+                          <td>{{ $leave->remark }}</td>
                           <td>
                               <label class="switch">
-                                  <input type="checkbox" class="approve-leave" data-url="{{ route('approve-leave', $leave->leave_id)}}" data-status="{{$leave->status}}" data-id="{{$leave->leave_id}}">
+                                  <input type="checkbox" class="approve-leave" data-url="{{ route('approve-leave', $leave->leave_id)}}" data-urlreject="{{route('reject-leave', $leave->leave_id)}}" data-status="{{$leave->status}}" data-id="{{$leave->leave_id}}">
                                   <span class="slider round"></span>
                               </label>
                           </td>
@@ -270,12 +300,28 @@ td {
       @else
         <div class="col-12">
           <div class="portfolio-details mt-5 mb-5">
-            <div class="portfolio-info aos-init aos-animate" data-aos="fade-up" data-aos-delay="200">
-              <h3>HR Leave Approvals</h3>
+            <div class="portfolio-info">
+              <h3 class="d-flex justify-content-between align-items-center flex-wrap">
+                <span>HR Leave Approvals</span>
+                <form method="GET" action="{{ route('leave-approvals', auth()->user()->emp_code) }}" class="d-flex align-items-end flex-wrap mb-0" style="gap: 8px;">
+                  <div>
+                    <label for="hr_leave_type_empty" class="mb-1" style="font-size: 13px;">Leave Type</label>
+                    <select name="hr_leave_type" id="hr_leave_type_empty" class="form-control form-control-sm" onchange="this.form.submit()">
+                      <option value="">All Leave Types</option>
+                      @foreach($leaveTypes as $leaveCode => $leaveType)
+                        <option value="{{ $leaveCode }}" {{ (int) $selectedHrLeaveType === (int) $leaveCode ? 'selected' : '' }}>{{ $leaveType }}</option>
+                      @endforeach
+                    </select>
+                  </div>
+                  @if($selectedHrLeaveType)
+                    <a href="{{ route('leave-approvals', auth()->user()->emp_code) }}" class="btn btn-secondary btn-sm">Reset</a>
+                  @endif
+                </form>
+              </h3>
               <table class="table mt-5 mb-5">
                 <tbody>
                   <tr>
-                    <td colspan="6" class="text-center">No HR leave approvals available.</td>
+                    <td colspan="7" class="text-center">No HR leave approvals available.</td>
                   </tr>  
                 </tbody>
               </table>
@@ -328,6 +374,26 @@ $(".approve-leave").change(function () {
                   _token: "{{ csrf_token() }}",
                   status: status,
               },
+              statusCode: {
+                  401: function() {
+                      Swal.fire({
+                          title: 'Session Expired',
+                          text: 'Your session has expired. Please login again.',
+                          icon: 'warning'
+                      }).then(() => {
+                          window.location.href = "{{ route('login') }}";
+                      });
+                  },
+                  419: function() {
+                      Swal.fire({
+                          title: 'Session Expired',
+                          text: 'Your session has expired. Please login again.',
+                          icon: 'warning'
+                      }).then(() => {
+                          window.location.href = "{{ route('login') }}";
+                      });
+                  }
+              },
               success: function (response) {
                   if (response.success) {
                       Swal.fire({
@@ -363,6 +429,26 @@ $(".approve-leave").change(function () {
               data: {
                   _token: "{{ csrf_token() }}",
                   status: status,
+              },
+              statusCode: {
+                  401: function() {
+                      Swal.fire({
+                          title: 'Session Expired',
+                          text: 'Your session has expired. Please login again.',
+                          icon: 'warning'
+                      }).then(() => {
+                          window.location.href = "{{ route('login') }}";
+                      });
+                  },
+                  419: function() {
+                      Swal.fire({
+                          title: 'Session Expired',
+                          text: 'Your session has expired. Please login again.',
+                          icon: 'warning'
+                      }).then(() => {
+                          window.location.href = "{{ route('login') }}";
+                      });
+                  }
               },
               success: function (response) {
                   if (response.success) {
@@ -424,6 +510,26 @@ $("#approveAllBtn").click(function () {
                 data: {
                     _token: "{{ csrf_token() }}",
                     leave_ids: leaveIds
+                },
+                statusCode: {
+                    401: function() {
+                        Swal.fire({
+                            title: 'Session Expired',
+                            text: 'Your session has expired. Please login again.',
+                            icon: 'warning'
+                        }).then(() => {
+                            window.location.href = "{{ route('login') }}";
+                        });
+                    },
+                    419: function() {
+                        Swal.fire({
+                            title: 'Session Expired',
+                            text: 'Your session has expired. Please login again.',
+                            icon: 'warning'
+                        }).then(() => {
+                            window.location.href = "{{ route('login') }}";
+                        });
+                    }
                 },
                 success: function (response) {
                     if (response.success) {
