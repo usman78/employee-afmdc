@@ -393,6 +393,7 @@ class LeavesController extends Controller
             if(! $this->checkBalance($emp_code, $request->input('leave_type'), 0.5)){
                 return response()->json(['error' => 'You do not have the leave balance.']);
             }
+            $userCatg  = Employee::where('emp_code', $emp_code)->value('catg_code');
             $leave = new Leave();
             $leave->leave_id = self::getNextLeaveId();
             $leave->leave_date = Carbon::today();
@@ -411,6 +412,14 @@ class LeavesController extends Controller
             $startTime = Carbon::parse(  "$leaveDate $time->st_time");
             $endTime = Carbon::parse( "$leaveDate $time->end_time");
             $durationMinutes = $startTime->diffInMinutes($endTime);
+            // check if the catgory code is 2 and the day of leave is friday, then reduce the shift duration by 1 hour
+            if ($userCatg == 2) {
+                $dayOfWeek = Carbon::parse($leaveDate)->format('l');
+                if ($dayOfWeek == 'Friday') {
+                    $durationMinutes -= 60; // Reduce by 1 hour (60 minutes)
+                    $endTime = $endTime->subHour(); // Adjust the end time accordingly
+                }
+            }
             $halfDuration = (int) round($durationMinutes / 2);
             $midPoint = $startTime->copy()->addMinutes($halfDuration);
             Carbon::parse($midPoint);

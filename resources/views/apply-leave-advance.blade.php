@@ -200,7 +200,7 @@ ul.error-msg{
                   <!-- Half Day Leave -->
                   <li id="single-date-section" class="mt-2" style="display: none;">
                     <strong>Leave Date: </strong>
-                    <input type="text" name="single_leave_date" class="form-control pull-right" style="margin-top: 15px;">
+                    <input type="text" name="single_leave_date" id="single_leave_date" class="form-control pull-right" style="margin-top: 15px;">
                   </li>
 
                   <!-- Short Day Section -->
@@ -533,9 +533,10 @@ ul.error-msg{
     const halfCustomStartTime = document.getElementById("half-custom-start-time");
     const halfCustomEndTime = document.getElementById("half-custom-end-time");
     const halfCustomWarning = document.getElementById("half-custom-time-warning");
+    const singleLeaveDate = document.getElementById("single_leave_date");
     const employeeStartMinutes = timeToMinutes("{{ substr((string) $employee->st_time, 0, 5) }}");
     const employeeEndMinutes = timeToMinutes("{{ substr((string) $employee->end_time, 0, 5) }}");
-    const halfDayDurationMinutes = Math.round((employeeEndMinutes - employeeStartMinutes) / 2);
+    const empCatg = "{{ $employee->catg_code }}";
   
     function timeToMinutes(t) {
       const [hours, minutes] = t.split(":").map(Number);
@@ -546,6 +547,26 @@ ul.error-msg{
       const h = Math.floor(minutes / 60).toString().padStart(2, "0");
       const m = (minutes % 60).toString().padStart(2, "0");
       return `${h}:${m}`;
+    }
+
+    function isFridayLeaveDate() {
+      const dateParts = singleLeaveDate.value.split('/').map(Number);
+      if (dateParts.length !== 3 || dateParts.some(Number.isNaN)) {
+        return false;
+      }
+
+      const leaveDate = new Date(dateParts[2], dateParts[0] - 1, dateParts[1]);
+      return leaveDate.getDay() === 5;
+    }
+
+    function getEffectiveEmployeeEndMinutes() {
+      return empCatg === "2" && isFridayLeaveDate()
+        ? employeeEndMinutes - 60
+        : employeeEndMinutes;
+    }
+
+    function getHalfCustomDurationMinutes() {
+      return Math.round((getEffectiveEmployeeEndMinutes() - employeeStartMinutes) / 2);
     }
 
     function resetCalculatedTime(startInput, endInput, warningEl) {
@@ -567,7 +588,10 @@ ul.error-msg{
         }
 
         const startMinutes = timeToMinutes(start);
-        const validationMessage = validation(startMinutes, durationMinutes);
+        const calculatedDurationMinutes = typeof durationMinutes === "function"
+          ? durationMinutes()
+          : durationMinutes;
+        const validationMessage = validation(startMinutes, calculatedDurationMinutes);
 
         if (validationMessage) {
           warningEl.style.display = "block";
@@ -581,7 +605,7 @@ ul.error-msg{
           return;
         }
 
-        endInput.value = minutesToTime(startMinutes + durationMinutes);
+        endInput.value = minutesToTime(startMinutes + calculatedDurationMinutes);
       });
     }
 
@@ -603,7 +627,7 @@ ul.error-msg{
       let message = "";
       if (customStartMinutes < employeeStartMinutes) {
         message = "Custom OD time cannot start before your office start time.";
-      } else if (customEndMinutes > employeeEndMinutes) {
+      } else if (customEndMinutes > getEffectiveEmployeeEndMinutes()) {
         message = "Custom OD time must end within your office timing.";
       } else if (customEndMinutes <= customStartMinutes) {
         message = "Custom OD end time must be after the start time.";
@@ -634,12 +658,12 @@ ul.error-msg{
       return null;
     });
 
-    bindCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning, halfDayDurationMinutes, (startMinutes, durationMinutes) => {
+    bindCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning, getHalfCustomDurationMinutes, (startMinutes, durationMinutes) => {
       if (startMinutes < employeeStartMinutes) {
         return "Custom half leave cannot start before your office start time.";
       }
 
-      if (!leaveIntervalCustomTime.checked && startMinutes + durationMinutes > employeeEndMinutes) {
+      if (!leaveIntervalCustomTime.checked && startMinutes + durationMinutes > getEffectiveEmployeeEndMinutes()) {
         return "Custom half leave must end within your office timing.";
       }
 
@@ -647,6 +671,11 @@ ul.error-msg{
     });
 
     halfCustomEndTime.addEventListener("change", validateCustomTimeRange);
+    singleLeaveDate.addEventListener("change", () => {
+      if (halfCustomStartTime.value && leaveIntervalCustom.checked) {
+        halfCustomStartTime.dispatchEvent(new Event("change"));
+      }
+    });
 
     // Initial state
     updateDisplay();
