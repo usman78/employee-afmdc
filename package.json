@@ -15,5 +15,8 @@
         "sass": "^1.56.1",
         "tailwindcss": "^4.1.11",
         "vite": "^6.0.11"
+    },
+    "dependencies": {
+        "fullcalendar": "^6.1.18"
     }
 }
