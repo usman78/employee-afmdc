@@ -41,8 +41,9 @@
                             <i class="fas fa-download"></i> Download
                         </button>
                         <div class="dropdown-menu" aria-labelledby="overtimeDownloadMenu">
-                            <a class="dropdown-item" href="{{ route('audit-reports.overtime.download', ['scope' => 'all', 'month' => $month]) }}" target="_blank">All Records</a>
-                            <a class="dropdown-item" href="{{ route('audit-reports.overtime.download', ['scope' => 'approved', 'month' => $month]) }}" target="_blank">Approved Records</a>
+                            {{-- <a class="dropdown-item" href="{{ route('audit-reports.overtime.download', ['scope' => 'all', 'month' => $month]) }}" target="_blank">All Records</a> --}}
+                            {{-- <a class="dropdown-item" href="{{ route('audit-reports.overtime.download', ['scope' => 'approved', 'month' => $month]) }}" target="_blank">Approved Records</a> --}}
+                            <a class="dropdown-item" href="#" id="ot-approved-report-btn">All Approved</a>
                         </div>
                     </div>
                 </div>
@@ -89,3 +90,22 @@
     </div>
 </div>
 @endsection
+@push('scripts')
+document.getElementById('ot-approved-report-btn').addEventListener('click', function(event) {
+    event.preventDefault();
+
+    const month = document.getElementById('month').value;
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+      Swal.fire('Month required', 'Please select a month in YYYY-MM format.', 'warning');
+      return;
+    }
+
+    const reportUrl = new URL('http://110.39.174.203:7777/reports/rwservlet');
+    reportUrl.searchParams.set('P_RMS', '');
+    reportUrl.searchParams.set('report', 'R:\\Applications\\Payroll\\Reports\\over_time_reg.rdf');
+    reportUrl.searchParams.set('destype', 'cache');
+    reportUrl.searchParams.set('desformat', 'pdf');
+    reportUrl.searchParams.set('dt1', `${month.slice(5, 7)}-${month.slice(0, 4)}`);
+    window.open(reportUrl.toString(), '_blank');
+});
+@endpush
