@@ -229,7 +229,6 @@ class TimetableController extends Controller
     public function markFinalized(Request $request)
     {
         $docIds = $request->input('doc_ids');
-
         if(empty($docIds) || !is_array($docIds)) {
             return response()->json(['error' => 'No timetable entries are present.'], 400);
         }

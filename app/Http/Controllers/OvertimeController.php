@@ -244,7 +244,6 @@ class OvertimeController extends Controller
         $status = $request->input('status');
 
         $applications = OvertimeApplication::where('salary_month', $month)
-            ->where('emp_type', 1)
             ->when($status, function ($query) use ($status) {
                 $query->where('status', $status);
             })
@@ -366,7 +365,6 @@ class OvertimeController extends Controller
         $status = $request->input('status');
 
         $applications = OvertimeApplication::where('salary_month', $month)
-            ->where('emp_type', 1)
             ->whereIn('status', [
                 OvertimeApplication::STATUS_HR_APPROVED,
                 OvertimeApplication::STATUS_APPROVED,
@@ -904,8 +902,7 @@ class OvertimeController extends Controller
         $status = $request->input('status');
 
         $query = OvertimeApplication::with(['employee.designation', 'employee.department'])
-            ->where('salary_month', $month)
-            ->where('emp_type', 1);
+            ->where('salary_month', $month);
 
         if ($status === 'all' || ! $status) {
             $query->whereIn('status', [

@@ -14,6 +14,7 @@ class JobShortlistMail extends Mailable
     use Queueable, SerializesModels;
     public $name;
     public $job_title;
+
     /**
      * Create a new message instance.
      */

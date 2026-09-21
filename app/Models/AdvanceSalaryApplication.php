@@ -70,6 +70,10 @@ class AdvanceSalaryApplication extends Model
     {
         return $this->belongsTo(Employee::class, 'emp_code', 'emp_code');
     }
+    public function dailyWager()
+    {
+        return $this->belongsTo(DailyWager::class, 'emp_code', 'emp_code');
+    }
     public function dailyWagerDesignation()
     {
         return $this->belongsTo(Designation::class, 'desg_code', 'desg_code');
@@ -77,10 +81,6 @@ class AdvanceSalaryApplication extends Model
     public function dailyWagerDepartment()
     {
         return $this->belongsTo(Department::class, 'dept_code', 'dept_code');
-    }
-    public function dailyWager()
-    {
-        return $this->belongsTo(DailyWager::class, 'emp_code', 'emp_code');
     }
     public function hodApprover()
     {

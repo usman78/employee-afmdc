@@ -1,6 +1,6 @@
 <?php
-
 use App\Models\Roster;
+use App\Http\Middleware\EnsureNoQuit;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AttendanceController;
@@ -9,30 +9,30 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TaskController;
-use App\Http\Controllers\EmployeeTaskController;
 use App\Http\Controllers\ServiceRequestController;
 use App\Http\Controllers\NotificationsController;
-use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\AdmissionController;
+use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\RosterController;
+use App\Models\Employee;
 use App\Http\Controllers\NoticeController;
+use App\Http\Controllers\EmployeeTaskController;
 use App\Http\Controllers\AdvanceSalaryController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\ReportAccessController;
 use App\Http\Controllers\AuditReportController;
-use App\Models\Employee;
 
 Auth::routes();
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+    Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home')->middleware(EnsureNoQuit::class);
     Route::get('/change-password', [HomeController::class, 'changePassword'])->name('change-password');
     Route::post('/update-password', [HomeController::class, 'updatePassword'])->name('update-password');
 
-    Route::get('/att', [RosterController::class, 'index'])->name('attendance.index');
+    Route::get('/roster/{empCode}', [RosterController::class, 'index'])->name('roster');
 
-    Route::get('/attendance-report', [AttendanceController::class, 'attendanceReport'])->middleware('report.access:attendance')->name('attendance-report');
+        Route::get('/attendance-report', [AttendanceController::class, 'attendanceReport'])->middleware('report.access:attendance')->name('attendance-report');
     Route::get('/attendance-late-report', [AttendanceController::class, 'attendanceLateReport'])->middleware('report.access:attendance-late')->name('attendance-late-report');
     Route::get('/attendance-absent-report', [AttendanceController::class, 'attendanceAbsentReport'])->middleware('report.access:attendance-absent')->name('attendance-absent-report');
     Route::get('/attendance-present-report', [AttendanceController::class, 'attendancePresentReport'])->middleware('report.access:attendance-present')->name('attendance-present-report');
@@ -121,6 +121,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/inventory-report', [InventoryController::class, 'storeReport'])->middleware('report.access:store-report')->name('inventory.store_report');
     Route::get('/indent-to-advise-tracking', [InventoryController::class, 'indentAdviseTracking'])->name('inventory.indent_advise_tracking');
 
+    Route::get('/inventory-reports', [InventoryController::class, 'reports'])->name('inventory.reports');
     Route::get('/team', [TeamController::class, 'index'])->name('team');
     Route::get('/attendance-filter/{emp_code}/{date_range}', [TeamController::class, 'attendanceFilter'])->name('attendance-filter');
     Route::get('/dgm-team-filter', [TeamController::class, 'dgmTeamFilter'])->name('dgm-team-filter');
@@ -148,7 +149,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/new-timetable', [TimetableController::class, 'newTimetable'])->name('timetables.new-timetable');
         Route::post('/create-timetable', [TimetableController::class, 'store'])->name('timetables.store');
         Route::post('/create', [TimetableController::class, 'create'])->name('timetables.create');
-        Route::post('/get-subject', [TimetableController::class, 'getSubject'])->name('timetables.get-subject');
+        Route::post('/get-subject', [TimetableController::class, 'getSubject'])->name('timetables.get-subject'); 
         Route::post('/mark-finalized', [TimetableController::class, 'markFinalized'])->name('timetables.mark-finalized');
         Route::get('/timetable/download', [TimetableController::class, 'downloadTimetable'])->name('timetables.download'); 
     });
@@ -156,11 +157,9 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('student-admissions')->group(function() {
         Route::get('/', [AdmissionController::class, 'admissions'])->name('admissions');
         Route::get('/applicant/{id}', [AdmissionController::class, 'applicant'])->name('applicant');
-        Route::post('/update-applicant-status/{id}', [AdmissionController::class, 'updateApplicantStatus'])->name('update-applicant-status');
         Route::get('/download-admission-pdf/{id}', [AdmissionController::class, 'downloadAdmissionPDF'])->name('download-admission-pdf');
         Route::get('/preview-admission/{id}', [AdmissionController::class, 'previewAdmission'])->name('preview-admission');
         Route::get('/private/admissions/{admission}/{file}', [App\Http\Controllers\FilesController::class, 'getAdmissionFiles'])->name('get.admission.files');
-
     });
 
     Route::prefix('exit-interview')->group(function() {
@@ -203,7 +202,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/report-access', [ReportAccessController::class, 'index'])->name('report-access.index');
     Route::put('/report-access/{empCode}', [ReportAccessController::class, 'update'])->name('report-access.update');
     Route::post('/finance/overtime-report/{application}/decision', [OvertimeController::class, 'financeDecision'])->name('overtime.finance-decision');
-
+    
     Route::get('/audit-reports', [AuditReportController::class, 'index'])->middleware('report.access:audit-dashboard')->name('audit-reports.index');
     Route::get('/audit-reports/advance-salary', [AuditReportController::class, 'advanceSalary'])->middleware('report.access:audit-advance-salary')->name('audit-reports.advance-salary');
     Route::get('/audit-reports/overtime', [AuditReportController::class, 'overtime'])->middleware('report.access:audit-overtime')->name('audit-reports.overtime');
@@ -218,20 +217,24 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{notice}/approve', [NoticeController::class, 'approve'])->name('notices.approve');
         Route::post('/{notice}/reject', [NoticeController::class, 'reject'])->name('notices.reject');
     });
-
-    Route::get('/hr-dashboard', function () {
-        return redirect('http://localhost:5173/');
-    });
 });
-
 Route::get('/send-shortlist-email/{app_no}', [JobController::class, 'sendShortlistEmail'])->name('send-shortlist-email');
 
 Route::get('applications/{id}/{fileName}', [App\Http\Controllers\FilesController::class, 'download'])
     ->name('download-file');
-Route::get('admissions/{id}/{fileName}/{fileFormat}', [App\Http\Controllers\FilesController::class, 'downloadAdmissionFile'])->name('download-admission-file');    
+Route::get('admissions/{id}/{fileName}/{fileFormat}', [App\Http\Controllers\FilesController::class, 'downloadAdmissionFile'])->name('download-admission-file');     
 
-Route::get('/testing', [TaskController::class, 'testing']);    
+Route::get('/debug', [TaskController::class, 'createSop'])->name('debug');
 
+Route::get('/pagination-test', function () {
+    $users = \App\Models\User::paginate(5);
+    return view('tasks.pagination-test', compact('users'));
+});
+Route::get('/query', [HomeController::class, 'query'])
+    ->name('query.get');
+Route::post('/query', [HomeController::class, 'queryDown'])
+    ->name('query.post');
 Route::fallback(function () {
     return response()->view('404', [], 404);
 });
+

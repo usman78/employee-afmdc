@@ -11,10 +11,7 @@
             <h4 class="mb-0">Overtime Eligibility Report</h4>
             <small class="text-muted">Employees with eligible overtime dates that have not been applied for.</small>
         </div>
-        <a href="{{ route('hr-reports') }}" class="btn btn-outline-secondary btn-sm">
-            <span class="fas fa-arrow-left"></span>
-            Back to HR Reports
-        </a>
+        <a href="{{ route('hr-reports') }}" class="btn btn-outline-secondary btn-sm">Back to HR Reports</a>
     </div>
 
     <div class="card shadow mb-3">
@@ -126,9 +123,7 @@
                                     <td class="text-right">{{ $eligibleRow['overtime_minutes'] }}</td>
                                     <td class="text-right">{{ number_format($eligibleRow['amount'], 2) }}</td>
                                     <td>
-                                        @if ($eligibleRow['is_weekly_rest'] ?? false)
-                                            <span class="badge badge-primary">Weekly Rest</span>
-                                        @elseif ($eligibleRow['is_holiday'])
+                                        @if ($eligibleRow['is_holiday'])
                                             <span class="badge badge-info">Holiday</span>
                                         @else
                                             <span class="badge badge-secondary">Working Day</span>

@@ -77,13 +77,13 @@ class User extends Authenticatable
     {
         return in_array($this->desg_code, ['716', '971', '991', '44', '996', '786', '95']);
     }
-    public function isFaculty()
-    {
-        return $this->catg_code == 2 ? true : false;
-    }
     public function isAccountsOfficer()
     {
         return in_array($this->desg_code, ['520', '991']);
+    }
+    public function canViewLeaveReport()
+    {
+        return $this->isHR() || in_array($this->emp_code, ['1225']);
     }
     public function isManagerHR()
     {
@@ -104,14 +104,6 @@ class User extends Authenticatable
     public function isStudentAffairs()
     {
         return in_array($this->emp_code, ['883', '856','851','199', '1045', '1171']);
-    }
-    public function isCOO()
-    {
-        return $this->desg_code == 889 ? true : false;
-    }
-    public function isPrincipal()
-    {
-        return $this->desg_code == 3 ? true : false;
     }
     public function isDailyWagerHod()
     {

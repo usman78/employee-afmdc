@@ -85,6 +85,7 @@
             </div>
             <div class="col-6 section-title-wrap d-flex justify-content-center align-items-center">
                 <h2 class="text-white me-4 mb-0" style="letter-spacing: normal; font-size: x-large;">{{$job->app_name}}</h2>
+
                 <img src="{{ (isset($job->profile_pic)) 
                         ? asset('applications/'.$job->app_no.'/'.$job->profile_pic) 
                         : asset('img/default-avatar.jpg') }}" 

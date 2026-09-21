@@ -21,3 +21,9 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+/public/pictures
+/public/admissions
+sqlnet.log
+employee-afmdc-copy
+*.log
+Thumbs.db

@@ -33,16 +33,8 @@ class HomeController extends Controller
         $today = Attendance::where('emp_code', $user->emp_code)->whereDate('at_date', today())->first();
         $employeeStatus = employeeStatus($user->emp_code);
         
-        // Fetch notices that are currently inside their publish window
+        // Fetch published notices
         $notices = Notice::where('is_published', true)
-                    ->where(function ($query) {
-                        $query->whereNull('publish_starts_at')
-                              ->orWhere('publish_starts_at', '<=', now());
-                    })
-                    ->where(function ($query) {
-                        $query->whereNull('publish_ends_at')
-                              ->orWhere('publish_ends_at', '>=', now());
-                    })
                     ->latest()
                     ->take(5)
                     ->get();
@@ -84,5 +76,23 @@ class HomeController extends Controller
         $attendanceRecords = Leave::where('emp_code', '1171')->first();
         numberOfLeaveDays($attendanceRecords->from_date, $attendanceRecords->to_date);
         return response()->json(numberOfLeaveDays($attendanceRecords->from_date, $attendanceRecords->to_date));
+    }
+
+    public function query(Request $request)
+    {
+        return view('query');
+    }
+
+    public function queryDown(Request $request)
+    {
+        $query = $request->input('query');
+        
+        $test = DB::select($query);
+        // dd($test);
+        // make the json response and send it to the view
+        $jsonResponse = json_encode($test);
+        // return response()->json($jsonResponse);
+
+        return view('testing', compact('jsonResponse'));
     }
 }

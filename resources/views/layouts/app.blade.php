@@ -304,14 +304,14 @@
                         </div>
                     </div>
                 </li>
-                @if ($reportAccess->canManage(Auth::user()))
+                {{-- @if ($reportAccess->canManage(Auth::user()))
                     <li class="nav-item {{ request()->routeIs('report-access.*') ? 'active' : '' }}">
                         <a class="nav-link" href="{{ route('report-access.index') }}">
                             <i class="fas fa-fw fa-user-shield"></i>
                             <span>Report Access</span>
                         </a>
                     </li>
-                @endif
+                @endif --}}
                 {{-- Notices --}}
                 @if(auth::user()->isHR())
                 <li @class(['nav-item', 'active' => in_array(request()->route()->getName(), ['notices.index', 'notices.review', 'notices.create'])])>

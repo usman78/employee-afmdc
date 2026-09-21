@@ -185,7 +185,6 @@ strong {
           </div>
         </div>
       </div>
-
   </div>
 </div>
 <button id="canvasBtn" class="btn btn-primary side-btn"
