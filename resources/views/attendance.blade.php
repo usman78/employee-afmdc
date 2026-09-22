@@ -207,7 +207,7 @@
             </li>
           @endif
           </ul>
-          <table class="table mt-2 mb-5">
+          <table class="table mt-2">
             <thead>
               <tr>
                 <th>Date</th>
@@ -303,6 +303,7 @@
               @endforeach
             </tbody>
           </table>
+          <h6 class="m-0 p-0 font-weight-bold text-danger">Note: Attendance records of AFH employees get updated after one day.</h6>
         </div>
       </div>
     </div>
