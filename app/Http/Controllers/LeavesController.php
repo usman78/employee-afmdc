@@ -1308,8 +1308,7 @@ class LeavesController extends Controller
             return response()->json(['results' => []]);
         }
 
-        $employees = Employee::whereNull('quit_stat')
-            ->where(function ($query) use ($term) {
+        $employees = Employee::where(function ($query) use ($term) {
                 $query->where('emp_code', 'like', '%' . $term . '%')
                     ->orWhereRaw('UPPER(name) LIKE ?', ['%' . strtoupper($term) . '%']);
             })
@@ -1345,7 +1344,7 @@ class LeavesController extends Controller
             }
 
             $employee = Employee::where('emp_code', $empCode)
-                ->whereNull('quit_stat')
+                // ->whereNull('quit_stat')
                 ->first(['emp_code', 'name', 'dept_code', 'desg_code']);
 
             if (!$employee) {
