@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Attendance;
 use App\Models\Leave;
 use App\Models\LeaveAuth;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rules\Password;
 
 class HomeController extends Controller
 {
@@ -51,13 +53,20 @@ class HomeController extends Controller
     }
     public function changePassword()
     {
-        return view('change-password');
+        return view('change-password', [
+            'passwordChangeRequired' => session('password_change_required'),
+            'passwordChangeReason' => session('password_change_reason'),
+        ]);
     }
     public function updatePassword(Request $request)
     {
         $request->validate([
             'current_password' => 'required',
-            'new_password' => 'required|min:8|confirmed',
+            'new_password' => [
+                'required',
+                'confirmed',
+                Password::min(8)->mixedCase()->numbers(),
+            ],
         ]);
 
         $user = Auth::user();
@@ -66,10 +75,36 @@ class HomeController extends Controller
             return back()->withErrors(['current_password' => 'Current password is incorrect']);
         }
 
+        if ($request->new_password === $user->u_passwd) {
+            return back()->withErrors(['new_password' => 'New password must be different from the current password']);
+        }
+
+        $changeReason = $user->u_passwd === '123'
+            ? 'default_password'
+            : ($this->passwordExpired($user->emp_code) ? 'expired_password' : 'user_changed');
+
         $user->u_passwd = $request->new_password;
         $user->save();
 
-        return back()->with('success', 'Password updated successfully');
+        DB::table('PASSWORD_CHANGE_TRAILS')->insert([
+            'EMP_CODE' => (string) $user->emp_code,
+            'CHANGED_BY' => (string) $user->emp_code,
+            'CHANGE_REASON' => $changeReason,
+            'IP_ADDRESS' => $request->ip(),
+            'USER_AGENT' => substr((string) $request->userAgent(), 0, 1000),
+            'CHANGED_AT' => now(),
+        ]);
+
+        return redirect()->route('home')->with('success', 'Password updated successfully');
+    }
+
+    private function passwordExpired(string|int $empCode): bool
+    {
+        $lastChange = DB::table('PASSWORD_CHANGE_TRAILS')
+            ->where('EMP_CODE', (string) $empCode)
+            ->max('CHANGED_AT');
+
+        return $lastChange && Carbon::parse($lastChange)->lte(now()->subMonths(2));
     }
     public function debug()
     {

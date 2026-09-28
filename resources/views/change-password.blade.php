@@ -6,11 +6,19 @@
             <div class="card">
                 <div class="card-header">{{ __('Change Password') }}</div>
                 <div class="card-body">
+                    @if ($passwordChangeRequired ?? false)
+                        <div class="alert alert-warning" role="alert">
+                            {{ $passwordChangeReason ?? 'Please change your password before continuing.' }}
+                        </div>
+                    @endif
                     @if (session('success'))
                         <div class="alert alert-success" role="alert">
                             {{ session('success') }}
                         </div>
                     @endif
+                    <div class="alert alert-info" role="alert">
+                        Password must be at least 8 characters and include uppercase letters, lowercase letters, and numbers.
+                    </div>
                     <form method="POST" action="{{ route('update-password') }}">
                         @csrf
                         <div class="form-group row">

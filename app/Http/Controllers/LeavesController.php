@@ -1344,7 +1344,6 @@ class LeavesController extends Controller
             }
 
             $employee = Employee::where('emp_code', $empCode)
-                // ->whereNull('quit_stat')
                 ->first(['emp_code', 'name', 'dept_code', 'desg_code']);
 
             if (!$employee) {

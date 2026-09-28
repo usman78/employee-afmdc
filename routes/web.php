@@ -24,7 +24,7 @@ use App\Http\Controllers\AuditReportController;
 
 Auth::routes();
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'password.current'])->group(function () {
 
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home')->middleware(EnsureNoQuit::class);
     Route::get('/change-password', [HomeController::class, 'changePassword'])->name('change-password');
@@ -237,4 +237,3 @@ Route::post('/query', [HomeController::class, 'queryDown'])
 Route::fallback(function () {
     return response()->view('404', [], 404);
 });
-

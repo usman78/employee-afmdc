@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureNoQuit;
+use App\Http\Middleware\EnsurePasswordIsCurrent;
 use App\Http\Middleware\EnsureReportAccess;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
+            'password.current' => EnsurePasswordIsCurrent::class,
             'report.access' => EnsureReportAccess::class,
         ]);
     })
