@@ -609,7 +609,7 @@
                             <select accesskey="" id="item_code" name="item_code" class="form-control">
                                 <option value="">Select Item</option>
                                 @foreach($items as $item)
-                                    <option value="{{ $item->item_code }}">{{ $item->item_desc }}</option>
+                                    <option value="{{ $item->item_code }}">{{ $item->item_desc }} - {{ $item->item_code }}</option>
                                 @endforeach
                             </select>
 
