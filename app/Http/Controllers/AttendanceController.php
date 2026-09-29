@@ -1146,6 +1146,7 @@ class AttendanceController extends Controller
 
             $isLeave = false;
             $leaveType = null;
+            $leaveStatus = null;
             $leaveStart = null;
             $leaveEnd   = null;
             $leaveMins  = 0;
@@ -1187,6 +1188,7 @@ class AttendanceController extends Controller
                     // \Log::info("Leave deducted for {$emp_code} on {$dateString}: {$leave->l_day} day(s) for leave code {$leave->leave_code}");
                 } else {
                     $isLeave = true;
+                    $leaveStatus = (int) $leave->status;
                     $leaveType = leaveDescription(
                         $leave->leave_code,
                         $leave->from_date,
@@ -1217,6 +1219,7 @@ class AttendanceController extends Controller
                     'has_roster' => $hasRoster,
                     'is_leave'  => $isLeave,
                     'leave_type'=> $isLeave ? $leaveType : null,
+                    'leave_status' => $leaveStatus,
                     'duty_start' => $startTimeCarbon->format('H:i'),
                     'duty_end' => $endTimeCarbon->format('H:i'),
                 ]);
@@ -1355,6 +1358,7 @@ class AttendanceController extends Controller
                 'has_roster'        => $hasRoster,
                 'is_leave'          => $isLeave,
                 'leave_type'        => $isLeave ? $leaveType : null,
+                'leave_status'      => $leaveStatus,
                 'short_duty_status' => $leaveRemark,
                 'duty_start'        => $startTimeCarbon->format('H:i'),
                 'duty_end'          => $endTimeCarbon->format('H:i'),

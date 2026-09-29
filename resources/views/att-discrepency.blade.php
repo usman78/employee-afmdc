@@ -373,7 +373,7 @@
                         {{ $record['is_holiday'] ? 'Holiday' : (($record['is_weekly_rest'] ?? false) ? 'Weekly Rest' : 'Sunday') }}
                       </span>
                     @elseif ($record['leave_type'])
-                      <span class="badge badge-success">{{ $record['leave_type'] }}</span>  
+                      <span class="badge {{ ($record['leave_status'] ?? null) == 7 ? 'badge-info' : 'badge-success' }}">{{ $record['leave_type'] }}</span>
                     @elseif(empty($record['time_logs']))
                       <span class="badge badge-danger">Absent</span>
                     @else                          
