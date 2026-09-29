@@ -95,7 +95,11 @@ class HomeController extends Controller
             'CHANGED_AT' => now(),
         ]);
 
-        return redirect()->route('home')->with('success', 'Password updated successfully');
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')->with('password_changed', 'Password changed successfully. Please log in again.');
     }
 
     private function passwordExpired(string|int $empCode): bool

@@ -16,6 +16,23 @@
         <link href="{{ asset('css/sb-admin-2.css') }}" rel="stylesheet">
     </head>
     <body class="bg-gradient-primary sidebar-toggled">
+        @if (session('password_changed'))
+            <div class="modal fade" id="passwordChangedModal" tabindex="-1" aria-labelledby="passwordChangedModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="passwordChangedModalLabel">Password Changed</h5>
+                        </div>
+                        <div class="modal-body">
+                            {{ session('password_changed') }}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-dismiss="modal">OK</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
         <div class="container">
             <!-- Outer Row -->
             <div class="row justify-content-center">
@@ -104,6 +121,13 @@
         <script src="{{ asset('sb/vendor/jquery-easing/jquery.easing.min.js') }}"></script>
         <!-- Custom scripts for all pages-->
         <script src="{{ asset('sb/js/sb-admin-2.min.js') }}"></script>
+        @if (session('password_changed'))
+            <script>
+                $(function () {
+                    $('#passwordChangedModal').modal('show');
+                });
+            </script>
+        @endif
     </body>
 </html>
 

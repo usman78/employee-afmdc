@@ -25,7 +25,12 @@
                             <label for="current_password" class="col-md-4 col-form-label text-md-right">{{ __('Current Password') }}</label>
 
                             <div class="col-md-6">
-                                <input id="current_password" type="password" class="form-control @error('current_password') is-invalid @enderror" name="current_password" required autocomplete="current-password">
+                                <div class="input-group">
+                                    <input id="current_password" type="password" class="form-control @error('current_password') is-invalid @enderror" name="current_password" required autocomplete="current-password">
+                                    <button type="button" class="btn btn-outline-secondary toggle-password" data-target="current_password" aria-label="Show current password" title="Show password">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
 
                                 @error('current_password')
                                     <span class="invalid-feedback" role="alert">
@@ -38,7 +43,12 @@
                             <label for="new_password" class="col-md-4 col-form-label text-md-right">{{ __('New Password') }}</label>
 
                             <div class="col-md-6">
-                                <input id="new_password" type="password" class="form-control @error('new_password') is-invalid @enderror" name="new_password" required autocomplete="new-password">
+                                <div class="input-group">
+                                    <input id="new_password" type="password" class="form-control @error('new_password') is-invalid @enderror" name="new_password" required autocomplete="new-password">
+                                    <button type="button" class="btn btn-outline-secondary toggle-password" data-target="new_password" aria-label="Show new password" title="Show password">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
 
                                 @error('new_password')
                                     <span class="invalid-feedback" role="alert">
@@ -51,7 +61,12 @@
                             <label for="new_password_confirmation" class="col-md-4 col-form-label text-md-right">{{ __('Confirm New Password') }}</label>
 
                             <div class="col-md-6">
-                                <input id="new_password_confirmation" type="password" class="form-control" name="new_password_confirmation" required autocomplete="new-password">
+                                <div class="input-group">
+                                    <input id="new_password_confirmation" type="password" class="form-control" name="new_password_confirmation" required autocomplete="new-password">
+                                    <button type="button" class="btn btn-outline-secondary toggle-password" data-target="new_password_confirmation" aria-label="Show password confirmation" title="Show password">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="form-group row mb-0">
@@ -67,4 +82,22 @@
         </div>
     </div>
 </div>
+<script>
+    document.querySelectorAll('.toggle-password').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const input = document.getElementById(button.dataset.target);
+            const icon = button.querySelector('i');
+            const showing = input.type === 'text';
+
+            input.type = showing ? 'password' : 'text';
+            icon.classList.toggle('bi-eye', showing);
+            icon.classList.toggle('bi-eye-slash', !showing);
+            button.setAttribute('aria-label', showing ? button.dataset.showLabel : button.dataset.hideLabel);
+            button.setAttribute('title', showing ? 'Show password' : 'Hide password');
+        });
+
+        button.dataset.showLabel = button.getAttribute('aria-label');
+        button.dataset.hideLabel = button.getAttribute('aria-label').replace('Show', 'Hide');
+    });
+</script>
 @endsection
