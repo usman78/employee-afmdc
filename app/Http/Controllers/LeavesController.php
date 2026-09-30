@@ -1802,6 +1802,7 @@ class LeavesController extends Controller
                     'pay_desig.desg_short',
                     'pay_dept.dept_desc'
                 )
+                ->orderBy('pre_leave_tran.emp_code')
                 ->orderBy('pre_leave_tran.leave_date', 'desc')
                 ->get();
 
