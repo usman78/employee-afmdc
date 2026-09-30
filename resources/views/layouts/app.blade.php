@@ -572,6 +572,19 @@
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
         <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
         @stack('cdn-scripts')
+        @if (session('pending_leave_approval_notice'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Notice for All Staff',
+                        text: 'Kindly get your pending leaves approved by your HOD from the portal before month end; otherwise, leave will be auto-deducted from salary. HR will not be responsible. Regards, HR Dept.',
+                        confirmButtonText: 'I Understand',
+                        confirmButtonColor: '#973594',
+                    });
+                });
+            </script>
+        @endif
         <script>
             $(function () {
                 $('[data-toggle="tooltip"]').tooltip();

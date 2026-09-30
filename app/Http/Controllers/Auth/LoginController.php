@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Support\Carbon;
 use Auth;
 
 class LoginController extends Controller
@@ -48,6 +49,13 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials)) {
             logger()->info('Login successful for user: ' . $credentials['employee_code']);
+
+            // Display the reminder once immediately after login during the
+            // final three calendar days of every month.
+            if ($this->isInLastThreeDaysOfMonth()) {
+                $request->session()->flash('pending_leave_approval_notice', true);
+            }
+
             return redirect()->intended('/'); // or your desired route
         }
 
@@ -60,6 +68,13 @@ class LoginController extends Controller
     public function username()
     {
         return 'employee_code';
+    }
+
+    private function isInLastThreeDaysOfMonth(): bool
+    {
+        $today = Carbon::today();
+
+        return $today->greaterThanOrEqualTo($today->copy()->endOfMonth()->subDays(2));
     }
 
     public function logout(Request $request)
