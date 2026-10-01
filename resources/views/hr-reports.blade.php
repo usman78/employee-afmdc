@@ -4,6 +4,54 @@
     {
         text-decoration: none;
     }
+
+    .report-actions {
+        border: 0;
+        border-radius: .75rem;
+    }
+
+    .report-actions .card-body {
+        padding: 1.5rem;
+    }
+
+    .report-action {
+        display: flex;
+        align-items: center;
+        min-height: 68px;
+        padding: .85rem 1rem;
+        border: 1px solid #dbe5f1;
+        border-radius: .6rem;
+        background: #fff;
+        color: #344767;
+        font-weight: 600;
+        line-height: 1.25;
+        text-align: left;
+        text-decoration: none;
+        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background-color .2s ease;
+    }
+
+    .report-action:hover,
+    .report-action:focus {
+        border-color: #4e73df;
+        background: #f4f7ff;
+        box-shadow: 0 .4rem 1rem rgba(78, 115, 223, .15);
+        color: #2e59d9;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+
+    .report-action i:first-child {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+        margin-right: .75rem;
+        border-radius: .5rem;
+        background: #e8efff;
+        color: #4e73df;
+    }
 @endpush
 @section('content')
 <div class="container">
@@ -189,119 +237,129 @@
             </div>
 
             @php($reportAccess = app(\App\Services\ReportAccessService::class))
-            <div class="row g-3 justify-content-center">
+            <div class="report-actions card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+                        <div>
+                            <h5 class="mb-1 font-weight-bold text-primary">Reports</h5>
+                            <p class="mb-0 text-muted small">Select a report to view its details.</p>
+                        </div>
+                    </div>
+                    <div class="row">
                 @if($reportAccess->allowed(Auth::user(), 'attendance'))
-                <div class="col-md-6 col-lg-2">
-                    <a href="{{ route('attendance-report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Attendance Report
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <a href="{{ route('attendance-report') }}" class="report-action h-100 w-100">
+                    <i class="fas fa-calendar-check me-1" aria-hidden="true"></i> Attendance Report
                     </a>
                 </div>
                 @endif
 
-                {{-- <div class="col-md-6 col-lg-2">
-                    <a href="{{ route('attendance-late-report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Late Report
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <a href="{{ route('attendance-late-report') }}" class="report-action h-100 w-100">
+                    <i class="fas fa-clock" aria-hidden="true"></i> Late Report
                     </a>
-                </div> --}}
+                </div>
 
-                {{-- <div class="col-md-6 col-lg-2">
-                    <a href="{{ route('attendance-absent-report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Absent Report
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <a href="{{ route('attendance-absent-report') }}" class="report-action h-100 w-100">
+                        <i class="fas fa-times" aria-hidden="true"></i> Absent Report
                     </a>
-                </div> --}}
+                </div>
 
-                {{-- <div class="col-md-6 col-lg-2">
-                    <a href="{{ route('attendance-present-report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Present Report
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <a href="{{ route('attendance-present-report') }}" class="report-action h-100 w-100">
+                        <i class="fas fa-check-circle" aria-hidden="true"></i> Present Report
                     </a>
-                </div> --}}
+                </div>
 
                 @if($reportAccess->allowed(Auth::user(), 'manual-attendance'))
-                <div class="col-md-6 col-lg-3">
-                    <a href="{{ route('manual-attendance-report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Manual Attendance
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <a href="{{ route('manual-attendance-report') }}" class="report-action h-100 w-100">
+                        <i class="fas fa-clipboard-check me-1" aria-hidden="true"></i> Manual Attendance
                     </a>
                 </div>
                 @endif
 
                 @if($reportAccess->allowed(Auth::user(), 'individual-leave-report'))
-                <div class="col-md-6 col-lg-3">
-                    <a href="{{ route('individual-leave-report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Individual Leave Report
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <a href="{{ route('individual-leave-report') }}" class="report-action h-100 w-100">
+                        <i class="fas fa-user-clock me-1" aria-hidden="true"></i> Individual Leave Report
                     </a>
                 </div>
                 @endif
 
                 @if($reportAccess->allowed(Auth::user(), 'leave'))
-                <div class="col-md-6 col-lg-2">
-                    <a href="{{ route('leave-report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Leave Report
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <a href="{{ route('leave-report') }}" class="report-action h-100 w-100">
+                        <i class="fas fa-plane-departure me-1" aria-hidden="true"></i> Leave Report
                     </a>
                 </div>
                 @endif
 
                 @if($reportAccess->allowed(Auth::user(), 'leave'))
-                <div class="col-md-6 col-lg-2">
-                    <a href="{{ route('hr-leaves-applied') }}" class="btn btn-primary w-100 text-nowrap" id="hr-leaves-applied">
-                    Leaves Status
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <a href="{{ route('hr-leaves-applied') }}" class="report-action h-100 w-100" id="hr-leaves-applied">
+                        <i class="fas fa-list-alt me-1" aria-hidden="true"></i> Leaves Status
                     </a>
                 </div>
                 @endif
 
                 @if($reportAccess->allowed(Auth::user(), 'leave'))
-                <div class="col-md-6 col-lg-3">
-                    <button type="button" class="btn btn-primary w-100 text-nowrap" id="pending-leaves-report-btn">
-                    Pending Leaves Report
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <button type="button" class="report-action h-100 w-100" id="pending-leaves-report-btn">
+                        <i class="fas fa-hourglass-half me-1" aria-hidden="true"></i> Pending Leaves Report
                     </button>
                 </div>
                 @endif
 
                 @if($reportAccess->allowed(Auth::user(), 'department-strength'))
-                <div class="col-md-6 col-lg-3">
-                    <a href="{{ route('department-strength-report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Department Strength
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <a href="{{ route('department-strength-report') }}" class="report-action h-100 w-100">
+                        <i class="fas fa-building me-1" aria-hidden="true"></i> Department Strength
                     </a>
                 </div>
                 @endif
 
                 @if($reportAccess->allowed(Auth::user(), 'advance-salary-hr'))
-                <div class="col-md-6 col-lg-3">
-                    <a href="{{ route('advance-salary.report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Advance Salary Report
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <a href="{{ route('advance-salary.report') }}" class="report-action h-100 w-100">
+                        <i class="fas fa-money-check-alt me-1" aria-hidden="true"></i> Advance Salary Report
                     </a>
                 </div>
                 @endif
                 @if($reportAccess->allowed(Auth::user(), 'exit-interview'))
 
-                <div class="col-md-6 col-lg-3">
-                    <a href="{{ route('exit-interview.report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Exit Interview Report
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <a href="{{ route('exit-interview.report') }}" class="report-action h-100 w-100">
+                        <i class="fas fa-door-open me-1" aria-hidden="true"></i> Exit Interview Report
                     </a>
                 </div>
                 @endif
 
                 @if($reportAccess->allowed(Auth::user(), 'overtime-hr'))
-                <div class="col-md-6 col-lg-3">
-                    <a href="{{ route('overtime.report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Overtime Report
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <a href="{{ route('overtime.report') }}" class="report-action h-100 w-100">
+                        <i class="fas fa-business-time me-1" aria-hidden="true"></i> Overtime Report
                     </a>
                 </div>
                 @endif
 
                 @if($reportAccess->allowed(Auth::user(), 'overtime-eligibility'))
-                <div class="col-md-6 col-lg-3">
-                    <a href="{{ route('overtime.eligibility-report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Overtime Eligibility
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <a href="{{ route('overtime.eligibility-report') }}" class="report-action h-100 w-100">
+                        <i class="fas fa-user-check me-1" aria-hidden="true"></i> Overtime Eligibility
                     </a>
                 </div>
                 @endif
                 @if($reportAccess->allowed(Auth::user(), 'attendance-discrepancy'))
-                <div class="col-md-6 col-lg-3">
-                    <a href="{{ route('att-discrepancy-report') }}" class="btn btn-primary w-100 text-nowrap">
-                    Attendance Discrepancy Report
+                <div class="col-sm-6 col-lg-4 col-xl-3 mb-3">
+                    <a href="{{ route('att-discrepancy-report') }}" class="report-action h-100 w-100">
+                        <i class="fas fa-exclamation-triangle me-1" aria-hidden="true"></i> Attendance Discrepancy Report
                     </a>
                 </div>
                 @endif
+                    </div>
+                </div>
             </div>
         </div>
       </div>
