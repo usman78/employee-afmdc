@@ -55,15 +55,15 @@
         <table class="table table-bordered table-sm">
             <thead class="thead-light">
                 <tr>
-                    <th>#</th><th>Employee</th><th>Department</th><th>Date</th><th>Shift</th><th>Time In/Out</th><th>Claimed Minutes</th><th>Sanctioned Minutes</th><th>Salary</th><th>Hourly Rate</th><th>Calculated</th><th>Sanctioned</th><th>Status</th><th>HOD Approval</th><th>HR Approval</th><th>Finance Approval</th>
+                    <th>#</th><th>Employee</th><th>Department</th><th>Date</th><th>Shift</th><th>Time In/Out</th><th>Claimed Overtime</th><th>Sanctioned Overtime</th><th>Salary</th><th>Hourly Rate</th><th>Calculated</th><th>Sanctioned</th><th>Status</th><th>HOD Approval</th><th>HR Approval</th><th>Finance Approval</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($applications as $application)
                     <tr>
                         <td>{{ $loop->iteration }}</td>
-                        <td>{{ capitalizeWords($application->employee->name ?? '') }}<br><small class="text-muted">{{ $application->emp_code }}</small></td>
-                        <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
+                        <td>{{ capitalizeWords($application->employee->name ?? $application->dailyWager->name ?? '') }}<br><small class="text-muted">{{ $application->emp_code }}</small></td>
+                        <td>{{ $application->employee->department->dept_desc ?? $application->dailyWager->department->dept_desc ?? '-' }}</td>
                         <td>{{ optional($application->overtime_date)->format('d M Y') }}</td>
                         <td>{{ $application->shift_start ? timeFormatFromString($application->shift_start) : '-' }} - {{ $application->shift_end ? timeFormatFromString($application->shift_end) : '-' }}</td>
                         <td>{{ $application->time_in ? timeFormatFromString($application->time_in) : '-' }} - {{ $application->time_out ? timeFormatFromString($application->time_out) : '-' }}</td>
