@@ -74,7 +74,7 @@
           <td>{{ $application->employee->department->dept_desc ?? $application->dailyWager->department->dept_desc ?? '-' }}</td>
           <td class="text-right">{{ $application->eligible_days }}</td>
           <td class="text-right">{{ number_format($application->requested_amount) }}</td>
-          <td class="text-right">{{ number_format($application->gross_salary) }}</td>
+          <td class="text-right">{{ number_format($application->dailyWager->emp_sal ?? $application->gross_salary) }}</td>
           <td class="text-right">{{ number_format($application->sanctioned_amount) }}</td>
           <td>{{ capitalizeWords(getEmployeeName($application->hod_approved_by)) . ' (' . $application->hod_approved_by . ')' }}</td>
           <td>{{ $application->hrApprover ? capitalizeWords($application->hrApprover->name) . ' (' . $application->hr_approved_by . ')' : '-' }}</td>

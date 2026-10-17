@@ -191,7 +191,7 @@ class AdvanceSalaryController extends Controller
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');
-        $applications = AdvanceSalaryApplication::with(['employee.designation', 'employee.department'])
+        $applications = AdvanceSalaryApplication::with(['dailyWager', 'employee.designation', 'employee.department'])
             ->where('salary_month', $month)
             ->when($status, function ($query) use ($status) {
                 $query->where('status', $status);

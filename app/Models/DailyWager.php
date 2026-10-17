@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DailyWager extends Model
 {
-    protected $table = 'dw_Employee';
+    protected $table = 'dw_employee';
     protected $primaryKey = 'emp_code';
     public $incrementing = false;
     public $timestamps = false;

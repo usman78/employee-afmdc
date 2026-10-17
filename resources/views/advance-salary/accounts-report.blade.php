@@ -186,7 +186,7 @@
                         <td>{{ $application->dailyWager->department->dept_desc ?? '-' }}</td>
                         <td>{{ $application->eligible_days }}</td>
                         <td>{{ number_format($application->requested_amount) }}</td>
-                        <td>{{ number_format($application->gross_salary) }}</td>
+                        <td>{{ number_format($application->dailyWager->emp_sal ?? $application->gross_salary) }}</td>
                         <td>{{ number_format($application->max_amount) }}</td>
                         <td>{{ number_format($application->sanctioned_amount) }}</td>
                         <td>{{ $application->hrApprover ? capitalizeWords($application->hrApprover->name) : '-' }}</td>
