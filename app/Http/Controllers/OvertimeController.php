@@ -243,7 +243,8 @@ class OvertimeController extends Controller
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');
 
-        $applications = OvertimeApplication::where('salary_month', $month)
+        $applications = OvertimeApplication::where('emp_type', 1)
+            ->where('salary_month', $month)
             ->when($status, function ($query) use ($status) {
                 $query->where('status', $status);
             })
