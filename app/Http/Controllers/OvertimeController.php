@@ -243,7 +243,12 @@ class OvertimeController extends Controller
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');
 
-        $applications = OvertimeApplication::where('emp_type', 1)
+        $applications = OvertimeApplication::with([
+                'employee.designation',
+                'employee.department',
+                'dailyWager.designation',
+                'dailyWager.department',
+            ])
             ->where('salary_month', $month)
             ->when($status, function ($query) use ($status) {
                 $query->where('status', $status);
@@ -254,7 +259,8 @@ class OvertimeController extends Controller
             ->get();
 
         return view('overtime.report', [
-            'applications' => $applications,
+            'regularApplications' => $applications->where('emp_type', 1)->values(),
+            'dailyWagerApplications' => $applications->where('emp_type', 2)->values(),
             'month' => $month,
             'status' => $status,
             'statuses' => $this->hrReportStatuses(),

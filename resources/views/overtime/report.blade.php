@@ -22,19 +22,9 @@
     font-size: 12px;
     margin-top: 5px;
   }
-  {{-- tr.detail-row td {
-      background-color: #bae0ff;
+  .portfolio-details .portfolio-info ul li {
+    margin-top: 10px;
   }
-  .approval-row td {
-    background-color: #e2f2ff;
-    font-size: 12px;
-    padding-top: .3rem !important;
-    padding-bottom: .3rem !important;
-  }
-  .approval-label {
-    font-weight: bold;
-    color: #555;
-  } --}}
            /* -------------------------------------------------
            APPROVAL ROW
         ------------------------------------------------- */
@@ -153,10 +143,26 @@
               Report for Daily Wagers
             </button>
           </form>
-          @php
-            $serialNumber = 1;
-          @endphp
-          <div class="table-responsive">
+          <ul class="nav nav-tabs mt-4 mb-3" id="overtimeTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <a class="nav-link active" id="regular-tab" data-toggle="tab" href="#regular" role="tab" aria-controls="regular" aria-selected="true">
+                Regular Applications
+              </a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link" id="daily-wager-tab" data-toggle="tab" href="#daily-wager" role="tab" aria-controls="daily-wager" aria-selected="false">
+                Daily Wager Applications
+              </a>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+            @foreach(['regular' => $regularApplications, 'daily-wager' => $dailyWagerApplications] as $tabKey => $tabApplications)
+            <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $tabKey }}" role="tabpanel" aria-labelledby="{{ $tabKey }}-tab">
+              @php
+                $serialNumber = 1;
+              @endphp
+              <div class="table-responsive">
             <table class="table overtime-report-table">
               <thead>
                 <tr>
@@ -177,7 +183,7 @@
                 </tr>
               </thead>
               <tbody>
-                @forelse($applications->groupBy('emp_code') as $employeeApplications)
+                @forelse($tabApplications->groupBy('emp_code') as $employeeApplications)
                   @php
                     $employee = $employeeApplications->first();
                   @endphp
@@ -201,9 +207,9 @@
                       <td>{{ Carbon::parse($application->overtime_date)->format('d M Y') }}</td>
                       <td>{{ $application->shift_start != null ? timeFormatFromString($application->shift_start) : '-' }} - {{ $application->shift_end != null ? timeFormatFromString($application->shift_end) : '-' }}</td>
                       <td>{{ $application->time_in != null ? timeFormatFromString($application->time_in) : '-' }} - {{ $application->time_out != null ? timeFormatFromString($application->time_out) : '-' }}</td>
-                      <td id="otMinutes{{ $loop->parent->index }}-{{ $loop->index }}">{{ formatMinutes(payableMinutes($application->overtime_minutes)) }}</td>
+                      <td id="otMinutes{{ $tabKey }}-{{ $loop->parent->index }}-{{ $loop->index }}">{{ formatMinutes(payableMinutes($application->overtime_minutes)) }}</td>
                       <td>{{ number_format($application->gross_salary ?? 0, 0) }}</td>
-                      <td id="otAmount{{ $loop->parent->index }}-{{ $loop->index }}">PKR {{ number_format($displayAmount, 2) }}</td>
+                      <td id="otAmount{{ $tabKey }}-{{ $loop->parent->index }}-{{ $loop->index }}">PKR {{ number_format($displayAmount, 2) }}</td>
                       <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
                       <td>{{ $application->remarks ?: '-' }}</td>
                       <td>
@@ -214,17 +220,17 @@
                               type="number"
                               name="sanctioned_minutes"
                               class="form-control form-control-sm mb-2 sanctioned-minutes-input"
-                              id="minutes{{ $loop->parent->index }}-{{ $loop->index }}"
+                              id="minutes{{ $tabKey }}-{{ $loop->parent->index }}-{{ $loop->index }}"
                               min="60"
                               max="{{ (int) $application->overtime_minutes }}"
                               value="{{ old('sanctioned_minutes', (int) $application->overtime_minutes) }}"
-                              data-row-index="{{ $loop->parent->index }}-{{ $loop->index }}"
+                              data-row-index="{{ $tabKey }}-{{ $loop->parent->index }}-{{ $loop->index }}"
                               data-hourly-rate="{{ $application->hourly_rate }}"
                             >
                             <small class="form-text text-muted d-block">
                               Claimed: {{ formatMinutes(payableMinutes($application->overtime_minutes)) }} min (PKR {{ number_format($application->calculated_amount, 2) }})
                             </small>
-                            <div class="amount-display" id="amountDisplay{{ $loop->parent->index }}-{{ $loop->index }}">
+                            <div class="amount-display" id="amountDisplay{{ $tabKey }}-{{ $loop->parent->index }}-{{ $loop->index }}">
                               Amount: PKR {{ number_format($application->calculated_amount, 2) }}
                             </div>
                             <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
@@ -364,13 +370,13 @@
                   @endforeach
                 @empty
                   <tr>
-                    <td colspan="13" class="text-center text-muted">No overtime applications found for this month.</td>
+                    <td colspan="13" class="text-center text-muted">No {{ $tabKey === 'regular' ? 'regular' : 'daily-wager' }} overtime applications found for this month.</td>
                   </tr>
                 @endforelse
 
-                @if($applications->count())
+                @if($tabApplications->count())
                   @php
-                    $grandTotal = $applications->reduce(function ($carry, $application) {
+                    $grandTotal = $tabApplications->reduce(function ($carry, $application) {
                       // Adding only those amounts that have the HR approved status to the grand total
                       // if ($application->status !== OvertimeApplication::STATUS_HR_APPROVED) {
                       //   return $carry;
@@ -387,6 +393,9 @@
                 @endif
               </tbody>
             </table>
+              </div>
+            </div>
+            @endforeach
           </div>
         </div>
       </div>
