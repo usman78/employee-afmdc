@@ -1147,12 +1147,11 @@ class AttendanceController extends Controller
             $isLeave = false;
             $leaveType = null;
             $leaveStatus = null;
-            $leaveStart = null;
-            $leaveEnd   = null;
-            $leaveMins  = 0;
+            $leaveEntries = [];
+            $leaveIntervals = [];
             $isFullDayLeave = false;
 
-            $leave = Leave::where('emp_code', $emp_code)
+            $matchingLeaves = Leave::where('emp_code', $emp_code)
                 ->whereNot('status', 9)
                 ->where(function ($query) use ($startTimeCarbon, $endTimeCarbon, $dateString) {
 
@@ -1180,33 +1179,42 @@ class AttendanceController extends Controller
                     });
 
                 })
-                ->first();
+                ->orderBy('from_date')
+                ->orderBy('to_date')
+                ->get();
             
-            if ($leave) {
+            foreach ($matchingLeaves as $leave) {
                 if ($leave->status == 10) {
                     $totalLeaveDaysDeducted += $leave->l_day;
-                    // \Log::info("Leave deducted for {$emp_code} on {$dateString}: {$leave->l_day} day(s) for leave code {$leave->leave_code}");
-                } else {
-                    $isLeave = true;
-                    $leaveStatus = (int) $leave->status;
-                    $leaveType = leaveDescription(
-                        $leave->leave_code,
-                        $leave->from_date,
-                        $leave->to_date
-                    );
-
-                    $from = Carbon::parse($leave->from_date);
-                    $to   = Carbon::parse($leave->to_date);
-
-                    if ($from->format('H:i:s') === '00:00:00' &&
-                        $to->format('H:i:s')   === '00:00:00') {
-                        $isFullDayLeave = true;
-                    } else {
-                        $leaveStart = $from;
-                        $leaveEnd   = $to;
-                        $leaveMins  = $from->diffInMinutes($to);
-                    }
+                    continue;
                 }
+
+                $isLeave = true;
+                $leaveStatus = (int) $leave->status;
+                $leaveType = leaveDescription(
+                    $leave->leave_code,
+                    $leave->from_date,
+                    $leave->to_date
+                );
+                $leaveEntries[] = [
+                    'type' => $leaveType,
+                    'status' => $leaveStatus,
+                ];
+
+                $from = Carbon::parse($leave->from_date);
+                $to   = Carbon::parse($leave->to_date);
+
+                if ($from->format('H:i:s') === '00:00:00' &&
+                    $to->format('H:i:s') === '00:00:00') {
+                    $isFullDayLeave = true;
+                } else {
+                    $leaveIntervals[] = ['start' => $from, 'end' => $to];
+                }
+            }
+
+            // Retain a text fallback for reports that still consume leave_type.
+            if ($isLeave) {
+                $leaveType = collect($leaveEntries)->pluck('type')->implode(', ');
             }
 
             if ($attendanceRecords->isEmpty()) {
@@ -1220,6 +1228,7 @@ class AttendanceController extends Controller
                     'is_leave'  => $isLeave,
                     'leave_type'=> $isLeave ? $leaveType : null,
                     'leave_status' => $leaveStatus,
+                    'leave_entries' => $leaveEntries,
                     'duty_start' => $startTimeCarbon->format('H:i'),
                     'duty_end' => $endTimeCarbon->format('H:i'),
                 ]);
@@ -1268,6 +1277,30 @@ class AttendanceController extends Controller
             $ramadanDeductionMins = $hasRoster ? 0 : $this->getRamadanDeductionMinutes($emp_category, $workDate);
             $adjustedEndTimeCarbon = $endTimeCarbon->copy()->subMinutes($ramadanDeductionMins);
 
+            // Clip intervals to the working day and merge overlaps so leave time is
+            // never counted twice when more than one partial leave is present.
+            usort($leaveIntervals, function ($left, $right) {
+                return $left['start']->getTimestamp() <=> $right['start']->getTimestamp();
+            });
+            $coveredLeaveIntervals = [];
+            foreach ($leaveIntervals as $interval) {
+                $start = $interval['start']->gt($startTimeCarbon) ? $interval['start']->copy() : $startTimeCarbon->copy();
+                $end = $interval['end']->lt($adjustedEndTimeCarbon) ? $interval['end']->copy() : $adjustedEndTimeCarbon->copy();
+
+                if ($start->gte($end)) {
+                    continue;
+                }
+
+                $lastIndex = count($coveredLeaveIntervals) - 1;
+                if ($lastIndex >= 0 && $start->lte($coveredLeaveIntervals[$lastIndex]['end'])) {
+                    if ($end->gt($coveredLeaveIntervals[$lastIndex]['end'])) {
+                        $coveredLeaveIntervals[$lastIndex]['end'] = $end;
+                    }
+                } else {
+                    $coveredLeaveIntervals[] = ['start' => $start, 'end' => $end];
+                }
+            }
+
             $minsWorked = 0;
             $timeLogs   = [];
 
@@ -1295,9 +1328,12 @@ class AttendanceController extends Controller
 
                 if (!$hasRoster && $emp_category->twh == 12) {
                     $required = $totalMins;
+                    $coveredLeaveMins = array_sum(array_map(function ($interval) {
+                        return $interval['start']->diffInMinutes($interval['end']);
+                    }, $coveredLeaveIntervals));
 
-                    if ($leaveMins > 0) {
-                        $required = max(0, $totalMins - $leaveMins);
+                    if ($coveredLeaveMins > 0) {
+                        $required = max(0, $totalMins - $coveredLeaveMins);
                     }
 
                     $lateMins = max(0, $required - $minsWorked);
@@ -1312,10 +1348,10 @@ class AttendanceController extends Controller
                         $earlyMins = $maxOut->diffInMinutes($adjustedEndTimeCarbon);
                     }
 
-                    if ($leaveStart) {
+                    foreach ($coveredLeaveIntervals as $interval) {
                         if ($lateMins > 0) {
-                            $overlapStart = $startTimeCarbon->gt($leaveStart) ? $startTimeCarbon : $leaveStart;
-                            $overlapEnd = $minIn->lt($leaveEnd) ? $minIn : $leaveEnd;
+                            $overlapStart = $startTimeCarbon->gt($interval['start']) ? $startTimeCarbon : $interval['start'];
+                            $overlapEnd = $minIn->lt($interval['end']) ? $minIn : $interval['end'];
 
                             if ($overlapStart->lt($overlapEnd)) {
                                 $lateMins = max(0, $lateMins - $overlapStart->diffInMinutes($overlapEnd));
@@ -1323,8 +1359,8 @@ class AttendanceController extends Controller
                         }
 
                         if ($earlyMins > 0 && $maxOut) {
-                            $overlapStart = $maxOut->gt($leaveStart) ? $maxOut : $leaveStart;
-                            $overlapEnd = $adjustedEndTimeCarbon->lt($leaveEnd) ? $adjustedEndTimeCarbon : $leaveEnd;
+                            $overlapStart = $maxOut->gt($interval['start']) ? $maxOut : $interval['start'];
+                            $overlapEnd = $adjustedEndTimeCarbon->lt($interval['end']) ? $adjustedEndTimeCarbon : $interval['end'];
 
                             if ($overlapStart->lt($overlapEnd)) {
                                 $earlyMins = max(0, $earlyMins - $overlapStart->diffInMinutes($overlapEnd));
@@ -1359,6 +1395,7 @@ class AttendanceController extends Controller
                 'is_leave'          => $isLeave,
                 'leave_type'        => $isLeave ? $leaveType : null,
                 'leave_status'      => $leaveStatus,
+                'leave_entries'     => $leaveEntries,
                 'short_duty_status' => $leaveRemark,
                 'duty_start'        => $startTimeCarbon->format('H:i'),
                 'duty_end'          => $endTimeCarbon->format('H:i'),

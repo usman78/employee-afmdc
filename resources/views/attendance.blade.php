@@ -289,8 +289,12 @@
                       <span class="badge badge-info">
                         {{ $record['is_holiday'] ? 'Holiday' : (($record['is_weekly_rest'] ?? false) ? 'Weekly Rest' : 'Sunday') }}
                       </span>
-                    @elseif ($record['leave_type'])
+                    @elseif (!empty($record['leave_entries'] ?? []) || $record['leave_type'])
+                      @forelse (($record['leave_entries'] ?? []) as $leave)
+                        <span class="badge {{ ($leave['status'] ?? null) == 7 ? 'badge-info' : 'badge-success' }}">{{ $leave['type'] }}</span>
+                      @empty
                         <span class="badge {{ ($record['leave_status'] ?? null) == 7 ? 'badge-info' : 'badge-success' }}">{{ $record['leave_type'] }}</span>
+                      @endforelse
                     @elseif(empty($record['time_logs']))
                       <span class="badge badge-danger">Absent</span>
                     @else                          
