@@ -27,6 +27,8 @@ class AuditReportController extends Controller
         $applications = AdvanceSalaryApplication::with([
             'employee.designation',
             'employee.department',
+            'dailyWager.designation',
+            'dailyWager.department',
             'hodApprover',
             'hrApprover',
             'accountsApprover',
@@ -38,7 +40,8 @@ class AuditReportController extends Controller
             ->get();
 
         return view('audit-reports.advance-salary', [
-            'applications' => $applications,
+            'regularApplications' => $applications->where('emp_type', 1)->values(),
+            'dailyWagerApplications' => $applications->where('emp_type', 2)->values(),
             'month' => $month,
             'status' => $status,
             'statuses' => $this->advanceSalaryStatuses(),
@@ -54,6 +57,8 @@ class AuditReportController extends Controller
         $applications = OvertimeApplication::with([
             'employee.designation',
             'employee.department',
+            'dailyWager.designation',
+            'dailyWager.department',
             'hodApprover',
             'hrApprover',
             'financeApprover',
@@ -65,7 +70,8 @@ class AuditReportController extends Controller
             ->get();
 
         return view('audit-reports.overtime', [
-            'applications' => $applications,
+            'regularApplications' => $applications->where('emp_type', 1)->values(),
+            'dailyWagerApplications' => $applications->where('emp_type', 2)->values(),
             'month' => $month,
             'status' => $status,
             'statuses' => $this->overtimeStatuses(),

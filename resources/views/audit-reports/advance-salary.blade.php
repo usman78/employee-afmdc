@@ -41,6 +41,18 @@
         </div>
     </div>
 
+    <ul class="nav nav-tabs mb-3" id="advanceSalaryAuditTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="regular-tab" data-toggle="tab" href="#regular" role="tab" aria-controls="regular" aria-selected="true">Regular Applications</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="daily-wager-tab" data-toggle="tab" href="#daily-wager" role="tab" aria-controls="daily-wager" aria-selected="false">Daily Wager Applications</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        @foreach(['regular' => $regularApplications, 'daily-wager' => $dailyWagerApplications] as $tabKey => $tabApplications)
+        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $tabKey }}" role="tabpanel" aria-labelledby="{{ $tabKey }}-tab">
     <div class="table-responsive">
         <table class="table table-bordered table-sm">
             <thead class="thead-light">
@@ -49,11 +61,11 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($applications as $application)
+                @forelse($tabApplications as $application)
                     <tr>
                         <td>{{ $loop->iteration }}</td>
-                        <td>{{ capitalizeWords($application->employee->name ?? '') }}<br><small class="text-muted">{{ $application->emp_code }}</small></td>
-                        <td>{{ $application->employee->department->dept_desc ?? '-' }}</td>
+                        <td>{{ capitalizeWords($application->employee->name ?? $application->dailyWager->name ?? '') }}<br><small class="text-muted">{{ $application->emp_code }}</small></td>
+                        <td>{{ $application->employee->department->dept_desc ?? $application->dailyWager->department->dept_desc ?? '-' }}</td>
                         <td>{{ $application->eligible_days }}</td>
                         <td>{{ number_format($application->requested_amount ?? 0) }}</td>
                         <td>{{ number_format($application->gross_salary ?? 0) }}</td>
@@ -66,10 +78,13 @@
                         <td>{{ capitalizeWords($application->accountsApprover->name ?? '') ?: '-' }}<br><small>{{ $application->accounts_remarks ?: '' }}</small></td>
                     </tr>
                 @empty
-                    <tr><td colspan="13" class="text-center text-muted">No advance salary applications found.</td></tr>
+                    <tr><td colspan="13" class="text-center text-muted">No {{ $tabKey === 'regular' ? 'regular' : 'daily-wager' }} advance salary applications found.</td></tr>
                 @endforelse
             </tbody>
         </table>
+    </div>
+        </div>
+        @endforeach
     </div>
 </div>
 @endsection

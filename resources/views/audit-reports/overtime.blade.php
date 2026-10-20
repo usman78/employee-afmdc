@@ -51,6 +51,18 @@
         </div>
     </div>
 
+    <ul class="nav nav-tabs mb-3" id="overtimeAuditTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="regular-tab" data-toggle="tab" href="#regular" role="tab" aria-controls="regular" aria-selected="true">Regular Applications</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="daily-wager-tab" data-toggle="tab" href="#daily-wager" role="tab" aria-controls="daily-wager" aria-selected="false">Daily Wager Applications</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        @foreach(['regular' => $regularApplications, 'daily-wager' => $dailyWagerApplications] as $tabKey => $tabApplications)
+        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $tabKey }}" role="tabpanel" aria-labelledby="{{ $tabKey }}-tab">
     <div class="table-responsive">
         <table class="table table-bordered table-sm">
             <thead class="thead-light">
@@ -59,7 +71,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($applications as $application)
+                @forelse($tabApplications as $application)
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ capitalizeWords($application->employee->name ?? $application->dailyWager->name ?? '') }}<br><small class="text-muted">{{ $application->emp_code }}</small></td>
@@ -83,10 +95,13 @@
                         <td>{{ capitalizeWords($application->financeApprover->name ?? '') ?: '-' }}<br><small>{{ $application->finance_remarks ?: '' }}</small></td>
                     </tr>
                 @empty
-                    <tr><td colspan="16" class="text-center text-muted">No overtime applications found.</td></tr>
+                    <tr><td colspan="16" class="text-center text-muted">No {{ $tabKey === 'regular' ? 'regular' : 'daily-wager' }} overtime applications found.</td></tr>
                 @endforelse
             </tbody>
         </table>
+    </div>
+        </div>
+        @endforeach
     </div>
 </div>
 @endsection
