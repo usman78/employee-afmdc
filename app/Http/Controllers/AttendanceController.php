@@ -1582,14 +1582,15 @@ class AttendanceController extends Controller
         $holidays = $holidays ?? $this->getHolidayDates();
         $dateStr = $date->toDateString();
 
-        if ($date->isSunday() || in_array($dateStr, $holidays, true)) {
-            return [
-                'late_minutes' => [],
-                'attendance_by_emp' => collect(),
-            ];
-        }
-
         $employeeCodes = $employees->pluck('emp_code')->all();
+        $rostersByEmp = Roster::whereIn('r_emp_code', $employeeCodes)
+            ->whereRaw(
+                "TRUNC(r_effective_from) <= TO_DATE(?, 'YYYY-MM-DD') AND NVL(TRUNC(r_effective_to), TRUNC(r_effective_from)) >= TO_DATE(?, 'YYYY-MM-DD')",
+                [$dateStr, $dateStr]
+            )
+            ->orderBy('r_effective_from')
+            ->get()
+            ->groupBy('r_emp_code');
 
         $attendanceByEmp = Attendance::whereRaw(
                 "TRUNC(at_date) = TO_DATE(?, 'YYYY-MM-DD')",
@@ -1610,15 +1611,26 @@ class AttendanceController extends Controller
 
         $lateMinutes = [];
         foreach ($employees as $emp) {
+            $roster = $rostersByEmp->get($emp->emp_code, collect())
+                ->first(fn ($row) => $this->isUsableRosterRow($row));
+
+            // A roster rest day supersedes calendar holidays and the employee's default shift.
+            if ($roster && (int) $roster->day_type === 0) {
+                continue;
+            }
+            if (!$roster && ($date->isSunday() || in_array($dateStr, $holidays, true))) {
+                continue;
+            }
+
             $records = $attendanceByEmp->get($emp->emp_code, collect());
             if ($records->isEmpty()) {
                 continue;
             }
 
             $leave = $leavesByEmp->get($emp->emp_code, collect())->first();
-            $late = $this->calculateLateMinutesForDay($emp, $records, $date, $leave);
+            $late = $this->calculateLateMinutesForDay($emp, $records, $date, $leave, $roster);
 
-            if ($late >= 10) {
+            if ($late > 0) {
                 $lateMinutes[$emp->emp_code] = $late;
             }
         }
@@ -1692,7 +1704,7 @@ class AttendanceController extends Controller
                 $leave = $this->findLeaveForDate($empLeaves, $date);
                 $late = $this->calculateLateMinutesForDay($emp, $records, $date, $leave);
 
-                if ($late >= 10) {
+                if ($late > 0) {
                     $totalLateMinutes += $late;
                     $totalLateDays += 1;
                 }
@@ -1723,7 +1735,7 @@ class AttendanceController extends Controller
         return null;
     }
 
-    private function calculateLateMinutesForDay($emp, $records, Carbon $workDate, ?Leave $leave): int
+    private function calculateLateMinutesForDay($emp, $records, Carbon $workDate, ?Leave $leave, $roster = null): int
     {
         $isFullDayLeave = false;
         $leaveStart = null;
@@ -1758,10 +1770,23 @@ class AttendanceController extends Controller
             $totalMins = 720;
         }
 
-        $startShift = $workDate->copy()->setTimeFromTimeString($emp->st_time);
-        $endShift   = $workDate->copy()->setTimeFromTimeString($emp->end_time);
+        $hasRoster = $roster && $this->isUsableRosterRow($roster);
+        if ($hasRoster) {
+            if ((int) $roster->day_type === 0) {
+                return 0;
+            }
+            $startShift = $this->rosterShiftDateTime($workDate, $roster->r_shift_start);
+            $endShift = $this->rosterShiftDateTime($workDate, $roster->r_shift_end);
+            if ($endShift->lte($startShift)) {
+                $endShift->addDay();
+            }
+            $totalMins = $startShift->diffInMinutes($endShift);
+        } else {
+            $startShift = $workDate->copy()->setTimeFromTimeString($emp->st_time);
+            $endShift = $workDate->copy()->setTimeFromTimeString($emp->end_time);
+        }
 
-        if ($emp->twh != 12) {
+        if (!$hasRoster && $emp->twh != 12) {
             if ($emp->catg_code == 2 && $workDate->isFriday()) {
                 $totalMins = 300;
                 $startShift->setTime(8, 0);
@@ -1784,23 +1809,14 @@ class AttendanceController extends Controller
         $minIn = Carbon::parse($records->min('timein'));
         $late = 0;
 
-        if ($emp->twh == 12) {
-            $required = $totalMins;
+        // Apply the same 10-minute grace to every shift. If arrival passes
+        // the grace boundary, count lateness from the scheduled shift start.
+        if ($minIn->gt($startShift->copy()->addMinutes(10))) {
+            $lateSeconds = $startShift->diffInSeconds($minIn);
+            $late = (int) ceil($lateSeconds / 60);
+        }
 
-            if ($leaveMins > 0) {
-                $required = max(0, $totalMins - $leaveMins);
-            }
-
-            $late = max(0, $required - $minsWorked);
-
-        } else {
-            if ($minIn->gt($startShift)) {
-
-                // FIX: calculate exact seconds, then floor minutes
-                $lateSeconds = $startShift->diffInSeconds($minIn);
-                $late = intdiv($lateSeconds, 60);
-            }
-
+        if ($emp->twh != 12) {
             if ($leaveStart && $late > 0) {
 
                 $overlapStart = $startShift->gt($leaveStart) ? $startShift : $leaveStart;
