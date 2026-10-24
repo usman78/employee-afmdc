@@ -85,6 +85,8 @@ class AuditReportController extends Controller
         ])
             ->where('salary_month', $month)
             ->when($status, fn ($query) => $query->where('status', $status))
+            ->when($request->input('audit_status') === 'audited', fn ($query) => $query->whereNotNull('audited_at'))
+            ->when($request->input('audit_status') === 'unaudited', fn ($query) => $query->whereNull('audited_at'))
             ->orderBy('emp_code')
             ->orderBy('overtime_date')
             ->get();
@@ -94,8 +96,26 @@ class AuditReportController extends Controller
             'dailyWagerApplications' => $applications->where('emp_type', 2)->values(),
             'month' => $month,
             'status' => $status,
+            'auditStatus' => $request->input('audit_status'),
             'statuses' => $this->overtimeStatuses(),
         ]);
+    }
+
+    public function auditOvertime(OvertimeApplication $application, ReportAccessService $reportAccess)
+    {
+        $this->ensureAuditAccess($reportAccess, 'audit-overtime');
+        abort_unless($application->status === OvertimeApplication::STATUS_APPROVED, 422);
+
+        $application->forceFill([
+            'audited_by' => (string) request()->user()->emp_code,
+            'audited_at' => Carbon::now(),
+        ])->save();
+
+        return redirect()->route('audit-reports.overtime', [
+            'month' => $application->salary_month,
+            'status' => request()->input('status'),
+            'audit_status' => request()->input('audit_status'),
+        ])->with('success', 'Overtime application marked as audited.');
     }
 
     public function downloadAdvanceSalary(Request $request, string $scope, ReportAccessService $reportAccess)
