@@ -205,6 +205,7 @@ Route::middleware(['auth', 'password.current'])->group(function () {
     
     Route::get('/audit-reports', [AuditReportController::class, 'index'])->middleware('report.access:audit-dashboard')->name('audit-reports.index');
     Route::get('/audit-reports/advance-salary', [AuditReportController::class, 'advanceSalary'])->middleware('report.access:audit-advance-salary')->name('audit-reports.advance-salary');
+    Route::post('/audit-reports/advance-salary/{application}/audit', [AuditReportController::class, 'auditAdvanceSalary'])->middleware('report.access:audit-advance-salary')->name('audit-reports.advance-salary.audit');
     Route::get('/audit-reports/overtime', [AuditReportController::class, 'overtime'])->middleware('report.access:audit-overtime')->name('audit-reports.overtime');
     Route::get('/audit-reports/advance-salary/download/{scope}', [AuditReportController::class, 'downloadAdvanceSalary'])->middleware('report.access:audit-advance-salary')->name('audit-reports.advance-salary.download');
     Route::get('/audit-reports/overtime/download/{scope}', [AuditReportController::class, 'downloadOvertime'])->middleware('report.access:audit-overtime')->name('audit-reports.overtime.download');

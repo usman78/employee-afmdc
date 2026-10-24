@@ -39,6 +39,8 @@ class AdvanceSalaryApplication extends Model
         'accounts_approved_by',
         'accounts_approved_at',
         'accounts_remarks',
+        'audited_by',
+        'audited_at',
         'applied_at',
     ];
 
@@ -51,6 +53,7 @@ class AdvanceSalaryApplication extends Model
         'hod_approved_at' => 'datetime',
         'hr_approved_at' => 'datetime',
         'accounts_approved_at' => 'datetime',
+        'audited_at' => 'datetime',
         'applied_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
