@@ -101,7 +101,7 @@
         <div class="portfolio-info">
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h3 class="mb-0">Overtime Finance Report</h3>
-            <a href="{{ route('finance-reports') }}" class="btn btn-outline-secondary btn-sm">Back</a>
+            <a href="{{ route('finance-reports') }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left"></i> Back</a>
           </div>
 
           @if(session('success'))
@@ -112,6 +112,7 @@
           @endif
 
           <form action="{{ route('overtime.finance-report') }}" method="GET" class="d-flex align-items-end gap-2 flex-wrap mt-4 mb-4">
+            <input type="hidden" name="tab" value="{{ $activeTab }}">
             <div>
               <label for="month" class="form-label">Month</label>
               <input type="month" id="month" name="month" class="form-control" value="{{ $month }}">
@@ -125,12 +126,21 @@
                 @endforeach
               </select>
             </div>
+            <div>
+              <label for="payment_status" class="form-label">Payment</label>
+              <select id="payment_status" name="payment_status" class="form-control">
+                <option value="">All Payment States</option>
+                <option value="paid" @selected(($paymentStatus ?? '') === 'paid')>Paid</option>
+                <option value="unpaid" @selected(($paymentStatus ?? '') === 'unpaid')>Unpaid</option>
+              </select>
+            </div>
             <button type="submit" class="btn btn-primary">View Report</button>
+            {{-- <a href="{{ route('overtime.finance-report') }}" class="btn btn-outline-secondary">Clear Filters</a> --}}
             <div class="dropdown">
               <button class="btn btn-primary dropdown-toggle" type="button"
                   id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
                   aria-expanded="false">
-                  Download Report
+                  <i class="fas fa-download"></i>
               </button>
               <div class="dropdown-menu animated--fade-in"
                   aria-labelledby="dropdownMenuButton">
@@ -144,6 +154,21 @@
           @php
             $serialNumber = 1;
           @endphp
+          <ul class="nav nav-tabs mt-4 mb-3" id="overtimeFinanceTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {{ $activeTab === 'regular' ? 'active' : '' }}" id="overtime-finance-regular-tab" data-toggle="tab" href="#overtime-finance-regular" role="tab" aria-controls="overtime-finance-regular" aria-selected="{{ $activeTab === 'regular' ? 'true' : 'false' }}">Regular Applications</a>
+            </li>
+            <li class="nav-item" role="presentation">
+              <a class="nav-link {{ $activeTab === 'daily-wager' ? 'active' : '' }}" id="overtime-finance-daily-wager-tab" data-toggle="tab" href="#overtime-finance-daily-wager" role="tab" aria-controls="overtime-finance-daily-wager" aria-selected="{{ $activeTab === 'daily-wager' ? 'true' : 'false' }}">Daily Wager Applications</a>
+            </li>
+          </ul>
+          <div class="tab-content">
+          @foreach(['regular' => 1, 'daily-wager' => 2] as $tabKey => $empType)
+          @php
+            $tabApplications = $applications->filter(fn ($application) => (int) $application->emp_type === $empType)->values();
+            $serialNumber = 1;
+          @endphp
+          <div class="tab-pane fade {{ $activeTab === $tabKey ? 'show active' : '' }}" id="overtime-finance-{{ $tabKey }}" role="tabpanel" aria-labelledby="overtime-finance-{{ $tabKey }}-tab">
           <div class="table-responsive">
             <table class="table overtime-finance-table">
               <thead>
@@ -157,12 +182,13 @@
                   <th>Hourly Rate</th>
                   <th>Sanctioned Amount</th>
                   <th>Status</th>
+                  <th>Payment Tracking</th>
                   <th>HR Remarks</th>
                   <th>Finance Action</th>
                 </tr>
               </thead>
               <tbody>
-                @forelse($applications->groupBy('emp_code') as $employeeApplications)
+                @forelse($tabApplications->groupBy('emp_code') as $employeeApplications)
                   @php
                     $employee = $employeeApplications->first();
                   @endphp
@@ -170,7 +196,7 @@
                     <td></td>
                     <td><strong>{{ capitalizeWords($employee->employee->name ?? $employee->dailyWager->name ?? '') }}</strong></td>
                     <td><strong>{{ $employee->emp_code }}</strong></td>
-                    <td colspan="8"><strong>{{ $employeeApplications->count() }} overtime application(s)</strong></td>
+                    <td colspan="9"><strong>{{ $employeeApplications->count() }} overtime application(s)</strong></td>
                   </tr>
                   @foreach($employeeApplications as $application)
                     @php
@@ -193,11 +219,30 @@
                         @endif
                       </td>
                       <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
+                      <td>
+                        @if($application->paid_at)
+                          <span class="text-success"><i class="fas fa-check-circle"></i> Paid</span><br>
+                          <small>{{ $application->paid_by }} · {{ $application->paid_at->format('d M Y H:i') }}</small>
+                        @elseif($application->status === OvertimeApplication::STATUS_APPROVED)
+                          <form action="{{ route('overtime.mark-paid', $application->id) }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="tab" value="{{ $tabKey }}">
+                            <input type="hidden" name="status" value="{{ $status }}">
+                            <input type="hidden" name="payment_status" value="{{ $paymentStatus }}">
+                            <button type="submit" class="btn btn-sm btn-outline-success">Mark Paid</button>
+                          </form>
+                        @else
+                          <span class="text-muted">Available after approval</span>
+                        @endif
+                      </td>
                       <td>{{ $application->hr_remarks ?: '-' }}</td>
                       <td>
                         @if($canAccountsAct)
                           <form action="{{ route('overtime.finance-decision', $application->id) }}" method="POST">
                             @csrf
+                            <input type="hidden" name="tab" value="{{ $tabKey }}">
+                            <input type="hidden" name="status" value="{{ $status }}">
+                            <input type="hidden" name="payment_status" value="{{ $paymentStatus }}">
                             <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
                             <div class="d-flex gap-1">
                               <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
@@ -234,7 +279,7 @@
                         </tr> --}}
                                                 <tr class="approval-row">
 
-                        <td colspan="13">
+                        <td colspan="12">
 
                                 <div class="approval-wrapper">
 
@@ -334,13 +379,13 @@
                   @endforeach
                 @empty
                   <tr>
-                    <td colspan="11" class="text-center text-muted">No overtime applications found for this month.</td>
+                    <td colspan="12" class="text-center text-muted">No overtime applications found for this month.</td>
                   </tr>
                 @endforelse
 
-                @if($applications->count())
+                @if($tabApplications->count())
                   @php
-                    $grandTotal = $applications->reduce(function ($carry, $application) {
+                    $grandTotal = $tabApplications->reduce(function ($carry, $application) {
                       // Adding only those amounts that have the HR approved status to the grand total
                       // if ($application->status !== OvertimeApplication::STATUS_HR_APPROVED) {
                       //   return $carry;
@@ -352,11 +397,14 @@
                   <tr class="table-active">
                     <td colspan="7" class="text-end"><strong>Grand Total</strong></td>
                     <td class="text-right"><strong>PKR {{ number_format($grandTotal, 2) }}</strong></td>
-                    <td colspan="3"></td>
+                    <td colspan="4"></td>
                   </tr>
                 @endif
               </tbody>
             </table>
+          </div>
+          </div>
+          @endforeach
           </div>
         </div>
       </div>
@@ -365,6 +413,10 @@
 </div>
 @endsection
 @push('scripts')
+  $('#overtimeFinanceTabs a[data-toggle="tab"]').on('shown.bs.tab', function (event) {
+    $('form[action="{{ route('overtime.finance-report') }}"] input[name="tab"]').val(event.target.getAttribute('href').replace('#overtime-finance-', ''));
+  });
+
   document.getElementById('ot-approved-report-btn').addEventListener('click', function(event) {
     event.preventDefault();
 

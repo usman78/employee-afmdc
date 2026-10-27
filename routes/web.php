@@ -178,6 +178,7 @@ Route::middleware(['auth', 'password.current'])->group(function () {
     Route::get('/finance/advance-salary-report/download-by-name', [AdvanceSalaryController::class, 'nameFilteredDownload'])->middleware('report.access:advance-salary-finance')->name('advance-salary.name-filtered-download');
     Route::get('/finance/advance-salary-report/download-by-date', [AdvanceSalaryController::class, 'dateFilteredDownload'])->middleware('report.access:advance-salary-finance')->name('advance-salary.date-filtered-download');
     Route::post('/finance/advance-salary-report/{application}/decision', [AdvanceSalaryController::class, 'accountsDecision'])->name('advance-salary.accounts-decision');
+    Route::post('/finance/advance-salary-report/{application}/paid', [AdvanceSalaryController::class, 'markPaid'])->middleware('report.access:advance-salary-finance')->name('advance-salary.mark-paid');
     Route::get('/advance-salary-subordinate-applications', [AdvanceSalaryController::class, 'hodIndex'])->name('advance-salary.hod-index');
     Route::get('/advance-salary-approvals/{application}', [AdvanceSalaryController::class, 'hodShow'])->name('advance-salary.hod-show');
     Route::post('/advance-salary-approvals/{application}/decision', [AdvanceSalaryController::class, 'hodDecision'])->name('advance-salary.hod-decision');
@@ -202,6 +203,7 @@ Route::middleware(['auth', 'password.current'])->group(function () {
     Route::get('/report-access', [ReportAccessController::class, 'index'])->name('report-access.index');
     Route::put('/report-access/{empCode}', [ReportAccessController::class, 'update'])->name('report-access.update');
     Route::post('/finance/overtime-report/{application}/decision', [OvertimeController::class, 'financeDecision'])->name('overtime.finance-decision');
+    Route::post('/finance/overtime-report/{application}/paid', [OvertimeController::class, 'markPaid'])->middleware('report.access:overtime-finance')->name('overtime.mark-paid');
     
     Route::get('/audit-reports', [AuditReportController::class, 'index'])->middleware('report.access:audit-dashboard')->name('audit-reports.index');
     Route::get('/audit-reports/advance-salary', [AuditReportController::class, 'advanceSalary'])->middleware('report.access:audit-advance-salary')->name('audit-reports.advance-salary');

@@ -242,7 +242,6 @@ class OvertimeController extends Controller
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');
-
         $applications = OvertimeApplication::with([
                 'employee.designation',
                 'employee.department',
@@ -370,6 +369,8 @@ class OvertimeController extends Controller
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');
+        $paymentStatus = $request->input('payment_status');
+        $activeTab = $request->input('tab') === 'daily-wager' ? 'daily-wager' : 'regular';
 
         $applications = OvertimeApplication::where('salary_month', $month)
             ->whereIn('status', [
@@ -380,6 +381,8 @@ class OvertimeController extends Controller
             ->when($status, function ($query) use ($status) {
                 $query->where('status', $status);
             })
+            ->when($paymentStatus === 'paid', fn ($query) => $query->whereNotNull('paid_at'))
+            ->when($paymentStatus === 'unpaid', fn ($query) => $query->whereNull('paid_at'))
             ->orderBy('emp_code')
             ->orderBy('overtime_date')
             ->orderByRaw("CASE WHEN STATUS = 'HR approved' THEN 1 WHEN STATUS = 'approved' THEN 2 ELSE 3 END")
@@ -390,6 +393,8 @@ class OvertimeController extends Controller
             'applications' => $applications,
             'month' => $month,
             'status' => $status,
+            'paymentStatus' => $paymentStatus,
+            'activeTab' => $activeTab,
             'statuses' => $this->financeReportStatuses(),
         ]);
     }
@@ -402,7 +407,12 @@ class OvertimeController extends Controller
 
         if ($overtimeApplication->status !== OvertimeApplication::STATUS_HR_APPROVED) {
             return redirect()
-                ->route('overtime.finance-report', ['month' => $overtimeApplication->salary_month])
+                ->route('overtime.finance-report', [
+                    'month' => $overtimeApplication->salary_month,
+                    'status' => $request->input('status'),
+                    'payment_status' => $request->input('payment_status'),
+                    'tab' => $request->input('tab'),
+                ])
                 ->with('error', 'Only HR approved applications can be updated by Finance.');
         }
 
@@ -428,8 +438,36 @@ class OvertimeController extends Controller
         );
 
         return redirect()
-            ->route('overtime.finance-report', ['month' => $overtimeApplication->salary_month])
+            ->route('overtime.finance-report', [
+                'month' => $overtimeApplication->salary_month,
+                'status' => $request->input('status'),
+                'payment_status' => $request->input('payment_status'),
+                'tab' => $request->input('tab'),
+            ])
             ->with('success', 'Overtime application updated by Finance successfully.');
+    }
+
+    public function markPaid(Request $request, $application)
+    {
+        $this->ensureReportAccess('overtime-finance');
+        $this->ensureAccountsOfficer();
+
+        $overtimeApplication = OvertimeApplication::where('id', $application)->firstOrFail();
+        abort_unless($overtimeApplication->status === OvertimeApplication::STATUS_APPROVED, 422);
+
+        if (! $overtimeApplication->paid_at) {
+            $overtimeApplication->forceFill([
+                'paid_by' => (string) $request->user()->emp_code,
+                'paid_at' => now(),
+            ])->save();
+        }
+
+        return redirect()->route('overtime.finance-report', [
+            'month' => $overtimeApplication->salary_month,
+            'status' => $request->input('status'),
+            'payment_status' => $request->input('payment_status'),
+            'tab' => $request->input('tab'),
+        ])->with('success', 'Overtime payment marked as paid.');
     }
 
     private function buildSummary(User $employee, string $month): array

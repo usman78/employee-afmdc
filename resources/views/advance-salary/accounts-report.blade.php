@@ -31,7 +31,7 @@
         <div class="portfolio-info">
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h3 class="mb-0">Advance Salary Finance Report</h3>
-            <a href="{{ route('finance-reports') }}" class="btn btn-outline-secondary btn-sm">Back</a>
+            <a href="{{ route('finance-reports') }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left"></i> Back</a>
           </div>
 
           @if(session('success'))
@@ -45,6 +45,7 @@
           @endif
 
           <form action="{{ route('advance-salary.accounts-report') }}" method="GET" class="d-flex align-items-end gap-2 flex-wrap mt-4 mb-4">
+            <input type="hidden" name="tab" value="{{ $activeTab }}">
             <div>
               <label for="month" class="form-label">Month</label>
               <input type="month" id="month" name="month" class="form-control" value="{{ $month }}">
@@ -60,12 +61,21 @@
                 @endforeach
               </select>
             </div>
+            <div>
+              <label for="payment_status" class="form-label">Payment</label>
+              <select id="payment_status" name="payment_status" class="form-control">
+                <option value="">All Payment States</option>
+                <option value="paid" @selected(($paymentStatus ?? '') === 'paid')>Paid</option>
+                <option value="unpaid" @selected(($paymentStatus ?? '') === 'unpaid')>Unpaid</option>
+              </select>
+            </div>
             <button type="submit" class="btn btn-primary">View Report</button>
+            {{-- <a href="{{ route('advance-salary.accounts-report') }}" class="btn btn-outline-secondary">Clear Filters</a> --}}
             <div class="dropdown">
               <button class="btn btn-primary dropdown-toggle" type="button"
                   id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true"
                   aria-expanded="false">
-                  Download Report
+                  <i class="fas fa-download"></i>
               </button>
               <div class="dropdown-menu animated--fade-in"
                   aria-labelledby="dropdownMenuButton">
@@ -78,19 +88,19 @@
 
           <ul class="nav nav-tabs mt-4 mb-3" id="advanceSalaryAccountsTabs" role="tablist">
             <li class="nav-item" role="presentation">
-              <a class="nav-link active" id="accounts-on-roll-tab" data-toggle="tab" href="#accounts-on-roll" role="tab" aria-controls="accounts-on-roll" aria-selected="true">
+              <a class="nav-link {{ $activeTab === 'accounts-on-roll' ? 'active' : '' }}" id="accounts-on-roll-tab" data-toggle="tab" href="#accounts-on-roll" role="tab" aria-controls="accounts-on-roll" aria-selected="{{ $activeTab === 'accounts-on-roll' ? 'true' : 'false' }}">
                 On Roll Applications
               </a>
             </li>
             <li class="nav-item" role="presentation">
-              <a class="nav-link" id="accounts-daily-wager-tab" data-toggle="tab" href="#accounts-daily-wager" role="tab" aria-controls="accounts-daily-wager" aria-selected="false">
+              <a class="nav-link {{ $activeTab === 'accounts-daily-wager' ? 'active' : '' }}" id="accounts-daily-wager-tab" data-toggle="tab" href="#accounts-daily-wager" role="tab" aria-controls="accounts-daily-wager" aria-selected="{{ $activeTab === 'accounts-daily-wager' ? 'true' : 'false' }}">
                 Daily Wager Applications
               </a>
             </li>
           </ul>
 
           <div class="tab-content">
-            <div class="tab-pane fade show active" id="accounts-on-roll" role="tabpanel" aria-labelledby="accounts-on-roll-tab">
+            <div class="tab-pane fade {{ $activeTab === 'accounts-on-roll' ? 'show active' : '' }}" id="accounts-on-roll" role="tabpanel" aria-labelledby="accounts-on-roll-tab">
               <div class="table-responsive">
                 <table class="table accounts-report-table">
                   <thead>
@@ -107,6 +117,7 @@
                       <th>Sanctioned by HR (PKR)</th>
                       <th>HR Approved By</th>
                       <th>Status</th>
+                      <th>Payment Tracking</th>
                       <th>Accounts Action</th>
                     </tr>
                   </thead>
@@ -129,9 +140,28 @@
                         <td>{{ $application->hrApprover ? capitalizeWords($application->hrApprover->name) : '-' }}</td>
                         <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
                         <td>
+                          @if($application->paid_at)
+                            <span class="text-success"><i class="fas fa-check-circle"></i> Paid</span><br>
+                            <small>{{ $application->paid_by }} · {{ $application->paid_at->format('d M Y H:i') }}</small>
+                          @elseif($application->status === AdvanceSalaryApplication::STATUS_APPROVED)
+                            <form action="{{ route('advance-salary.mark-paid', $application->id) }}" method="POST">
+                              @csrf
+                              <input type="hidden" name="status" value="{{ $status }}">
+                              <input type="hidden" name="payment_status" value="{{ $paymentStatus }}">
+                              <input type="hidden" name="tab" value="accounts-on-roll">
+                              <button type="submit" class="btn btn-sm btn-outline-success">Mark Paid</button>
+                            </form>
+                          @else
+                            <span class="text-muted">Available after approval</span>
+                          @endif
+                        </td>
+                        <td>
                           @if($canAccountsAct)
                             <form action="{{ route('advance-salary.accounts-decision', $application->id) }}" method="POST">
                               @csrf
+                              <input type="hidden" name="tab" value="accounts-on-roll">
+                              <input type="hidden" name="status" value="{{ $status }}">
+                              <input type="hidden" name="payment_status" value="{{ $paymentStatus }}">
                               <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
                               <div class="d-flex gap-1">
                                 <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
@@ -145,7 +175,7 @@
                       </tr>
                     @empty
                       <tr>
-                        <td colspan="12" class="text-center text-muted">No on-roll HR approved advance salary applications found for this month.</td>
+                        <td colspan="14" class="text-center text-muted">No on-roll HR approved advance salary applications found for this month.</td>
                       </tr>
                     @endforelse
                   </tbody>
@@ -153,7 +183,7 @@
               </div>
             </div>
 
-            <div class="tab-pane fade" id="accounts-daily-wager" role="tabpanel" aria-labelledby="accounts-daily-wager-tab">
+            <div class="tab-pane fade {{ $activeTab === 'accounts-daily-wager' ? 'show active' : '' }}" id="accounts-daily-wager" role="tabpanel" aria-labelledby="accounts-daily-wager-tab">
               <div class="table-responsive">
                 <table class="table accounts-report-table">
                   <thead>
@@ -170,6 +200,7 @@
                       <th>Sanctioned by HR (PKR)</th>
                       <th>HR Approved By</th>
                       <th>Status</th>
+                      <th>Payment Tracking</th>
                       <th>Accounts Action</th>
                     </tr>
                   </thead>
@@ -192,9 +223,28 @@
                         <td>{{ $application->hrApprover ? capitalizeWords($application->hrApprover->name) : '-' }}</td>
                         <td><span class="badge bg-secondary">{{ $application->status }}</span></td>
                         <td>
+                          @if($application->paid_at)
+                            <span class="text-success"><i class="fas fa-check-circle"></i> Paid</span><br>
+                            <small>{{ $application->paid_by }} · {{ $application->paid_at->format('d M Y H:i') }}</small>
+                          @elseif($application->status === AdvanceSalaryApplication::STATUS_APPROVED)
+                            <form action="{{ route('advance-salary.mark-paid', $application->id) }}" method="POST">
+                              @csrf
+                              <input type="hidden" name="status" value="{{ $status }}">
+                              <input type="hidden" name="payment_status" value="{{ $paymentStatus }}">
+                              <input type="hidden" name="tab" value="accounts-daily-wager">
+                              <button type="submit" class="btn btn-sm btn-outline-success">Mark Paid</button>
+                            </form>
+                          @else
+                            <span class="text-muted">Available after approval</span>
+                          @endif
+                        </td>
+                        <td>
                           @if($canAccountsAct)
                             <form action="{{ route('advance-salary.accounts-decision', $application->id) }}" method="POST">
                               @csrf
+                              <input type="hidden" name="tab" value="accounts-daily-wager">
+                              <input type="hidden" name="status" value="{{ $status }}">
+                              <input type="hidden" name="payment_status" value="{{ $paymentStatus }}">
                               <textarea name="remarks" class="form-control form-control-sm mb-2" rows="2" placeholder="Remarks">{{ old('remarks') }}</textarea>
                               <div class="d-flex gap-1">
                                 <button type="submit" name="decision" value="approve" class="btn btn-sm btn-success">Approve</button>
@@ -208,7 +258,7 @@
                       </tr>
                     @empty
                       <tr>
-                        <td colspan="12" class="text-center text-muted">No daily-wager HR approved advance salary applications found for this month.</td>
+                        <td colspan="14" class="text-center text-muted">No daily-wager HR approved advance salary applications found for this month.</td>
                       </tr>
                     @endforelse
                   </tbody>
@@ -281,3 +331,13 @@
   </div>
 </div>
 @endsection
+@push('scripts')
+  $('#advanceSalaryAccountsTabs a[data-toggle="tab"]').on('shown.bs.tab', function (event) {
+    $('form[action="{{ route('advance-salary.accounts-report') }}"] input[name="tab"]').val(event.target.getAttribute('href').slice(1));
+  });
+@endpush
+@push('scripts')
+  $('#advanceSalaryAccountsTabs a[data-toggle="tab"]').on('shown.bs.tab', function (event) {
+    $('form[action="{{ route('advance-salary.accounts-report') }}"] input[name="tab"]').val(event.target.getAttribute('href').slice(1));
+  });
+@endpush

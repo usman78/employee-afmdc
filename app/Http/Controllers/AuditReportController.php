@@ -24,6 +24,7 @@ class AuditReportController extends Controller
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');
+        $activeTab = $request->input('tab') === 'daily-wager' ? 'daily-wager' : 'regular';
         $applications = AdvanceSalaryApplication::with([
             'employee.designation',
             'employee.department',
@@ -47,6 +48,7 @@ class AuditReportController extends Controller
             'month' => $month,
             'status' => $status,
             'auditStatus' => $request->input('audit_status'),
+            'activeTab' => $activeTab,
             'statuses' => $this->advanceSalaryStatuses(),
         ]);
     }
@@ -65,6 +67,7 @@ class AuditReportController extends Controller
             'month' => $application->salary_month,
             'status' => request()->input('status'),
             'audit_status' => request()->input('audit_status'),
+            'tab' => request()->input('tab'),
         ])->with('success', 'Advance salary application marked as audited.');
     }
 
@@ -74,6 +77,7 @@ class AuditReportController extends Controller
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');
+        $activeTab = $request->input('tab') === 'daily-wager' ? 'daily-wager' : 'regular';
         $applications = OvertimeApplication::with([
             'employee.designation',
             'employee.department',
@@ -96,6 +100,7 @@ class AuditReportController extends Controller
             'dailyWagerApplications' => $applications->where('emp_type', 2)->values(),
             'month' => $month,
             'status' => $status,
+            'activeTab' => $activeTab,
             'auditStatus' => $request->input('audit_status'),
             'statuses' => $this->overtimeStatuses(),
         ]);
@@ -115,6 +120,7 @@ class AuditReportController extends Controller
             'month' => $application->salary_month,
             'status' => request()->input('status'),
             'audit_status' => request()->input('audit_status'),
+            'tab' => request()->input('tab'),
         ])->with('success', 'Overtime application marked as audited.');
     }
 

@@ -10,6 +10,7 @@
     <div class="card shadow mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('audit-reports.advance-salary') }}" class="row align-items-end">
+                <input type="hidden" name="tab" value="{{ $activeTab }}">
                 <div class="col-md-3">
                     <label for="month" class="form-label">Month</label>
                     <input type="month" id="month" name="month" class="form-control" value="{{ $month }}">
@@ -54,16 +55,16 @@
 
     <ul class="nav nav-tabs mb-3" id="advanceSalaryAuditTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <a class="nav-link active" id="regular-tab" data-toggle="tab" href="#regular" role="tab" aria-controls="regular" aria-selected="true">Regular Applications</a>
+            <a class="nav-link {{ $activeTab === 'regular' ? 'active' : '' }}" id="regular-tab" data-toggle="tab" href="#regular" role="tab" aria-controls="regular" aria-selected="{{ $activeTab === 'regular' ? 'true' : 'false' }}">Regular Applications</a>
         </li>
         <li class="nav-item" role="presentation">
-            <a class="nav-link" id="daily-wager-tab" data-toggle="tab" href="#daily-wager" role="tab" aria-controls="daily-wager" aria-selected="false">Daily Wager Applications</a>
+            <a class="nav-link {{ $activeTab === 'daily-wager' ? 'active' : '' }}" id="daily-wager-tab" data-toggle="tab" href="#daily-wager" role="tab" aria-controls="daily-wager" aria-selected="{{ $activeTab === 'daily-wager' ? 'true' : 'false' }}">Daily Wager Applications</a>
         </li>
     </ul>
 
     <div class="tab-content">
         @foreach(['regular' => $regularApplications, 'daily-wager' => $dailyWagerApplications] as $tabKey => $tabApplications)
-        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $tabKey }}" role="tabpanel" aria-labelledby="{{ $tabKey }}-tab">
+        <div class="tab-pane fade {{ $activeTab === $tabKey ? 'show active' : '' }}" id="{{ $tabKey }}" role="tabpanel" aria-labelledby="{{ $tabKey }}-tab">
     <div class="table-responsive">
         <table class="table table-bordered table-sm">
             <thead class="thead-light">
@@ -97,6 +98,7 @@
                                     <input type="hidden" name="month" value="{{ $month }}">
                                     <input type="hidden" name="status" value="{{ $status }}">
                                     <input type="hidden" name="audit_status" value="{{ $auditStatus }}">
+                                    <input type="hidden" name="tab" value="{{ $tabKey }}">
                                     <button type="submit" class="btn btn-sm btn-outline-success" title="Mark as audited"><i class="fas fa-check"></i> Verify</button>
                                 </form>
                             @else
@@ -115,3 +117,8 @@
     </div>
 </div>
 @endsection
+@push('scripts')
+    $('#advanceSalaryAuditTabs a[data-toggle="tab"]').on('shown.bs.tab', function (event) {
+        $('form[action="{{ route('audit-reports.advance-salary') }}"] input[name="tab"]').val(event.target.getAttribute('href').slice(1));
+    });
+@endpush

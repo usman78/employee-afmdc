@@ -49,6 +49,8 @@ class OvertimeApplication extends Model
         'finance_remarks',
         'audited_by',
         'audited_at',
+        'paid_by',
+        'paid_at',
         'applied_at',
     ];
 
@@ -70,6 +72,7 @@ class OvertimeApplication extends Model
         'hr_approved_at' => 'datetime',
         'finance_approved_at' => 'datetime',
         'audited_at' => 'datetime',
+        'paid_at' => 'datetime',
         'applied_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

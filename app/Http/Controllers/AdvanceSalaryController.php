@@ -283,6 +283,8 @@ class AdvanceSalaryController extends Controller
 
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $status = $request->input('status');
+        $paymentStatus = $request->input('payment_status');
+        $activeTab = $request->input('tab') === 'accounts-daily-wager' ? 'accounts-daily-wager' : 'accounts-on-roll';
         $applications = AdvanceSalaryApplication::with(['employee.designation', 'employee.department', 'hrApprover'])
             ->where('salary_month', $month)
             ->whereIn('status', [
@@ -293,6 +295,8 @@ class AdvanceSalaryController extends Controller
             ->when($status, function ($query) use ($status) {
                 $query->where('status', $status);
             })
+            ->when($paymentStatus === 'paid', fn ($query) => $query->whereNotNull('paid_at'))
+            ->when($paymentStatus === 'unpaid', fn ($query) => $query->whereNull('paid_at'))
             // ->orderByRaw("CASE WHEN STATUS = 'HR approved' THEN 1 WHEN STATUS = 'approved' THEN 2 ELSE 3 END")
             ->orderByRaw('CAST(emp_code AS NUMBER)')
             ->get();
@@ -311,6 +315,8 @@ class AdvanceSalaryController extends Controller
             'dailyWagerApplications' => $dailyWagerApplications,
             'month' => $month,
             'status' => $status,
+            'paymentStatus' => $paymentStatus,
+            'activeTab' => $activeTab,
             'statuses' => $this->accountsReportStatuses(),
         ]);
     }
@@ -435,7 +441,12 @@ class AdvanceSalaryController extends Controller
 
         if ($advanceSalaryApplication->status !== AdvanceSalaryApplication::STATUS_HR_APPROVED) {
             return redirect()
-                ->route('advance-salary.accounts-report', ['month' => $advanceSalaryApplication->salary_month])
+                ->route('advance-salary.accounts-report', [
+                    'month' => $advanceSalaryApplication->salary_month,
+                    'status' => $request->input('status'),
+                    'payment_status' => $request->input('payment_status'),
+                    'tab' => $request->input('tab'),
+                ])
                 ->with('error', 'Only HR approved applications can be updated by Accounts.');
         }
 
@@ -459,8 +470,36 @@ class AdvanceSalaryController extends Controller
         $employee?->notify(new AdvanceSalaryDecisionNotification($advanceSalaryApplication));
 
         return redirect()
-            ->route('advance-salary.accounts-report', ['month' => $advanceSalaryApplication->salary_month])
+            ->route('advance-salary.accounts-report', [
+                'month' => $advanceSalaryApplication->salary_month,
+                'status' => $request->input('status'),
+                'payment_status' => $request->input('payment_status'),
+                'tab' => $request->input('tab'),
+            ])
             ->with('success', 'Advance salary application updated by Accounts successfully.');
+    }
+
+    public function markPaid(Request $request, $application)
+    {
+        $this->ensureReportAccess('advance-salary-finance');
+        $this->ensureAccountsOfficer();
+
+        $advanceSalaryApplication = AdvanceSalaryApplication::where('id', $application)->firstOrFail();
+        abort_unless($advanceSalaryApplication->status === AdvanceSalaryApplication::STATUS_APPROVED, 422);
+
+        if (! $advanceSalaryApplication->paid_at) {
+            $advanceSalaryApplication->forceFill([
+                'paid_by' => (string) $request->user()->emp_code,
+                'paid_at' => now(),
+            ])->save();
+        }
+
+        return redirect()->route('advance-salary.accounts-report', [
+            'month' => $advanceSalaryApplication->salary_month,
+            'status' => $request->input('status'),
+            'payment_status' => $request->input('payment_status'),
+            'tab' => $request->input('tab'),
+        ])->with('success', 'Advance salary payment marked as paid.');
     }
 
     public function revoke($empCode, $application)
