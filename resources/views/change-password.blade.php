@@ -17,7 +17,7 @@
                         </div>
                     @endif
                     <div class="alert alert-info" role="alert">
-                        Password must be at least 8 characters and include uppercase letters, lowercase letters, and numbers.
+                        Password must be at least 8 characters of letters or numbers.
                     </div>
                     <form method="POST" action="{{ route('update-password') }}">
                         @csrf

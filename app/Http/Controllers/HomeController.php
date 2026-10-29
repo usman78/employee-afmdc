@@ -65,7 +65,7 @@ class HomeController extends Controller
             'new_password' => [
                 'required',
                 'confirmed',
-                Password::min(8)->mixedCase()->numbers(),
+                Password::min(8),
             ],
         ]);
 
