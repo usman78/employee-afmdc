@@ -64,10 +64,19 @@
                                                 @enderror
                                             </div>
                                             <div class="form-group">
-                                                <input id="u_passwd" type="password" placeholder="Enter password..."
-                                                class="form-control form-control-user @error('u_passwd') is-invalid @enderror" 
-                                                name="u_passwd" required autocomplete="current-password">
-            
+                                                <div class="position-relative">
+                                                    <input id="u_passwd" type="password" placeholder="Enter password..."
+                                                    class="form-control form-control-user @error('u_passwd') is-invalid @enderror" 
+                                                    name="u_passwd" required autocomplete="current-password"
+                                                    style="padding-right: 2.5rem;">
+                                                    <button type="button" id="togglePassword"
+                                                        onclick="togglePasswordVisibility()"
+                                                        style="position:absolute; top:50%; right:0.75rem; transform:translateY(-50%); background:none; border:none; padding:0; cursor:pointer; color:#6c757d; line-height:1;"
+                                                        title="Show/hide password">
+                                                        <i id="togglePasswordIcon" class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+
                                                 @error('u_passwd')
                                                     <span class="invalid-feedback" role="alert">
                                                         <strong>{{ $message }}</strong>
@@ -128,6 +137,19 @@
                 });
             </script>
         @endif
+        <script>
+            function togglePasswordVisibility() {
+                var input = document.getElementById('u_passwd');
+                var icon  = document.getElementById('togglePasswordIcon');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            }
+        </script>
     </body>
 </html>
 
