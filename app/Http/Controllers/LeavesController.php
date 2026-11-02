@@ -70,19 +70,17 @@ class LeavesController extends Controller
         $yearStart = Carbon::now()->startOfYear()->toDateString();
         $today = Carbon::today()->toDateString();
 
-        $yearlyLeavesTaken = Attendance::selectRaw('att_stat, COUNT(*) as total')
+        $yearlyLeavesTaken = Leave::selectRaw('leave_code, SUM(l_day) as total')
             ->where('emp_code', $emp_code)
-            ->whereIn('att_stat', [5, 12])
-            ->whereRaw(
-                "TRUNC(at_date) BETWEEN TO_DATE(?, 'YYYY-MM-DD') AND TO_DATE(?, 'YYYY-MM-DD')",
-                [$yearStart, $today]
-            )
-            ->groupBy('att_stat')
-            ->pluck('total', 'att_stat');
+            ->whereIn('leave_code', [5, 12])
+            ->where('from_date', '>=', $yearStart)
+            ->where('to_date', '<=', $today)
+            ->groupBy('leave_code')
+            ->pluck('total', 'leave_code');
 
         $yearlyLeaveSummary = [
-            'without_pay' => (int) ($yearlyLeavesTaken->get(5, 0)),
-            'od' => (int) ($yearlyLeavesTaken->get(12, 0)),
+            'without_pay' => $yearlyLeavesTaken->get(5, 0),
+            'od' => $yearlyLeavesTaken->get(12, 0),
             'from' => $yearStart,
             'to' => $today,
         ];
