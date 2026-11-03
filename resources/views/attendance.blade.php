@@ -215,6 +215,7 @@
                 <th>Late Mins</th>
                 <th>Early Mins</th>
                 <th>Status</th>
+                <th>Leave Approval Status</th>
               </tr>
             </thead>
             <tbody>
@@ -301,6 +302,44 @@
                       <span class="badge badge-success">
                         Present
                       </span>
+                    @endif
+                  </td>
+                  {{-- Leave approval status --}}
+                  <td>
+                    @if (!empty($record['leave_entries'] ?? []))
+                      @foreach ($record['leave_entries'] as $leave)
+                        @php
+                          $approvalStatus = match ((int) ($leave['status'] ?? 0)) {
+                            1 => 'Pending at Supervisor',
+                            3 => 'Pending HOD',
+                            5 => 'Pending at HR',
+                            7 => 'Approved',
+                            default => null,
+                          };
+                        @endphp
+                        @if ($approvalStatus)
+                          <span class="badge {{ (int) ($leave['status'] ?? 0) === 7 ? 'badge-info' : 'badge-warning' }}">
+                            {{ $approvalStatus }}
+                          </span><br>
+                        @endif
+                      @endforeach
+                    @elseif ($record['leave_type'] ?? false)
+                      @php
+                        $approvalStatus = match ((int) ($record['leave_status'] ?? 0)) {
+                          1 => 'Pending at Supervisor',
+                          3 => 'Pending HOD',
+                          5 => 'Pending at HR',
+                          7 => 'Approved',
+                          default => null,
+                        };
+                      @endphp
+                      @if ($approvalStatus)
+                        <span class="badge {{ (int) ($record['leave_status'] ?? 0) === 7 ? 'badge-info' : 'badge-warning' }}">{{ $approvalStatus }}</span>
+                      @else
+                        —
+                      @endif
+                    @else
+                      —
                     @endif
                   </td>
                 </tr>
