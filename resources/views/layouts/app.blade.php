@@ -578,7 +578,7 @@
                     Swal.fire({
                         icon: 'warning',
                         title: 'Notice for All Staff',
-                        text: 'Kindly get your pending leaves approved by your HOD from the portal before month end; otherwise, leave will be auto-deducted from salary. HR will not be responsible. Regards, HR Dept.',
+                        text: 'It is employee\'s responsibility to apply for leave/s within the effective month along with approval from HOD.',
                         confirmButtonText: 'I Understand',
                         confirmButtonColor: '#973594',
                     });

@@ -51,8 +51,8 @@ class LoginController extends Controller
             logger()->info('Login successful for user: ' . $credentials['employee_code']);
 
             // Display the reminder once immediately after login during the
-            // final three calendar days of every month.
-            if ($this->isInLastThreeDaysOfMonth()) {
+            // final four calendar days of every month.
+            if ($this->isInLastFourDaysOfMonth()) {
                 $request->session()->flash('pending_leave_approval_notice', true);
             }
 
@@ -70,11 +70,11 @@ class LoginController extends Controller
         return 'employee_code';
     }
 
-    private function isInLastThreeDaysOfMonth(): bool
+    private function isInLastFourDaysOfMonth(): bool
     {
         $today = Carbon::today();
 
-        return $today->greaterThanOrEqualTo($today->copy()->endOfMonth()->subDays(2));
+        return $today->greaterThanOrEqualTo($today->copy()->endOfMonth()->subDays(4));
     }
 
     public function logout(Request $request)
