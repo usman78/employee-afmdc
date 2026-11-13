@@ -573,6 +573,7 @@ ul.error-msg{
 
     async function refreshShiftForSelectedDate() {
       if (!singleLeaveDate.value) return;
+      const selectedShortStart = startTime.value;
       const body = new URLSearchParams();
       body.append('_token', document.querySelector('input[name="_token"]').value);
       body.append('single_leave_date', singleLeaveDate.value);
@@ -599,6 +600,10 @@ ul.error-msg{
         startTime.max = minutesToTime(effectiveEndMinutes - 120);
         resetCalculatedTime(startTime, endTime, warning);
         resetCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning);
+        if (shortDay.checked && selectedShortStart) {
+          startTime.value = selectedShortStart;
+          startTime.dispatchEvent(new Event('change'));
+        }
       } catch (error) {
         effectiveStartMinutes = employeeStartMinutes;
         effectiveEndMinutes = employeeEndMinutes;
