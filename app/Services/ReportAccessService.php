@@ -26,6 +26,7 @@ class ReportAccessService
         'overtime-hr' => ['label' => 'Overtime Report', 'group' => 'HR'],
         'overtime-eligibility' => ['label' => 'Overtime Eligibility Report', 'group' => 'HR'],
         'attendance-discrepancy' => ['label' => 'Attendance Discrepancy Report', 'group' => 'HR'],
+        'admin-attendance-discrepancy' => ['label' => 'Attendance Discrepancy Report', 'group' => 'Admin'],
         'advance-salary-finance' => ['label' => 'Advance Salary Finance Report', 'group' => 'Finance'],
         'overtime-finance' => ['label' => 'Overtime Finance Report', 'group' => 'Finance'],
         'inventory-reports' => ['label' => 'Inventory Reports', 'group' => 'Inventory'],

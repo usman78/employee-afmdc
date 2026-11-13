@@ -23,12 +23,13 @@
     }
 @endpush
 @section('content')
+@php($adminReport = request()->routeIs('admin-reports.*'))
 <div class="container">
     <div class="row">
         <div class="col-md-12">
             <h3>Attendance Discrepancy Report</h3>
             <p class="text-muted mb-2">Report includes job/roster timing and attendance information against it.</p>
-            <form method="post" action="{{route('att-discrepency')}}">
+            <form method="post" action="{{ $adminReport ? route('admin-reports.attendance-discrepancy.generate') : route('att-discrepency') }}">
                 @csrf
                 <div class="row">
                     <div class="col-md-12 form-group mt-3">

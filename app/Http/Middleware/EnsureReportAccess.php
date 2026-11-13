@@ -18,6 +18,7 @@ class EnsureReportAccess
             'hr-dashboard' => $user && $reportAccess->allowedAny($user, $reportAccess->groupKeys('HR')),
             'finance-dashboard' => $user && $reportAccess->allowedAny($user, $reportAccess->groupKeys('Finance')),
             'audit-dashboard' => $user && $reportAccess->allowedAny($user, $reportAccess->groupKeys('Audit')),            
+            'admin-dashboard' => $user && $reportAccess->allowedAny($user, $reportAccess->groupKeys('Admin')),
             default => $user && $reportAccess->allowed($user, $reportKey),
         };
 

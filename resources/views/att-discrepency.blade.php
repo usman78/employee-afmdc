@@ -78,6 +78,7 @@
 @endpush
 
 @section('content')
+@php($adminReport = request()->routeIs('admin-reports.*'))
 <div class="container">
   <div class="row">
     <div class="col-12">
@@ -152,7 +153,7 @@
             </div>
         </div>
           <div class="attendance-header mt-3">
-            <form action="{{ route('att-discrepency') }}" method="POST" class="d-flex align-items-end flex-wrap gap-2">
+            <form action="{{ $adminReport ? route('admin-reports.attendance-discrepancy.generate') : route('att-discrepency') }}" method="POST" class="d-flex align-items-end flex-wrap gap-2">
               @csrf
               <div>
                 <input type="hidden" name="emp_code" value="{{ $emp_code ?? '' }}">
@@ -187,7 +188,7 @@
               </button>
               <ul class="dropdown-menu" aria-labelledby="downloadDropdownAttendance">
                 <li>
-                  <form action="{{ route('att-discrepancy-report-download', ['emp_code' => $emp_code ?? '']) }}" method="POST" target="_blank" style="display: inline;">
+                  <form action="{{ $adminReport ? route('admin-reports.attendance-discrepancy.download', ['emp_code' => $emp_code ?? '']) : route('att-discrepancy-report-download', ['emp_code' => $emp_code ?? '']) }}" method="POST" target="_blank" style="display: inline;">
                     <input type="hidden" name="start_date" value="{{ $report_start_date ?? Carbon::now()->startOfMonth()->toDateString() }}">
                     @csrf
                     <input type="hidden" name="end_date" value="{{ $report_end_date ?? Carbon::today()->toDateString() }}">
@@ -198,7 +199,7 @@
                   </form>
                 </li>
                 <li>
-                  <form action="{{ route('att-discrepancy-report-download', ['emp_code' => $emp_code ?? '']) }}" method="POST" target="_blank" style="display: inline;">
+                  <form action="{{ $adminReport ? route('admin-reports.attendance-discrepancy.download', ['emp_code' => $emp_code ?? '']) : route('att-discrepancy-report-download', ['emp_code' => $emp_code ?? '']) }}" method="POST" target="_blank" style="display: inline;">
                     <input type="hidden" name="start_date" value="{{ $report_start_date ?? Carbon::now()->startOfMonth()->toDateString() }}">
                     @csrf
                     <input type="hidden" name="end_date" value="{{ $report_end_date ?? Carbon::today()->toDateString() }}">
