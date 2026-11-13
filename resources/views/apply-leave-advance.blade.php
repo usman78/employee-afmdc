@@ -536,6 +536,8 @@ ul.error-msg{
     const singleLeaveDate = document.getElementById("single_leave_date");
     const employeeStartMinutes = timeToMinutes("{{ substr((string) $employee->st_time, 0, 5) }}");
     const employeeEndMinutes = timeToMinutes("{{ substr((string) $employee->end_time, 0, 5) }}");
+    let effectiveStartMinutes = employeeStartMinutes;
+    let effectiveEndMinutes = employeeEndMinutes;
     const empCatg = "{{ $employee->catg_code }}";
   
     function timeToMinutes(t) {
@@ -561,12 +563,46 @@ ul.error-msg{
 
     function getEffectiveEmployeeEndMinutes() {
       return empCatg === "2" && isFridayLeaveDate()
-        ? employeeEndMinutes - 60
-        : employeeEndMinutes;
+        ? effectiveEndMinutes - 60
+        : effectiveEndMinutes;
     }
 
     function getHalfCustomDurationMinutes() {
-      return Math.round((getEffectiveEmployeeEndMinutes() - employeeStartMinutes) / 2);
+      return Math.round((getEffectiveEmployeeEndMinutes() - effectiveStartMinutes) / 2);
+    }
+
+    async function refreshShiftForSelectedDate() {
+      if (!singleLeaveDate.value) return;
+      const body = new URLSearchParams();
+      body.append('_token', document.querySelector('input[name="_token"]').value);
+      body.append('single_leave_date', singleLeaveDate.value);
+      try {
+        const response = await fetch("{{ route('leave.preview') }}", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+          body
+        });
+        if (!response.ok) return;
+        const result = await response.json();
+        if (result.shift) {
+          effectiveStartMinutes = timeToMinutes(result.shift.start);
+          effectiveEndMinutes = timeToMinutes(result.shift.end);
+        } else {
+          effectiveStartMinutes = employeeStartMinutes;
+          effectiveEndMinutes = employeeEndMinutes;
+        }
+        halfCustomStartTime.min = minutesToTime(effectiveStartMinutes);
+        halfCustomStartTime.max = minutesToTime(effectiveEndMinutes);
+        halfCustomEndTime.min = minutesToTime(effectiveStartMinutes);
+        halfCustomEndTime.max = minutesToTime(effectiveEndMinutes);
+        startTime.min = minutesToTime(effectiveStartMinutes);
+        startTime.max = minutesToTime(effectiveEndMinutes - 120);
+        resetCalculatedTime(startTime, endTime, warning);
+        resetCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning);
+      } catch (error) {
+        effectiveStartMinutes = employeeStartMinutes;
+        effectiveEndMinutes = employeeEndMinutes;
+      }
     }
 
     function resetCalculatedTime(startInput, endInput, warningEl) {
@@ -625,7 +661,7 @@ ul.error-msg{
       const customEndMinutes = timeToMinutes(halfCustomEndTime.value);
 
       let message = "";
-      if (customStartMinutes < employeeStartMinutes) {
+      if (customStartMinutes < effectiveStartMinutes) {
         message = "Custom OD time cannot start before your office start time.";
       } else if (customEndMinutes > getEffectiveEmployeeEndMinutes()) {
         message = "Custom OD time must end within your office timing.";
@@ -651,7 +687,7 @@ ul.error-msg{
         return "Leave time cannot go past midnight.";
       }
 
-      if (startMinutes + durationMinutes > employeeEndMinutes) {
+      if (startMinutes + durationMinutes > effectiveEndMinutes) {
         return "Short leave end time cannot go past your office end time.";
       }
 
@@ -659,7 +695,7 @@ ul.error-msg{
     });
 
     bindCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning, getHalfCustomDurationMinutes, (startMinutes, durationMinutes) => {
-      if (startMinutes < employeeStartMinutes) {
+      if (startMinutes < effectiveStartMinutes) {
         return "Custom half leave cannot start before your office start time.";
       }
 
@@ -672,16 +708,21 @@ ul.error-msg{
 
     halfCustomEndTime.addEventListener("change", validateCustomTimeRange);
     singleLeaveDate.addEventListener("change", () => {
+      refreshShiftForSelectedDate();
       if (halfCustomStartTime.value && leaveIntervalCustom.checked) {
         halfCustomStartTime.dispatchEvent(new Event("change"));
       }
     });
+    singleLeaveDate.addEventListener("apply.daterangepicker", refreshShiftForSelectedDate);
 
     // Initial state
     updateDisplay();
 
   formEl.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (halfDay.checked || shortDay.checked) {
+      await refreshShiftForSelectedDate();
+    }
     if (!validateCustomTimeRange()) {
       return;
     }

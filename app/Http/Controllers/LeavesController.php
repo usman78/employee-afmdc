@@ -18,12 +18,31 @@ use App\Models\Attendance;
 use App\Models\Designation;
 use App\Models\Balance;
 use App\Models\Holidays;
+use App\Models\Roster;
 
 class LeavesController extends Controller
 {
     private function authorizeLeaveReportAccess(): void
     {
         abort_unless(Auth::user() && app(\App\Services\ReportAccessService::class)->allowed(Auth::user(), 'leave'), 403);
+    }
+
+    public function getShiftTimesForDate($empCode, Carbon $date, ?Employee $employee = null): array
+    {
+        $employee = $employee ?: Employee::where('emp_code', $empCode)->first();
+        $roster = Roster::where('r_emp_code', $empCode)
+            ->whereRaw(
+                "TRUNC(r_effective_from) <= TO_DATE(?, 'YYYY-MM-DD') AND NVL(TRUNC(r_effective_to), TRUNC(r_effective_from)) >= TO_DATE(?, 'YYYY-MM-DD')",
+                [$date->toDateString(), $date->toDateString()]
+            )
+            ->orderByDesc('r_effective_from')
+            ->first();
+
+        if ($roster && $roster->r_shift_start && $roster->r_shift_end) {
+            return [$roster->r_shift_start, $roster->r_shift_end];
+        }
+
+        return [$employee->st_time ?? null, $employee->end_time ?? null];
     }
 
     public function leaves(Request $request, $emp_code)                                                                      
@@ -287,10 +306,24 @@ class LeavesController extends Controller
 
     public function preview(Request $request)
     {
+        $shift = null;
+        $singleDate = $request->input('single_leave_date');
+        if ($singleDate && auth()->user()) {
+            [$start, $end] = $this->getShiftTimesForDate(
+                auth()->user()->emp_code,
+                Carbon::parse($singleDate)
+            );
+            $shift = $start && $end ? [
+                'start' => Carbon::parse($start)->format('H:i'),
+                'end' => Carbon::parse($end)->format('H:i'),
+            ] : null;
+        }
+
         if($request->input('leave_type') == null) {
             return response()->json([
                 'sandwich' => false,
                 'rest_day' => null,
+                'shift' => $shift,
             ]);
         }
         $emp_code = auth()->user()->emp_code;
@@ -301,6 +334,7 @@ class LeavesController extends Controller
         return response()->json([
             'sandwich' => $sandwichDate !== false,
             'rest_day' => $sandwichDate ? Carbon::parse($sandwichDate)->format('l') : null,
+            'shift' => $shift,
         ]);
     }
 
@@ -403,12 +437,13 @@ class LeavesController extends Controller
             if (! $this->checkLeaveCurrentMonth($leaveDate)) {
                 return response()->json(['error' => 'For half day leave, the selected date must be within the current month.']);
             }
-            $time = Employee::where('emp_code', $emp_code)->first();
-            if (!$time || !$time->st_time || !$time->end_time) {
+            [$shiftStart, $shiftEnd] = $this->getShiftTimesForDate($emp_code, Carbon::parse($leaveDate));
+            if (!$shiftStart || !$shiftEnd) {
                 return response()->json(['error' => 'Office timing is not configured for this employee.']);
             }
-            $startTime = Carbon::parse(  "$leaveDate $time->st_time");
-            $endTime = Carbon::parse( "$leaveDate $time->end_time");
+            $startTime = Carbon::parse("$leaveDate $shiftStart");
+            $endTime = Carbon::parse("$leaveDate $shiftEnd");
+            if ($endTime->lte($startTime)) $endTime->addDay();
             $durationMinutes = $startTime->diffInMinutes($endTime);
             // check if the catgory code is 2 and the day of leave is friday, then reduce the shift duration by 1 hour
             if ($userCatg == 2) {
@@ -953,12 +988,13 @@ class LeavesController extends Controller
             $leave->leave_code = 5; // Unpaid leave code
             $leaveDate = $request->input('single_leave_date');
             $leaveDate = date('d-m-Y', strtotime($leaveDate));
-            $time = Employee::where('emp_code', $emp_code)->first();
-            if (!$time || !$time->st_time || !$time->end_time) {
+            [$shiftStart, $shiftEnd] = $this->getShiftTimesForDate($emp_code, Carbon::parse($leaveDate));
+            if (!$shiftStart || !$shiftEnd) {
                 return response()->json(['error' => 'Office timing is not configured for this employee.']);
             }
-            $startTime = Carbon::parse(  "$leaveDate $time->st_time");
-            $endTime = Carbon::parse( "$leaveDate $time->end_time");
+            $startTime = Carbon::parse("$leaveDate $shiftStart");
+            $endTime = Carbon::parse("$leaveDate $shiftEnd");
+            if ($endTime->lte($startTime)) $endTime->addDay();
             $durationMinutes = $startTime->diffInMinutes($endTime);
             $halfDuration = $durationMinutes / 2;
             $midPoint = $startTime->copy()->addMinutes($halfDuration);
@@ -1074,12 +1110,13 @@ class LeavesController extends Controller
             $leave->leave_code = 12; 
             $leaveDate = $request->input('single_leave_date');
             $leaveDate = date('d-m-Y', strtotime($leaveDate));
-            $time = Employee::where('emp_code', $emp_code)->first();
-            if (!$time || !$time->st_time || !$time->end_time) {
+            [$shiftStart, $shiftEnd] = $this->getShiftTimesForDate($emp_code, Carbon::parse($leaveDate));
+            if (!$shiftStart || !$shiftEnd) {
                 return response()->json(['error' => 'Office timing is not configured for this employee.']);
             }
-            $startTime = Carbon::parse(  "$leaveDate $time->st_time");
-            $endTime = Carbon::parse( "$leaveDate $time->end_time");
+            $startTime = Carbon::parse("$leaveDate $shiftStart");
+            $endTime = Carbon::parse("$leaveDate $shiftEnd");
+            if ($endTime->lte($startTime)) $endTime->addDay();
             $durationMinutes = $startTime->diffInMinutes($endTime);
             $halfDuration = $durationMinutes / 2;
             $midPoint = $startTime->copy()->addMinutes($halfDuration);
@@ -1531,8 +1568,14 @@ class LeavesController extends Controller
             SHIFT TIMES
             ================================ */
             $workDate = Carbon::parse($dateStr);
-            $startShift = $workDate->copy()->setTimeFromTimeString($emp->st_time);
-            $endShift   = $workDate->copy()->setTimeFromTimeString($emp->end_time);
+            [$shiftStart, $shiftEnd] = $this->getShiftTimesForDate($emp_code, $workDate, $emp);
+            if (!$shiftStart || !$shiftEnd) {
+                $date->addDay();
+                continue;
+            }
+            $startShift = $workDate->copy()->setTimeFromTimeString($shiftStart);
+            $endShift   = $workDate->copy()->setTimeFromTimeString($shiftEnd);
+            if ($endShift->lte($startShift)) $endShift->addDay();
 
             if ($emp->twh != 12) {
 
