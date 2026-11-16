@@ -124,6 +124,8 @@ use App\Models\OvertimeApplication;
         <th>Remarks</th>
         <th>HR Remarks</th>
         <th>Finance Remarks</th>
+        <th>Audited By</th>
+        <th>Paid At</th>
       </tr>
     </thead>
     <tbody>
@@ -137,7 +139,7 @@ use App\Models\OvertimeApplication;
           <td>{{ $employee->emp_code }}</td>
           <td>{{ $employee->employee->designation->desg_short ?? $employee->dailyWagerDesignation->desg_short ?? '-' }}</td>
           <td>{{ $employee->employee->department->dept_desc ?? $employee->dailyWagerDepartment->dept_desc ?? '-' }}</td>
-          <td colspan="7">{{ $employeeApplications->count() }} overtime application(s)</td>
+          <td colspan="12">{{ $employeeApplications->count() }} overtime application(s)</td>
         </tr>
         @foreach($employeeApplications as $application)
           <tr class="detail-row">
@@ -156,6 +158,8 @@ use App\Models\OvertimeApplication;
             <td>{{ $application->remarks ?? '-' }}</td>
             <td>{{ $application->hr_remarks ?? '-' }}</td>
             <td>{{ $application->finance_remarks ?? '-' }}</td>
+            <td>{{ $application->audited_by ?: '-' }}</td>
+            <td>{{ $application->paid_at ? $application->paid_at->format('d M Y H:i') : '-' }}</td>
           </tr>
           <tr class="approval-row">
             <td></td>
@@ -168,11 +172,13 @@ use App\Models\OvertimeApplication;
             <td colspan="2" class="approval-label">Finance Approval</td>
             <td colspan="2">{{ $application->finance_approved_by ? capitalizeWords(getEmployeeName($application->finance_approved_by)) : '' }}</td>
             <td colspan="1">{{ $application->finance_approved_at ? dateAndTimeFormat($application->finance_approved_at) : '' }}</td>
+            <td></td>
+            <td></td>
           </tr>
         @endforeach
       @empty
         <tr>
-          <td colspan="15" style="text-align: center;">No approved overtime applications found yet in this month.</td>
+          <td colspan="17" style="text-align: center;">No approved overtime applications found yet in this month.</td>
         </tr>
       @endforelse
 
@@ -180,7 +186,7 @@ use App\Models\OvertimeApplication;
         <tr class="total-row">
           <td colspan="11" class="text-right">Grand Total</td>
           <td class="text-right">{{ number_format($totalAmount, 2) }}</td>
-          <td colspan="4"></td>
+          <td colspan="5"></td>
         </tr>
       @endif
     </tbody>

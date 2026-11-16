@@ -62,6 +62,8 @@
         <th>HOD Approval By</th>
         <th>HR Approval By</th>
         <th>Accounts Approval By</th>
+        <th>Audited By</th>
+        <th>Paid At</th>
       </tr> 
     </thead>
     <tbody>
@@ -79,17 +81,19 @@
           <td>{{ capitalizeWords(getEmployeeName($application->hod_approved_by)) . ' (' . $application->hod_approved_by . ')' }}</td>
           <td>{{ $application->hrApprover ? capitalizeWords($application->hrApprover->name) . ' (' . $application->hr_approved_by . ')' : '-' }}</td>
           <td>{{ $application->accountsApprover ? capitalizeWords($application->accountsApprover->name) . ' (' . $application->accounts_approved_by . ')' : '-' }}</td>
+          <td>{{ $application->audited_by ?: '-' }}</td>
+          <td>{{ $application->paid_at ? $application->paid_at->format('d M Y H:i') : '-' }}</td>
         </tr>
       @empty
         <tr>
-          <td colspan="12" style="text-align: center;">No approved advance salary applications found.</td>
+          <td colspan="14" style="text-align: center;">No approved advance salary applications found.</td>
         </tr>
       @endforelse
 
       <tr class="total-row">
         <td colspan="8" class="text-right">Total Sanctioned Amount</td>
         <td class="text-right">{{ number_format($totalSanctioned) }}</td>
-        <td colspan="3"></td>
+        <td colspan="5"></td>
       </tr>
     </tbody>
   </table>
