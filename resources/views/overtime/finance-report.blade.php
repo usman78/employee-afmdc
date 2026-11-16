@@ -91,6 +91,9 @@
             color: #98a2b3;
             margin-top: 2px;
         }
+        .text-warning {
+            color: #ff0000 !important;
+        }
 @endpush
 
 @section('content')
@@ -223,7 +226,7 @@
                         @if($application->paid_at)
                           <span class="text-success"><i class="fas fa-check-circle"></i> Paid</span><br>
                           <small>{{ $application->paid_by }} · {{ $application->paid_at->format('d M Y H:i') }}</small>
-                        @elseif($application->status === OvertimeApplication::STATUS_APPROVED)
+                        @elseif($application->status === OvertimeApplication::STATUS_APPROVED && $application->audited_at)
                           <form action="{{ route('overtime.mark-paid', $application->id) }}" method="POST">
                             @csrf
                             <input type="hidden" name="tab" value="{{ $tabKey }}">
@@ -231,6 +234,8 @@
                             <input type="hidden" name="payment_status" value="{{ $paymentStatus }}">
                             <button type="submit" class="btn btn-sm btn-outline-success">Mark Paid</button>
                           </form>
+                        @elseif($application->status === OvertimeApplication::STATUS_APPROVED)
+                          <span class="text-warning">Awaiting auditor verification</span>
                         @else
                           <span class="text-muted">Available after approval</span>
                         @endif

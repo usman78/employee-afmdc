@@ -485,7 +485,14 @@ class AdvanceSalaryController extends Controller
         $this->ensureAccountsOfficer();
 
         $advanceSalaryApplication = AdvanceSalaryApplication::where('id', $application)->firstOrFail();
-        abort_unless($advanceSalaryApplication->status === AdvanceSalaryApplication::STATUS_APPROVED, 422);
+        if ($advanceSalaryApplication->status !== AdvanceSalaryApplication::STATUS_APPROVED || ! $advanceSalaryApplication->audited_at) {
+            return redirect()->route('advance-salary.accounts-report', [
+                'month' => $advanceSalaryApplication->salary_month,
+                'status' => $request->input('status'),
+                'payment_status' => $request->input('payment_status'),
+                'tab' => $request->input('tab'),
+            ])->with('error', 'The application must be fully approved and auditor-verified before it can be marked paid.');
+        }
 
         if (! $advanceSalaryApplication->paid_at) {
             $advanceSalaryApplication->forceFill([

@@ -453,7 +453,14 @@ class OvertimeController extends Controller
         $this->ensureAccountsOfficer();
 
         $overtimeApplication = OvertimeApplication::where('id', $application)->firstOrFail();
-        abort_unless($overtimeApplication->status === OvertimeApplication::STATUS_APPROVED, 422);
+        if ($overtimeApplication->status !== OvertimeApplication::STATUS_APPROVED || ! $overtimeApplication->audited_at) {
+            return redirect()->route('overtime.finance-report', [
+                'month' => $overtimeApplication->salary_month,
+                'status' => $request->input('status'),
+                'payment_status' => $request->input('payment_status'),
+                'tab' => $request->input('tab'),
+            ])->with('error', 'The application must be fully approved and auditor-verified before it can be marked paid.');
+        }
 
         if (! $overtimeApplication->paid_at) {
             $overtimeApplication->forceFill([
