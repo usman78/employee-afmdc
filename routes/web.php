@@ -60,6 +60,7 @@ Route::middleware(['auth', 'password.current'])->group(function () {
     })->middleware('report.access:attendance-discrepancy')->name('att-discrepancy-report');
     Route::post('/att-discrepency', [AttendanceController::class, 'attDiscrepency'])->middleware('report.access:attendance-discrepancy')->name('att-discrepency');
     Route::post('/att-discrepancy-download/{emp_code}', [AttendanceController::class, 'attDiscrepancyDownload'])->middleware('report.access:attendance-discrepancy')->name('att-discrepancy-report-download');
+    Route::get('/att-discrepancy-employee-search', [LeavesController::class, 'discrepancyEmployeeSearch'])->middleware('report.access:attendance-discrepancy')->name('att-discrepancy.employee-search');
     Route::get('/admin-reports', function () {
         return view('admin-reports.index');
     })->middleware('report.access:admin-dashboard')->name('admin-reports.index');
@@ -68,6 +69,7 @@ Route::middleware(['auth', 'password.current'])->group(function () {
     })->middleware('report.access:admin-attendance-discrepancy')->name('admin-reports.attendance-discrepancy');
     Route::post('/admin-reports/attendance-discrepancy', [AttendanceController::class, 'attDiscrepency'])->middleware('report.access:admin-attendance-discrepancy')->name('admin-reports.attendance-discrepancy.generate');
     Route::post('/admin-reports/attendance-discrepancy/download/{emp_code}', [AttendanceController::class, 'attDiscrepancyDownload'])->middleware('report.access:admin-attendance-discrepancy')->name('admin-reports.attendance-discrepancy.download');
+    Route::get('/admin-reports/attendance-discrepancy/employee-search', [LeavesController::class, 'discrepancyEmployeeSearch'])->middleware('report.access:admin-attendance-discrepancy')->name('admin-reports.attendance-discrepancy.employee-search');
     Route::get('/leaves/{emp_code}', [LeavesController::class, 'leaves'])->name('leaves');
     Route::get('/apply-leave-advance/{emp_code}/{shortLeaveOnly?}', [LeavesController::class, 'applyLeaveAdvance'])->name('apply-leave-advance');
     Route::post('/leave/preview', [LeavesController::class, 'preview'])->name('leave.preview');

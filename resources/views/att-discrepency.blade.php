@@ -3,7 +3,6 @@
 @php
   use Carbon\Carbon;
   $today = Carbon::today()->toDateString();
-  $isTimeIn = false;
   // dd($attendance);
 @endphp
 
@@ -308,30 +307,21 @@
                     </td>                  
                   {{-- Time In / Out --}}
                   <td>
-                      {{-- @if ($record['is_sunday'] || $record['is_holiday'] || ($record['is_weekly_rest'] ?? false))
-                           <span class="badge badge-info">
-                              {{ $record['is_holiday'] ? 'Holiday' : (($record['is_weekly_rest'] ?? false) ? 'Weekly Rest' : 'Sunday') }}
-                           </span>
-                      @else --}}
-                          @if (!empty($record['time_logs']))
-                              @foreach ($record['time_logs'] as $log)
-                                  @if ($log['timein'] && $log['timeout'])
-                                      {{ Carbon::parse($log['timein'])->format('H:i') }}
-                                      /
-                                      {{ Carbon::parse($log['timeout'])->format('H:i') }}
-                                      <br>
-                                  @elseif ($log['timein'])
-                                      {{ Carbon::parse($log['timein'])->format('H:i') }} / --:--
-                                      <br>
-                                      @php
-                                        $isTimeIn = true;
-                                      @endphp
-                                  @endif
-                              @endforeach
-                          @else
-                              <span class="badge badge-danger">Not timed in</span>
-                          @endif
-                      {{-- @endif --}}
+                    @if (!empty($record['time_logs']))
+                        @foreach ($record['time_logs'] as $log)
+                            @if ($log['timein'] && $log['timeout'])
+                                {{ Carbon::parse($log['timein'])->format('H:i') }}
+                                /
+                                {{ Carbon::parse($log['timeout'])->format('H:i') }}
+                                <br>
+                            @elseif ($log['timein'])
+                                {{ Carbon::parse($log['timein'])->format('H:i') }} / --:--
+                                <br>
+                            @endif
+                        @endforeach
+                    @else
+                        <span class="badge badge-danger">Not timed in</span>
+                    @endif
                   </td>
                   {{-- Late Minutes (DAY LEVEL) --}}
                   <td>

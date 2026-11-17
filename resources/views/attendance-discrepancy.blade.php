@@ -58,7 +58,7 @@
         width: '100%',
         minimumInputLength: 2,
         ajax: {
-            url: "{{ route('leave-report-employee-search') }}",
+            url: "{{ $adminReport ? route('admin-reports.attendance-discrepancy.employee-search') : route('att-discrepancy.employee-search') }}",
             dataType: 'json',
             delay: 250,
             data: function (params) {

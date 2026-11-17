@@ -1361,6 +1361,32 @@ class LeavesController extends Controller
 
         return response()->json(['results' => $results]);
     }
+
+    public function discrepancyEmployeeSearch(Request $request)
+    {
+        $term = trim($request->input('q', ''));
+        if (strlen($term) < 2) {
+            return response()->json(['results' => []]);
+        }
+
+        $employees = Employee::where(function ($query) use ($term) {
+                $query->where('emp_code', 'like', '%' . $term . '%')
+                    ->orWhereRaw('UPPER(name) LIKE ?', ['%' . strtoupper($term) . '%']);
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get(['emp_code', 'name']);
+
+        $results = $employees->map(function ($employee) {
+            $name = function_exists('capitalizeWords') ? capitalizeWords($employee->name) : ucfirst(strtolower($employee->name));
+            return [
+                'id' => $employee->emp_code,
+                'text' => $employee->emp_code . ' - ' . $name,
+            ];
+        })->values();
+
+        return response()->json(['results' => $results]);
+    }
     public function leaveReportData(Request $request)
     {
         $this->authorizeLeaveReportAccess();
