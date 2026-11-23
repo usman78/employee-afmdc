@@ -454,6 +454,7 @@ ul.error-msg{
         leaveDateSection.disabled = true;
         shortTimeSection.disabled = true;
       } else if (fullDay.checked) {
+        clearHalfLeaveSelection();
         leaveDateSection.style.display = 'block';
         leaveIntervalSection.style.display = 'none';
         shortTimeSection.style.display = 'none';
@@ -465,6 +466,7 @@ ul.error-msg{
         shortTimeSection.disabled = true;
         singleDateSection.disabled = true;
       } else if (shortDay.checked) {
+        clearHalfLeaveSelection();
         leaveIntervalSection.style.display = 'none';
         leaveDateSection.style.display = 'none';
         shortTimeSection.style.display = 'block';
@@ -506,6 +508,13 @@ ul.error-msg{
         halfCustomEndTime.readOnly = true;
         resetCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning);
       }
+    }
+
+    function clearHalfLeaveSelection() {
+      document.querySelectorAll('input[name="leave_interval"]').forEach((input) => {
+        input.checked = false;
+      });
+      resetCalculatedTime(halfCustomStartTime, halfCustomEndTime, halfCustomWarning);
     }
   
     // Add event listeners
@@ -574,6 +583,8 @@ ul.error-msg{
     async function refreshShiftForSelectedDate() {
       if (!singleLeaveDate.value) return;
       const selectedShortStart = startTime.value;
+      const selectedHalfStart = halfCustomStartTime.value;
+      const selectedHalfEnd = halfCustomEndTime.value;
       const body = new URLSearchParams();
       body.append('_token', document.querySelector('input[name="_token"]').value);
       body.append('single_leave_date', singleLeaveDate.value);
@@ -603,6 +614,15 @@ ul.error-msg{
         if (shortDay.checked && selectedShortStart) {
           startTime.value = selectedShortStart;
           startTime.dispatchEvent(new Event('change'));
+        }
+        if (halfDay.checked && selectedHalfStart && (leaveIntervalCustom.checked || leaveIntervalCustomTime.checked)) {
+          halfCustomStartTime.value = selectedHalfStart;
+          if (leaveIntervalCustomTime.checked) {
+            halfCustomEndTime.value = selectedHalfEnd;
+            validateCustomTimeRange();
+          } else {
+            halfCustomStartTime.dispatchEvent(new Event('change'));
+          }
         }
       } catch (error) {
         effectiveStartMinutes = employeeStartMinutes;
