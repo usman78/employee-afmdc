@@ -41,9 +41,6 @@
                         <option value="unaudited" @selected(($auditStatus ?? '') === 'unaudited')>Not Audited</option>
                     </select>
                 </div>
-                {{-- <div class="col-md-auto mt-3 mt-md-0">
-                    <a href="{{ route('audit-reports.overtime') }}" class="btn btn-outline-secondary">Clear Filters</a>
-                </div> --}}
                 <div class="col-md-auto mt-3 mt-md-0">
                     <button type="submit" class="btn btn-primary">View Report</button>
                 </div>
@@ -53,9 +50,8 @@
                             <i class="fas fa-download"></i>
                         </button>
                         <div class="dropdown-menu" aria-labelledby="overtimeDownloadMenu">
-                            {{-- <a class="dropdown-item" href="{{ route('audit-reports.overtime.download', ['scope' => 'all', 'month' => $month]) }}" target="_blank">All Records</a> --}}
-                            {{-- <a class="dropdown-item" href="{{ route('audit-reports.overtime.download', ['scope' => 'approved', 'month' => $month]) }}" target="_blank">Approved Records</a> --}}
-                            <a class="dropdown-item" href="#" id="ot-approved-report-btn">All Approved</a>
+                            <a class="dropdown-item" href="#" id="ot-approved-report-btn">All Approved (regular)</a>
+                            <a class="dropdown-item" href="#" id="ot-dw-report-btn">All Approved (daily wager)</a>
                         </div>
                     </div>
                 </div>
@@ -127,6 +123,18 @@
                     <tr><td colspan="17" class="text-center text-muted">No {{ $tabKey === 'regular' ? 'regular' : 'daily-wager' }} overtime applications found.</td></tr>
                 @endforelse
             </tbody>
+            <tfoot class="font-weight-bold">
+                <tr>
+                    <td colspan="11" class="text-right">Total Approved Amount</td>
+                    <td>{{ number_format($tabApplications->where('status', \App\Models\OvertimeApplication::STATUS_APPROVED)->sum('sanctioned_amount'), 2) }}</td>
+                    <td colspan="5"></td>
+                </tr>
+                <tr>
+                    <td colspan="11" class="text-right">Total Audited Amount</td>
+                    <td>{{ number_format($tabApplications->filter(fn ($application) => $application->audited_at)->sum('sanctioned_amount'), 2) }}</td>
+                    <td colspan="5"></td>
+                </tr>
+            </tfoot>
         </table>
     </div>
         </div>
@@ -155,5 +163,42 @@ document.getElementById('ot-approved-report-btn').addEventListener('click', func
     reportUrl.searchParams.set('desformat', 'pdf');
     reportUrl.searchParams.set('dt1', `${month.slice(5, 7)}-${month.slice(0, 4)}`);
     window.open(reportUrl.toString(), '_blank');
+});
+
+document.getElementById('ot-dw-report-btn').addEventListener('click', async function() {
+const monthDefault = new Date().toISOString().slice(0, 7);
+const { value: month } = await Swal.fire({
+    title: 'Inventory Report',
+    html: `
+    <div class="text-start">
+        <label for="swal-report-month" class="form-label">Month</label>
+        <input id="swal-report-month" type="month" class="form-control" value="${monthDefault}">
+    </div>
+    `,
+    focusConfirm: false,
+    showCancelButton: true,
+    confirmButtonText: 'View Report',
+    preConfirm: () => {
+    const selectedMonth = document.getElementById('swal-report-month').value;
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(selectedMonth)) {
+        Swal.showValidationMessage('Please select a month in YYYY-MM format.');
+        return false;
+    }
+    return selectedMonth;
+    }
+});
+
+if (!month) {
+    return;
+}
+
+const reportUrl = new URL('http://110.39.174.203:7777/reports/rwservlet');
+reportUrl.searchParams.set('P_RMS', '');
+reportUrl.searchParams.set('report', 'R:\\Applications\\Payroll\\Reports\\over_time_dw.rdf');
+reportUrl.searchParams.set('destype', 'cache');
+reportUrl.searchParams.set('desformat', 'pdf');
+const reportMonth = `${month.slice(5, 7)}-${month.slice(0, 4)}`;
+reportUrl.searchParams.set('dt1', reportMonth);
+window.open(reportUrl.toString(), '_blank');
 });
 @endpush
